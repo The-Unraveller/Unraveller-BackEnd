@@ -1,0 +1,43 @@
+using Microsoft.EntityFrameworkCore;
+using TheUnraveller.Core.Entities;
+using TheUnraveller.Core.Interfaces;
+using TheUnraveller.Infrastructure.Data;
+
+namespace TheUnraveller.Infrastructure.Repositories;
+
+public class UserRepository : GenericRepository<User>, IUserRepository
+{
+    public UserRepository(AppDbContext context) : base(context) { }
+
+    public async Task<User?> GetByUsernameAsync(string username) => 
+        await _dbSet.FirstOrDefaultAsync(u => u.Username == username);
+
+    public async Task<User?> GetByEmailAsync(string email) => 
+        await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+}
+
+public class MissionRepository : GenericRepository<Mission>, IMissionRepository
+{
+    public MissionRepository(AppDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<Mission>> GetAvailableMissionsAsync() => 
+        await _dbSet.Include(m => m.Npc).ToListAsync();
+}
+
+public class UserProgressRepository : GenericRepository<UserProgress>, IUserProgressRepository
+{
+    public UserProgressRepository(AppDbContext context) : base(context) { }
+
+    public async Task<UserProgress?> GetUserProgressAsync(int userId, int missionId) =>
+        await _dbSet.FirstOrDefaultAsync(up => up.UserId == userId && up.MissionId == missionId);
+}
+
+public class DialogueRepository : GenericRepository<Dialogue>, IDialogueRepository
+{
+    public DialogueRepository(AppDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<Dialogue>> GetConversationHistoryAsync(int userId, int missionId) =>
+        await _dbSet.Where(d => d.UserId == userId && d.MissionId == missionId)
+                    .OrderBy(d => d.Timestamp)
+                    .ToListAsync();
+}

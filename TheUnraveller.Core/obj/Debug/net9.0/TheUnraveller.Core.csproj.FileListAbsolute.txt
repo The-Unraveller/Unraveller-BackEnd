@@ -1,0 +1,11 @@
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\bin\Debug\net9.0\TheUnraveller.Core.deps.json
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\bin\Debug\net9.0\TheUnraveller.Core.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\bin\Debug\net9.0\TheUnraveller.Core.pdb
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.AssemblyInfoInputs.cache
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.AssemblyInfo.cs
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.csproj.CoreCompileInputs.cache
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\refint\TheUnraveller.Core.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.pdb
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\ref\TheUnraveller.Core.dll

@@ -1,0 +1,15 @@
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\bin\Debug\net9.0\TheUnraveller.Infrastructure.deps.json
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\bin\Debug\net9.0\TheUnraveller.Infrastructure.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\bin\Debug\net9.0\TheUnraveller.Infrastructure.pdb
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\bin\Debug\net9.0\TheUnraveller.Core.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\bin\Debug\net9.0\TheUnraveller.Core.pdb
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.csproj.AssemblyReference.cache
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.AssemblyInfoInputs.cache
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.AssemblyInfo.cs
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.csproj.CoreCompileInputs.cache
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnrav.EC4BDE45.Up2Date
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\refint\TheUnraveller.Infrastructure.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.pdb
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\ref\TheUnraveller.Infrastructure.dll
