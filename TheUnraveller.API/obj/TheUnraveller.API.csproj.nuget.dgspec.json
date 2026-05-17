@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj": {}
+    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj": {}
   },
   "projects": {
-    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj": {
+    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj",
+        "projectUniqueName": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj",
         "projectName": "TheUnraveller.API",
-        "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj",
+        "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\TheUnraveller.API.csproj",
         "packagesPath": "C:\\Users\\letuankhoa\\.nuget\\packages\\",
-        "outputPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\obj\\",
+        "outputPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
-                "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj"
+              "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
+                "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj"
               }
             }
           }
@@ -56,7 +56,7 @@
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
-              "version": "[9.0.9, )"
+              "version": "[9.0.*, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -70,7 +70,7 @@
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[10.1.4, )"
+              "version": "[6.6.2, )"
             }
           },
           "imports": [
@@ -92,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
@@ -157,18 +157,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
+    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
+        "projectUniqueName": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
         "projectName": "TheUnraveller.Infrastructure",
-        "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
+        "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\letuankhoa\\.nuget\\packages\\",
-        "outputPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\obj\\",
+        "outputPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -236,18 +236,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
+    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
+        "projectUniqueName": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
         "projectName": "TheUnraveller.Service",
-        "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
+        "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
         "packagesPath": "C:\\Users\\letuankhoa\\.nuget\\packages\\",
-        "outputPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\obj\\",
+        "outputPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -268,8 +268,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
-                "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj"
+              "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
+                "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj"
               }
             }
           }
@@ -305,7 +305,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -26,6 +26,8 @@ builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 // Register Services
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
 builder.Services.AddScoped<IMissionService, MissionService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
 // builder.Services.AddScoped<IUserService, UserService>(); // Implementation omitted for brevity
 
 // CORS for Frontend

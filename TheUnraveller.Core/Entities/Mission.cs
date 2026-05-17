@@ -9,6 +9,13 @@ public class Mission
     public int StartSuspicion { get; set; } = 0; // Default: 0
     public int MaxSuspicion { get; set; } = 100; // Threshold to "Lose"
     
+    // Rendering & Session Metadata
+    public string Stage { get; set; } = string.Empty; // e.g., "Stage 1"
+    public string Difficulty { get; set; } = string.Empty; // e.g., "Beginner"
+    public int XpReward { get; set; } = 0;
+    public string ImageUrl { get; set; } = string.Empty;
+    public bool Locked { get; set; } = false;
+    
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;
 }

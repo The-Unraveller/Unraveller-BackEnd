@@ -9,3 +9,4 @@ D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\refint\TheUnraveller.Core.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.pdb
 D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\ref\TheUnraveller.Core.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Core\obj\Debug\net9.0\TheUnraveller.Core.sourcelink.json

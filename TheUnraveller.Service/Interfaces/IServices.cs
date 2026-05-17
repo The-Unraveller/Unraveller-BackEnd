@@ -18,3 +18,8 @@ public interface IGameEngineService
 {
     Task<DialogueResponseDto> ProcessPlayerMessageAsync(DialogueRequestDto request);
 }
+
+public interface ILLMProviderService
+{
+    Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage);
+}

@@ -13,3 +13,4 @@ D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.
 D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\refint\TheUnraveller.Infrastructure.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.pdb
 D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\ref\TheUnraveller.Infrastructure.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Infrastructure\obj\Debug\net9.0\TheUnraveller.Infrastructure.sourcelink.json

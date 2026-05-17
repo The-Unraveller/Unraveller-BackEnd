@@ -22,6 +22,9 @@ public class MissionRepository : GenericRepository<Mission>, IMissionRepository
 
     public async Task<IEnumerable<Mission>> GetAvailableMissionsAsync() => 
         await _dbSet.Include(m => m.Npc).ToListAsync();
+
+    public override async Task<Mission?> GetByIdAsync(int id) =>
+        await _dbSet.Include(m => m.Npc).FirstOrDefaultAsync(m => m.Id == id);
 }
 
 public class UserProgressRepository : GenericRepository<UserProgress>, IUserProgressRepository

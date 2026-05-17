@@ -7,4 +7,5 @@ public class Npc
     public string Role { get; set; } = string.Empty; // e.g., "Security Guard", "Hacker"
     public string Description { get; set; } = string.Empty;
     public string Personality { get; set; } = string.Empty; // For AI context
+    public string NpcEmoji { get; set; } = string.Empty; // e.g., "☕", "📋", "🔍"
 }

@@ -15,3 +15,4 @@ D:\CODE\EXE\BackEnd\TheUnraveller.Service\obj\Debug\net9.0\TheUnraveller.Service
 D:\CODE\EXE\BackEnd\TheUnraveller.Service\obj\Debug\net9.0\refint\TheUnraveller.Service.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.Service\obj\Debug\net9.0\TheUnraveller.Service.pdb
 D:\CODE\EXE\BackEnd\TheUnraveller.Service\obj\Debug\net9.0\ref\TheUnraveller.Service.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.Service\obj\Debug\net9.0\TheUnraveller.Service.sourcelink.json
