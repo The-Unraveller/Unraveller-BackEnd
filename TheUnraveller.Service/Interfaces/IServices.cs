@@ -2,10 +2,9 @@ using TheUnraveller.Service.DTOs;
 
 namespace TheUnraveller.Service.Interfaces;
 
-public interface IUserService
+public interface ILeaderboardService
 {
-    Task<UserDto?> AuthenticateAsync(string email, string password);
-    Task<UserDto> RegisterAsync(string username, string email, string password);
+    Task<IEnumerable<LeaderboardEntryDto>> GetLeaderboardAsync(int currentUserId);
 }
 
 public interface IMissionService

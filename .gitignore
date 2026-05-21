@@ -1,0 +1,196 @@
+## .NET
+*.user
+*.userosscache
+*.suo
+*.userprefs
+bin/
+obj/
+out/
+*.pidb
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.VC.opendb
+*.vs/
+.vscode/
+*.code-workspace
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]est[Rr]esults/
+[Nn]uget[Pp]ackages/
+*.cache
+*.props
+*.targets
+*.sln
+*.sln.docstates
+
+## Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+## Rider
+.idea/
+*.sln.iml
+
+## Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## TeamCity
+_TeamCity*
+
+## DotCover
+*.dotCover
+
+## NCrunch
+*.ncrunch*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+## MightyBryceFinger
+*.i*/*
+
+## Build Results
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+## NuGet Packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+## Windows Store app package
+*.appx
+*.appxbundle
+*.appxupload
+
+## Visual Studio Code
+.vscode/
+
+## OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## StyleCop
+StyleCopReport.xml
+
+## EF Core
+*.db
+*.sqlite
+
+## Linux
+*~
+
+## Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.swn
+*.swo
+*.lnk
+
+## Backup files
+*.bak
+*.backup
+*.orig
+
+## Recycle Bin
+$RECYCLE.BIN/
+
+## Android
+*.apk
+*.aab
+*.ap_
+*.dex
+
+## iOS
+*.ipa
+
+## macOS
+.DS_Store
+
+## Logs
+*.log
+logs/
+
+## Environment files (but keep example)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+## Test coverage
+coverage/
+.coverage
+*.coverage
+
+## Docker
+.dockerignore
+
+## Misc
+.cr/
+public/
+temp/
+
+## Unnecessary files
+.claude/
+CLAUDE.md
+DESIGN_LLM_INTEGRATION.md
+
+## Legacy/unused folders
+src/
+docs/

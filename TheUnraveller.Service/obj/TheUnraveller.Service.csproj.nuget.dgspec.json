@@ -1,7 +1,7 @@
 {
   "format": 1,
   "restore": {
-    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {}
+    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {}
   },
   "projects": {
     "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Core\\TheUnraveller.Core.csproj": {
@@ -69,14 +69,14 @@
         }
       }
     },
-    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
+    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
+        "projectUniqueName": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
         "projectName": "TheUnraveller.Infrastructure",
-        "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
+        "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\letuankhoa\\.nuget\\packages\\",
-        "outputPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\obj\\",
+        "outputPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -148,14 +148,14 @@
         }
       }
     },
-    "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
+    "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
+        "projectUniqueName": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
         "projectName": "TheUnraveller.Service",
-        "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
+        "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
         "packagesPath": "C:\\Users\\letuankhoa\\.nuget\\packages\\",
-        "outputPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\obj\\",
+        "outputPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -176,8 +176,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
-                "projectPath": "d:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj"
+              "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj": {
+                "projectPath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj"
               }
             }
           }
