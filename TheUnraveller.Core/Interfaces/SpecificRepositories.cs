@@ -22,3 +22,8 @@ public interface IDialogueRepository : IGenericRepository<Dialogue>
 {
     Task<IEnumerable<Dialogue>> GetConversationHistoryAsync(int userId, int missionId);
 }
+
+public interface IPaymentRepository : IGenericRepository<Payment>
+{
+    Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(int userId);
+}

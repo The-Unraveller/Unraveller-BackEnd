@@ -22,3 +22,9 @@ public interface ILLMProviderService
 {
     Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage);
 }
+
+public interface IPaymentService
+{
+    Task<PaymentResponseDto> CreatePaymentAsync(CreatePaymentRequestDto request);
+    Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId);
+}

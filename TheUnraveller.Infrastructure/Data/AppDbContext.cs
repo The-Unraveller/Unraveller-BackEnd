@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Mission> Missions { get; set; }
     public DbSet<Dialogue> Dialogues { get; set; }
     public DbSet<UserProgress> UserProgresses { get; set; }
+    public DbSet<Payment> Payments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,12 @@ public class AppDbContext : DbContext
             .HasOne(up => up.User)
             .WithMany(u => u.Progresses)
             .HasForeignKey(up => up.UserId);
+
+        // Configure Payment-User relationship
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId);
 
         // Seed default users
         modelBuilder.Entity<User>().HasData(

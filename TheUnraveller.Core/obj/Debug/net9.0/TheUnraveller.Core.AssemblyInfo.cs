@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TheUnraveller.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ad0dceabd556243935717b45bc0be164399f077f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c07f2eb5da4b58f9bcadbc34b40471990e687cec")]
 [assembly: System.Reflection.AssemblyProductAttribute("TheUnraveller.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TheUnraveller.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

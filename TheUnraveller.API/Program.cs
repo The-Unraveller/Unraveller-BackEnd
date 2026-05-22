@@ -22,11 +22,13 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IMissionRepository, MissionRepository>();
 builder.Services.AddScoped<IDialogueRepository, DialogueRepository>();
 builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 // Register Services
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
 // builder.Services.AddScoped<IUserService, UserService>(); // Implementation omitted for brevity
 
