@@ -26,6 +26,32 @@
     ]
   },
   {
+    "ContainingType": "TheUnraveller.API.Controllers.LeaderboardController",
+    "Method": "GetLeaderboard",
+    "RelativePath": "api/Leaderboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[TheUnraveller.Service.DTOs.LeaderboardEntryDto, TheUnraveller.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "TheUnraveller.API.Controllers.MissionController",
     "Method": "GetMissions",
     "RelativePath": "api/Mission",
@@ -62,6 +88,58 @@
     "ReturnTypes": [
       {
         "Type": "TheUnraveller.Service.DTOs.MissionDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
+    "Method": "CreateVnpayUrl",
+    "RelativePath": "api/Payment/create-vnpay-url",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TheUnraveller.Service.DTOs.CreatePaymentRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "TheUnraveller.Service.DTOs.PaymentResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
+    "Method": "GetPaymentHistory",
+    "RelativePath": "api/Payment/history/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[TheUnraveller.Service.DTOs.PaymentHistoryDto, TheUnraveller.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",

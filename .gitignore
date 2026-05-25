@@ -129,6 +129,8 @@ StyleCopReport.xml
 
 ## EF Core
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 
 ## Linux

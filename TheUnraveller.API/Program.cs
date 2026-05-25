@@ -41,11 +41,12 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "The Unraveller API V1");
+    c.RoutePrefix = string.Empty; // Swagger sẽ hiển thị ngay tại trang chủ (root)
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
