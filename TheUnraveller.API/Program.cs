@@ -36,9 +36,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Configure DbContext (SQLite)
+// Configure DbContext (PostgreSQL - Supabase)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=unraveller.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 // Register Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -72,22 +72,15 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "The Unraveller API V1");
-    c.RoutePrefix = string.Empty; // Swagger will show at root
+    c.RoutePrefix = string.Empty;
 });
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
-app.UseAuthentication(); // Must be before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Ensure Database is created
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
 
 app.Run();

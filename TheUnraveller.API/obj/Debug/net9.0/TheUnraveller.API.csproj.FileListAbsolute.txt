@@ -170,4 +170,5 @@ D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.P
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
-D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Npgsql.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
