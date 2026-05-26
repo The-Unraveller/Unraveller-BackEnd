@@ -6,6 +6,7 @@ using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Core.Entities;
 using TheUnraveller.Service.Interfaces;
 using Microsoft.IdentityModel.Tokens;
+using Google.Apis.Auth;
 
 namespace TheUnraveller.Service.Implementations;
 
@@ -51,7 +52,53 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.AddAsync(newUser);
+        await _userRepository.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<string> LoginWithGoogleAsync(string idToken)
+    {
+        var googleSettings = _configuration.GetSection("Google");
+        var clientId = googleSettings["ClientId"];
+
+        try
+        {
+            // Verify the ID token with Google
+            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { clientId }
+            });
+
+            var email = payload.Email;
+            var name = payload.Name;
+
+            // Check if user exists
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {
+                // Auto-register if not exists
+                user = new User
+                {
+                    Username = name ?? email.Split('@')[0],
+                    Email = email,
+                    PasswordHash = Guid.NewGuid().ToString(), // Random password for OAuth users
+                    Energy = 100,
+                    MaxEnergy = 100,
+                    XpBalance = 0,
+                    IsPremium = false,
+                    LastActiveDate = DateTime.UtcNow
+                };
+                await _userRepository.AddAsync(user);
+                await _userRepository.SaveChangesAsync();
+            }
+
+            return GenerateJwtToken(user);
+        }
+        catch (Exception ex)
+        {
+            throw new UnauthorizedAccessException($"Google authentication failed: {ex.Message}");
+        }
     }
 
     private string GenerateJwtToken(User user)

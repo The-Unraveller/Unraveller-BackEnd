@@ -41,6 +41,23 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("google")]
+    public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.IdToken)) return BadRequest("idToken is required");
+
+        try
+        {
+            var token = await _authService.LoginWithGoogleAsync(request.IdToken);
+            return Ok(new { Token = token });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { Message = ex.Message });
+        }
+    }
+
     public record RegisterRequest(string Username, string Email, string Password);
     public record LoginRequest(string Email, string Password);
+    public record GoogleLoginRequest(string IdToken);
 }

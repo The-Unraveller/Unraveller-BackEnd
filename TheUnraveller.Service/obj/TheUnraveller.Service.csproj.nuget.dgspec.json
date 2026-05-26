@@ -198,6 +198,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.74.0, )"
+            },
             "Microsoft.IdentityModel.Tokens": {
               "target": "Package",
               "version": "[8.18.0, )"

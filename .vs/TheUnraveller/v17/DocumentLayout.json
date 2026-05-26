@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\CODE\\EXE\\BackEnd\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|d:\\code\\exe\\backend\\theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|solutionrelative:theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|d:\\code\\exe\\backend\\theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|solutionrelative:theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
@@ -22,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -50,7 +54,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\Implementations\\AuthService.cs",
+              "RelativeDocumentMoniker": "TheUnraveller.Service\\Implementations\\AuthService.cs",
+              "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\Implementations\\AuthService.cs",
+              "RelativeToolTip": "TheUnraveller.Service\\Implementations\\AuthService.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-26T04:35:15.481Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\Program.cs",
               "RelativeDocumentMoniker": "TheUnraveller.API\\Program.cs",
@@ -62,7 +79,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "launchSettings.json",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "TheUnraveller.API\\Properties\\launchSettings.json",
@@ -74,13 +91,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\appsettings.json",
               "RelativeDocumentMoniker": "TheUnraveller.API\\appsettings.json",
               "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\appsettings.json",
               "RelativeToolTip": "TheUnraveller.API\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAsAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2026-05-25T10:22:07.61Z",
               "EditorCaption": ""
