@@ -27,3 +27,10 @@ public interface IPaymentRepository : IGenericRepository<Payment>
 {
     Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(int userId);
 }
+
+public interface IShopRepository : IGenericRepository<ShopItem>
+{
+    Task<IEnumerable<ShopItem>> GetAllItemsAsync();
+    Task<int> GetItemQuantityAsync(int userId, int itemId);
+    Task UpdateItemQuantityAsync(int userId, int itemId, int quantity);
+}

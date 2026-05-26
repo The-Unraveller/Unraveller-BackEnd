@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "e2PeaGAVphE=",
+  "dgSpecHash": "1vo1AjPepho=",
   "success": true,
   "projectFilePath": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\TheUnraveller.Service.csproj",
   "expectedPackageFiles": [
@@ -21,10 +21,15 @@
     "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\9.0.16\\microsoft.extensions.logging.abstractions.9.0.16.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.extensions.options\\9.0.16\\microsoft.extensions.options.9.0.16.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.extensions.primitives\\9.0.16\\microsoft.extensions.primitives.9.0.16.nupkg.sha512",
+    "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.18.0\\microsoft.identitymodel.abstractions.8.18.0.nupkg.sha512",
+    "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\8.18.0\\microsoft.identitymodel.jsonwebtokens.8.18.0.nupkg.sha512",
+    "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.identitymodel.logging\\8.18.0\\microsoft.identitymodel.logging.8.18.0.nupkg.sha512",
+    "C:\\Users\\letuankhoa\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.18.0\\microsoft.identitymodel.tokens.8.18.0.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.10\\sqlitepclraw.bundle_e_sqlite3.2.1.10.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\sqlitepclraw.core\\2.1.10\\sqlitepclraw.core.2.1.10.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.10\\sqlitepclraw.lib.e_sqlite3.2.1.10.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.10\\sqlitepclraw.provider.e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\letuankhoa\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.18.0\\system.identitymodel.tokens.jwt.8.18.0.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512",
     "C:\\Users\\letuankhoa\\.nuget\\packages\\system.text.json\\9.0.16\\system.text.json.9.0.16.nupkg.sha512"
   ],

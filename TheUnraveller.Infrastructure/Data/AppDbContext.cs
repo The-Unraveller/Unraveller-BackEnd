@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<Dialogue> Dialogues { get; set; }
     public DbSet<UserProgress> UserProgresses { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<ShopItem> ShopItems { get; set; }
+    public DbSet<UserInventory> UserInventories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +39,17 @@ public class AppDbContext : DbContext
             .HasOne(p => p.User)
             .WithMany()
             .HasForeignKey(p => p.UserId);
+
+        // Configure UserInventory relationships
+        modelBuilder.Entity<UserInventory>()
+            .HasOne(ui => ui.User)
+            .WithMany()
+            .HasForeignKey(ui => ui.UserId);
+
+        modelBuilder.Entity<UserInventory>()
+            .HasOne(ui => ui.Item)
+            .WithMany()
+            .HasForeignKey(ui => ui.ItemId);
 
         // Seed default users
         modelBuilder.Entity<User>().HasData(

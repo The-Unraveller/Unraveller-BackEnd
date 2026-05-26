@@ -162,3 +162,12 @@ D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\TheUnraveller.API.pdb
 D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\TheUnraveller.API.genruntimeconfig.cache
 D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\ref\TheUnraveller.API.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\TheUnraveller.API.sourcelink.json
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

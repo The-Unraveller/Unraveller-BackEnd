@@ -1,5 +1,37 @@
 [
   {
+    "ContainingType": "TheUnraveller.API.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/Auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TheUnraveller.API.Controllers.AuthController\u002BLoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.AuthController",
+    "Method": "Register",
+    "RelativePath": "api/Auth/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TheUnraveller.API.Controllers.AuthController\u002BRegisterRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TheUnraveller.API.Controllers.GameController",
     "Method": "SendMessage",
     "RelativePath": "api/Game/message",
@@ -126,17 +158,11 @@
   {
     "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
     "Method": "GetPaymentHistory",
-    "RelativePath": "api/Payment/history/{userId}",
+    "RelativePath": "api/Payment/history",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "userId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IEnumerable\u00601[[TheUnraveller.Service.DTOs.PaymentHistoryDto, TheUnraveller.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
@@ -148,5 +174,123 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
+    "Method": "VnpayIpn",
+    "RelativePath": "api/Payment/vnpay-ipn",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "vnpayData",
+        "Type": "Microsoft.AspNetCore.Http.IFormCollection",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.ShopController",
+    "Method": "BuyItem",
+    "RelativePath": "api/Shop/buy",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TheUnraveller.Service.DTOs.BuyItemRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "TheUnraveller.Service.DTOs.BuyItemResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.ShopController",
+    "Method": "GetItems",
+    "RelativePath": "api/Shop/items",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[TheUnraveller.Service.DTOs.ShopItemDto, TheUnraveller.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.ShopController",
+    "Method": "UseItem",
+    "RelativePath": "api/Shop/use-item",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TheUnraveller.Service.DTOs.UseItemRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "TheUnraveller.Service.DTOs.UseItemResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.UserController",
+    "Method": "GetProfile",
+    "RelativePath": "api/User/profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "TheUnraveller.Service.DTOs.UserProfileDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.UserController",
+    "Method": "UpdateStreak",
+    "RelativePath": "api/User/update-streak",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
   }
 ]

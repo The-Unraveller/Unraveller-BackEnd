@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
 
@@ -15,6 +17,14 @@ public class PaymentController : ControllerBase
         _paymentService = paymentService;
     }
 
+    private int GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null) throw new UnauthorizedAccessException("User ID not found in token");
+        return int.Parse(userIdClaim.Value);
+    }
+
+    [Authorize]
     [HttpPost("create-vnpay-url")]
     public async Task<ActionResult<PaymentResponseDto>> CreateVnpayUrl([FromBody] CreatePaymentRequestDto request)
     {
@@ -39,15 +49,38 @@ public class PaymentController : ControllerBase
         }
     }
 
-    [HttpGet("history/{userId}")]
-    public async Task<ActionResult<IEnumerable<PaymentHistoryDto>>> GetPaymentHistory(int userId)
+    [Authorize]
+    [HttpGet("history")]
+    public async Task<ActionResult<IEnumerable<PaymentHistoryDto>>> GetPaymentHistory()
     {
-        if (userId <= 0)
+        try
         {
-            return BadRequest("Invalid user ID");
+            var userId = GetUserId();
+            var history = await _paymentService.GetPaymentHistoryAsync(userId);
+            return Ok(history);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
 
-        var history = await _paymentService.GetPaymentHistoryAsync(userId);
-        return Ok(history);
+    [HttpPost("vnpay-ipn")]
+    public async Task<IActionResult> VnpayIpn([FromForm] IFormCollection vnpayData)
+    {
+        // Sử dụng hashSecret từ config
+        string hashSecret = "YOUR_VNPAY_HASH_SECRET";
+
+        var dataDict = vnpayData.ToDictionary(k => k.Key, v => v.Value.ToString());
+        bool isValid = await _paymentService.VerifyAndProcessVnpayIPNAsync(dataDict, hashSecret);
+
+        if (isValid)
+        {
+            return Ok(new { Message = "Payment processed successfully" });
+        }
+        else
+        {
+            return BadRequest(new { Message = "Invalid IPN request" });
+        }
     }
 }
