@@ -112,7 +112,8 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Role, user.IsPremium ? "Premium" : "User")
+            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim("IsPremium", user.IsPremium.ToString())
         };
 
         var token = new JwtSecurityToken(

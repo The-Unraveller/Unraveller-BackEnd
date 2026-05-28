@@ -1,5 +1,67 @@
 [
   {
+    "ContainingType": "TheUnraveller.API.Controllers.AdminController",
+    "Method": "GetAllMissions",
+    "RelativePath": "api/Admin/missions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.AdminController",
+    "Method": "UpdateMission",
+    "RelativePath": "api/Admin/missions/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "update",
+        "Type": "TheUnraveller.Service.DTOs.MissionUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.AdminController",
+    "Method": "GetAllUsers",
+    "RelativePath": "api/Admin/users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.AdminController",
+    "Method": "UpdateUser",
+    "RelativePath": "api/Admin/users/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "update",
+        "Type": "TheUnraveller.Service.DTOs.UserUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TheUnraveller.API.Controllers.AuthController",
     "Method": "LoginWithGoogle",
     "RelativePath": "api/Auth/google",
@@ -147,8 +209,8 @@
   },
   {
     "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
-    "Method": "CreateVnpayUrl",
-    "RelativePath": "api/Payment/create-vnpay-url",
+    "Method": "CreatePayOSLink",
+    "RelativePath": "api/Payment/create-payos-link",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -161,7 +223,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "TheUnraveller.Service.DTOs.PaymentResponseDto",
+        "Type": "TheUnraveller.Service.DTOs.CreatePayOSLinkResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -193,18 +255,28 @@
   },
   {
     "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
-    "Method": "VnpayIpn",
-    "RelativePath": "api/Payment/vnpay-ipn",
+    "Method": "PayOSWebhook",
+    "RelativePath": "api/Payment/payos-webhook",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "vnpayData",
-        "Type": "Microsoft.AspNetCore.Http.IFormCollection",
-        "IsRequired": false
+        "Name": "webhookPayload",
+        "Type": "PayOS.Models.Webhooks.Webhook",
+        "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TheUnraveller.API.Controllers.PaymentController",
+    "Method": "GetSubscriptionPlans",
+    "RelativePath": "api/Payment/plans",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

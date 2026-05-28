@@ -3,16 +3,32 @@
   "WorkspaceRootPath": "D:\\CODE\\EXE\\BackEnd\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|d:\\code\\exe\\backend\\theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|solutionrelative:theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|d:\\code\\exe\\backend\\theunraveller.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|solutionrelative:theunraveller.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|d:\\code\\exe\\backend\\theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|solutionrelative:theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|d:\\code\\exe\\backend\\theunraveller.infrastructure\\repositories\\shoprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|solutionrelative:theunraveller.infrastructure\\repositories\\shoprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|d:\\code\\exe\\backend\\theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|solutionrelative:theunraveller.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|d:\\code\\exe\\backend\\theunraveller.infrastructure\\migrations\\20260528034042_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|solutionrelative:theunraveller.infrastructure\\migrations\\20260528034042_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|d:\\code\\exe\\backend\\theunraveller.infrastructure\\migrations\\appdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|solutionrelative:theunraveller.infrastructure\\migrations\\appdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|d:\\code\\exe\\backend\\theunraveller.infrastructure\\migrations\\20260528041035_seedshopitems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE4AE8F-A217-440F-B64A-3CAD10370ACB}|TheUnraveller.Infrastructure\\TheUnraveller.Infrastructure.csproj|solutionrelative:theunraveller.infrastructure\\migrations\\20260528041035_seedshopitems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|d:\\code\\exe\\backend\\theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DB70ED41-075A-4784-A058-6028BBCB581F}|TheUnraveller.Service\\TheUnraveller.Service.csproj|solutionrelative:theunraveller.service\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C8BBD59A-95AD-4A6E-8C01-BEA05E02B0A3}|TheUnraveller.API\\TheUnraveller.API.csproj|d:\\code\\exe\\backend\\theunraveller.api\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
@@ -26,7 +42,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 13,
           "Children": [
             {
               "$type": "Bookmark",
@@ -49,8 +65,61 @@
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             },
             {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
+              "Title": "20260528034042_InitialCreate.cs",
+              "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\20260528034042_InitialCreate.cs",
+              "RelativeDocumentMoniker": "TheUnraveller.Infrastructure\\Migrations\\20260528034042_InitialCreate.cs",
+              "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\20260528034042_InitialCreate.cs",
+              "RelativeToolTip": "TheUnraveller.Infrastructure\\Migrations\\20260528034042_InitialCreate.cs",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-28T10:19:49.085Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AppDbContextModelSnapshot.cs",
+              "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\AppDbContextModelSnapshot.cs",
+              "RelativeDocumentMoniker": "TheUnraveller.Infrastructure\\Migrations\\AppDbContextModelSnapshot.cs",
+              "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\AppDbContextModelSnapshot.cs",
+              "RelativeToolTip": "TheUnraveller.Infrastructure\\Migrations\\AppDbContextModelSnapshot.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-28T10:19:47.905Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "20260528041035_SeedShopItems.cs",
+              "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\20260528041035_SeedShopItems.cs",
+              "RelativeDocumentMoniker": "TheUnraveller.Infrastructure\\Migrations\\20260528041035_SeedShopItems.cs",
+              "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Migrations\\20260528041035_SeedShopItems.cs",
+              "RelativeToolTip": "TheUnraveller.Infrastructure\\Migrations\\20260528041035_SeedShopItems.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-28T10:19:46.884Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ShopRepository.cs",
+              "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Repositories\\ShopRepository.cs",
+              "RelativeDocumentMoniker": "TheUnraveller.Infrastructure\\Repositories\\ShopRepository.cs",
+              "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Infrastructure\\Repositories\\ShopRepository.cs",
+              "RelativeToolTip": "TheUnraveller.Infrastructure\\Repositories\\ShopRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-28T10:19:39.131Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "AuthService.cs",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.Service\\Implementations\\AuthService.cs",
               "RelativeDocumentMoniker": "TheUnraveller.Service\\Implementations\\AuthService.cs",
@@ -62,20 +131,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\Program.cs",
               "RelativeDocumentMoniker": "TheUnraveller.API\\Program.cs",
               "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\Program.cs",
               "RelativeToolTip": "TheUnraveller.API\\Program.cs",
-              "ViewState": "AgIAAE0AAAAAAAAAAAASwFUAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAFgAAAAAAAAAAIAwwGYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-25T10:43:43.955Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 7,
               "Title": "launchSettings.json",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "TheUnraveller.API\\Properties\\launchSettings.json",
@@ -87,19 +156,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\appsettings.json",
               "RelativeDocumentMoniker": "TheUnraveller.API\\appsettings.json",
               "ToolTip": "D:\\CODE\\EXE\\BackEnd\\TheUnraveller.API\\appsettings.json",
               "RelativeToolTip": "TheUnraveller.API\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAABJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-05-25T10:22:07.61Z"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+              "WhenOpened": "2026-05-25T10:22:07.61Z",
+              "EditorCaption": ""
             }
           ]
         }

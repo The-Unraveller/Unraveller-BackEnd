@@ -1,3 +1,4 @@
+using TheUnraveller.API.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +9,8 @@ using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Infrastructure.Repositories;
 using TheUnraveller.Service.Implementations;
 using TheUnraveller.Service.Interfaces;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +62,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
 
 // Register payOS Client (singleton — thread-safe)
@@ -84,11 +88,15 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AdminMiddleware>();
 
 app.MapControllers();
 

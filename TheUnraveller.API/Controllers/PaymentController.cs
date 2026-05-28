@@ -4,6 +4,7 @@ using System.Security.Claims;
 using PayOS.Models.Webhooks;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
+using TheUnraveller.Core.Entities;
 
 namespace TheUnraveller.API.Controllers;
 
@@ -12,11 +13,13 @@ namespace TheUnraveller.API.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
+    private readonly ISubscriptionService _subscriptionService;
     private readonly ILogger<PaymentController> _logger;
 
-    public PaymentController(IPaymentService paymentService, ILogger<PaymentController> logger)
+    public PaymentController(IPaymentService paymentService, ISubscriptionService subscriptionService, ILogger<PaymentController> logger)
     {
         _paymentService = paymentService;
+        _subscriptionService = subscriptionService;
         _logger = logger;
     }
 
@@ -27,10 +30,21 @@ public class PaymentController : ControllerBase
         return int.Parse(userIdClaim.Value);
     }
 
-    /// <summary>
-    /// Creates a payOS hosted checkout link and returns it to the frontend.
-    /// Frontend should redirect the user to the returned checkoutUrl.
-    /// </summary>
+    [HttpGet("plans")]
+    public async Task<IActionResult> GetSubscriptionPlans()
+    {
+        try
+        {
+            var plans = await _subscriptionService.GetPlansAsync();
+            return Ok(plans);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching subscription plans");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
     [Authorize]
     [HttpPost("create-payos-link")]
     public async Task<ActionResult<CreatePayOSLinkResponseDto>> CreatePayOSLink([FromBody] CreatePaymentRequestDto request)
@@ -56,15 +70,9 @@ public class PaymentController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Webhook endpoint for payOS IPN (Instant Payment Notification).
-    /// No [Authorize] — payOS server posts here directly.
-    /// </summary>
     [HttpPost("payos-webhook")]
     public async Task<IActionResult> PayOSWebhook([FromBody] Webhook webhookPayload)
     {
-        _logger.LogInformation("payOS webhook received: code={Code}, success={Success}", webhookPayload.Code, webhookPayload.Success);
-
         var isValid = await _paymentService.VerifyPayOSWebhookAsync(webhookPayload);
 
         if (isValid)
@@ -73,9 +81,6 @@ public class PaymentController : ControllerBase
         return BadRequest(new { message = "Invalid or already-processed webhook" });
     }
 
-    /// <summary>
-    /// Returns payment history for the authenticated user.
-    /// </summary>
     [Authorize]
     [HttpGet("history")]
     public async Task<ActionResult<IEnumerable<PaymentHistoryDto>>> GetPaymentHistory()

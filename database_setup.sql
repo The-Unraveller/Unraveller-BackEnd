@@ -88,6 +88,28 @@ CREATE TABLE IF NOT EXISTS "Payments" (
     "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 9. Table: SubscriptionPlans
+CREATE TABLE IF NOT EXISTS "SubscriptionPlans" (
+    "Id" SERIAL PRIMARY KEY,
+    "Name" TEXT NOT NULL,
+    "Tier" INTEGER NOT NULL,
+    "Price" DECIMAL(18, 2) NOT NULL,
+    "DurationDays" INTEGER NOT NULL,
+    "Description" TEXT,
+    "Features" TEXT[]
+);
+
+-- 10. Table: UserSubscriptions
+CREATE TABLE IF NOT EXISTS "UserSubscriptions" (
+    "Id" SERIAL PRIMARY KEY,
+    "UserId" INTEGER REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "PlanId" INTEGER REFERENCES "SubscriptionPlans"("Id"),
+    "StartDate" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "EndDate" TIMESTAMP WITH TIME ZONE,
+    "IsActive" BOOLEAN DEFAULT TRUE,
+    "TransactionId" TEXT
+);
+
 -- =============================================================================
 -- SEED DATA (Dữ liệu mẫu ban đầu)
 -- =============================================================================

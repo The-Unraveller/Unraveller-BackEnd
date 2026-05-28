@@ -27,6 +27,7 @@ public class UserService : IUserService
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
+            Role = user.Role.ToString(),
             Energy = user.Energy,
             MaxEnergy = user.MaxEnergy,
             LastEnergyRechargedAt = user.LastEnergyRechargedAt,

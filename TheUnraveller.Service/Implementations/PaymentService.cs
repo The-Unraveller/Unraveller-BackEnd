@@ -129,6 +129,7 @@ public class PaymentService : IPaymentService
                     {
                         user.IsPremium = true;
                         user.MaxEnergy = 200;
+                        user.Energy = 200; // Recharge current energy to full
                         _userRepository.Update(user);
                         await _userRepository.SaveChangesAsync();
                     }
@@ -143,11 +144,82 @@ public class PaymentService : IPaymentService
         }
     }
 
+    private async Task SyncPendingPaymentsAsync(int userId)
+    {
+        try
+        {
+            var pendingPayments = await _context.Set<Payment>()
+                .Where(p => p.UserId == userId && p.Status == "Pending")
+                .ToListAsync();
+
+            if (pendingPayments.Any())
+            {
+                bool hasUpdates = false;
+                foreach (var payment in pendingPayments)
+                {
+                    if (long.TryParse(payment.OrderId, out long orderCode))
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[SyncPendingPayments] Checking orderCode: {orderCode}");
+                            var paymentInfo = await _payOSClient.PaymentRequests.GetAsync(orderCode);
+                            if (paymentInfo != null)
+                            {
+                                string statusStr = paymentInfo.Status.ToString();
+                                Console.WriteLine($"[SyncPendingPayments] OrderCode {orderCode} status on PayOS: {statusStr}");
+                                if (statusStr.Equals("PAID", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    payment.Status = "Completed";
+                                    payment.CompletedAt = DateTime.UtcNow;
+                                    _paymentRepository.Update(payment);
+                                    hasUpdates = true;
+
+                                    // Upgrade user to Premium
+                                    var user = await _userRepository.GetByIdAsync(userId);
+                                    if (user != null)
+                                    {
+                                        user.IsPremium = true;
+                                        user.MaxEnergy = 200;
+                                        user.Energy = 200; // Recharge current energy to full
+                                        _userRepository.Update(user);
+                                    }
+                                }
+                                else if (statusStr.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    payment.Status = "Failed";
+                                    _paymentRepository.Update(payment);
+                                    hasUpdates = true;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[SyncPendingPayments] Error checking orderCode {orderCode}: {ex.Message}");
+                            Console.WriteLine(ex.ToString());
+                        }
+                    }
+                }
+
+                if (hasUpdates)
+                {
+                    await _paymentRepository.SaveChangesAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SyncPendingPayments] Outer error: {ex.Message}");
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
     /// <summary>
     /// Returns the payment history for a given user.
     /// </summary>
     public async Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId)
     {
+        await SyncPendingPaymentsAsync(userId);
+
         var payments = await _paymentRepository.GetPaymentsByUserIdAsync(userId);
         return payments.Select(p => new PaymentHistoryDto
         {

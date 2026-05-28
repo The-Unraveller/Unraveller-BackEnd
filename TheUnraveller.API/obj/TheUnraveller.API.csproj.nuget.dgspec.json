@@ -313,6 +313,10 @@
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.18.0, )"
+            },
+            "payOS": {
+              "target": "Package",
+              "version": "[2.1.0, )"
             }
           },
           "imports": [

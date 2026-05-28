@@ -94,7 +94,7 @@ public class AIEvaluationServiceTests : IDisposable
                             ""content"": {
                                 ""parts"": [
                                     {
-                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\n", " ") + @"""
+                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
                                     }
                                 ]
                             }

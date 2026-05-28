@@ -178,4 +178,4 @@ D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Google.Apis.Core.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\Newtonsoft.Json.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\System.Management.dll
 D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\runtimes\win\lib\net7.0\System.Management.dll
-D:\CODE\EXE\BackEnd\TheUnraveller.API\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+D:\CODE\EXE\BackEnd\TheUnraveller.API\bin\Debug\net9.0\PayOS.dll
