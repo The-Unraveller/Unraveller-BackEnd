@@ -37,15 +37,24 @@ public class PaymentController : ControllerBase
             });
         }
 
-        var result = await _paymentService.CreatePaymentAsync(request);
+        try
+        {
+            var userId = GetUserId();
+            request.UserId = userId;
+            var result = await _paymentService.CreatePaymentAsync(request);
 
-        if (result.Success)
-        {
-            return Ok(result);
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return StatusCode(500, result);
+            }
         }
-        else
+        catch (UnauthorizedAccessException ex)
         {
-            return StatusCode(500, result);
+            return Unauthorized(ex.Message);
         }
     }
 

@@ -9,11 +9,16 @@ public class ShopService : IShopService
 {
     private readonly IShopRepository _shopRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IUserProgressRepository _userProgressRepository;
 
-    public ShopService(IShopRepository shopRepository, IUserRepository userRepository)
+    public ShopService(
+        IShopRepository shopRepository, 
+        IUserRepository userRepository,
+        IUserProgressRepository userProgressRepository)
     {
         _shopRepository = shopRepository;
         _userRepository = userRepository;
+        _userProgressRepository = userProgressRepository;
     }
 
     public async Task<IEnumerable<ShopItemDto>> GetShopItemsAsync()
@@ -76,16 +81,50 @@ public class ShopService : IShopService
 
         string effectMessage = item.Type switch
         {
-            ItemType.InGameHint => "Hint activated: NPC is now more likely to give a clue.",
-            ItemType.BribeNpc => "Bribe successful: Suspicion level decreased!",
+            ItemType.InGameHint => "Hint activated: NPC is now more likely to give a clue. Suspicion decreased by 10!",
+            ItemType.BribeNpc => "Bribe successful: Suspicion level decreased by 20!",
             ItemType.Cosmetic => "Cosmetic applied to your profile.",
             _ => "Item used successfully."
         };
+
+        if (request.MissionId > 0)
+        {
+            var progress = await _userProgressRepository.GetUserProgressAsync(userId, request.MissionId);
+            if (progress != null && progress.Status == MissionStatus.InProgress)
+            {
+                if (item.Type == ItemType.BribeNpc)
+                {
+                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - 20);
+                    _userProgressRepository.Update(progress);
+                    await _userProgressRepository.SaveChangesAsync();
+                }
+                else if (item.Type == ItemType.InGameHint)
+                {
+                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - 10);
+                    _userProgressRepository.Update(progress);
+                    await _userProgressRepository.SaveChangesAsync();
+                }
+            }
+        }
 
         return new UseItemResponseDto
         {
             Success = true,
             Message = effectMessage
         };
+    }
+
+    public async Task<IEnumerable<UserInventoryDto>> GetUserInventoryAsync(int userId)
+    {
+        var inventory = await _shopRepository.GetUserInventoryAsync(userId);
+        return inventory.Select(ui => new UserInventoryDto
+        {
+            ItemId = ui.ItemId,
+            Name = ui.Item?.Name ?? "Unknown Item",
+            Description = ui.Item?.Description ?? string.Empty,
+            Type = ui.Item?.Type.ToString() ?? string.Empty,
+            Quantity = ui.Quantity,
+            Emoji = ui.Item?.Emoji ?? "📦"
+        });
     }
 }

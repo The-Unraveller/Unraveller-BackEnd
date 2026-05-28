@@ -1,4 +1,4 @@
-@TheUnraveller.API_HostAddress = http://localhost:5251
+@TheUnraveller.API_HostAddress = http://localhost:7055
 
 GET {{TheUnraveller.API_HostAddress}}/weatherforecast/
 Accept: application/json

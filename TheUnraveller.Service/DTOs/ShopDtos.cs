@@ -34,3 +34,13 @@ public class UseItemResponseDto
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
 }
+
+public class UserInventoryDto
+{
+    public int ItemId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public string Emoji { get; set; } = "📦";
+}

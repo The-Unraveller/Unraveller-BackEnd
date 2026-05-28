@@ -53,10 +53,10 @@ public class AppDbContext : DbContext
 
         // Seed default users
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAECxHpxxx", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "HASH2", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "HASH3", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "HASH4", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAECxHpxxx", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "HASH2", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "HASH3", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "HASH4", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
 
         // Seed NPCs
@@ -187,26 +187,33 @@ public class AppDbContext : DbContext
         // Seed user progresses with earned XP to populate the leaderboard dynamically
         modelBuilder.Entity<UserProgress>().HasData(
             // Minh Khôi (User 2) - 4800 XP total
-            new UserProgress { Id = 10, UserId = 2, MissionId = 1, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000 },
-            new UserProgress { Id = 11, UserId = 2, MissionId = 2, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1200 },
-            new UserProgress { Id = 12, UserId = 2, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300 },
-            new UserProgress { Id = 13, UserId = 2, MissionId = 4, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300 },
+            new UserProgress { Id = 10, UserId = 2, MissionId = 1, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 11, UserId = 2, MissionId = 2, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1200, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 12, UserId = 2, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 13, UserId = 2, MissionId = 4, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
 
             // Lan Anh (User 3) - 3950 XP total
-            new UserProgress { Id = 20, UserId = 3, MissionId = 1, CurrentSuspicion = 10, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 950 },
-            new UserProgress { Id = 21, UserId = 3, MissionId = 2, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000 },
-            new UserProgress { Id = 22, UserId = 3, MissionId = 3, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000 },
-            new UserProgress { Id = 23, UserId = 3, MissionId = 4, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000 },
+            new UserProgress { Id = 20, UserId = 3, MissionId = 1, CurrentSuspicion = 10, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 950, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 21, UserId = 3, MissionId = 2, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 22, UserId = 3, MissionId = 3, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 23, UserId = 3, MissionId = 4, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
 
             // Tuấn Khoa (User 4) - 3200 XP total
-            new UserProgress { Id = 30, UserId = 4, MissionId = 1, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800 },
-            new UserProgress { Id = 31, UserId = 4, MissionId = 2, CurrentSuspicion = 22, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800 },
-            new UserProgress { Id = 32, UserId = 4, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800 },
-            new UserProgress { Id = 33, UserId = 4, MissionId = 4, CurrentSuspicion = 28, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800 },
+            new UserProgress { Id = 30, UserId = 4, MissionId = 1, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 31, UserId = 4, MissionId = 2, CurrentSuspicion = 22, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 32, UserId = 4, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 33, UserId = 4, MissionId = 4, CurrentSuspicion = 28, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
 
             // KHOA_PRO (User 1) - 1250 XP starter progress
-            new UserProgress { Id = 40, UserId = 1, MissionId = 1, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 600 },
-            new UserProgress { Id = 41, UserId = 1, MissionId = 2, CurrentSuspicion = 35, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 650 }
+            new UserProgress { Id = 40, UserId = 1, MissionId = 1, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 600, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new UserProgress { Id = 41, UserId = 1, MissionId = 2, CurrentSuspicion = 35, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 650, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+        );
+
+        // Seed ShopItems
+        modelBuilder.Entity<ShopItem>().HasData(
+            new ShopItem { Id = 1, Name = "Detective Magnifier", Description = "Reveals hidden clues and hints in dialogues.", Type = ItemType.InGameHint, PriceXp = 200, Emoji = "🔍" },
+            new ShopItem { Id = 2, Name = "Golden Tongue", Description = "Instantly reduces suspicion by 20 points.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "✨" },
+            new ShopItem { Id = 3, Name = "Shadow Cape", Description = "A rare cosmetic item that fits a master infiltrator.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🧥" }
         );
     }
 }

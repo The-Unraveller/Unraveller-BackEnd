@@ -32,6 +32,21 @@ public class ShopController : ControllerBase
         return Ok(items);
     }
 
+    [HttpGet("inventory")]
+    public async Task<ActionResult<IEnumerable<UserInventoryDto>>> GetInventory()
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _shopService.GetUserInventoryAsync(userId);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
+
     [HttpPost("buy")]
     public async Task<ActionResult<BuyItemResponseDto>> BuyItem([FromBody] BuyItemRequestDto request)
     {

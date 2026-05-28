@@ -33,4 +33,5 @@ public interface IShopRepository : IGenericRepository<ShopItem>
     Task<IEnumerable<ShopItem>> GetAllItemsAsync();
     Task<int> GetItemQuantityAsync(int userId, int itemId);
     Task UpdateItemQuantityAsync(int userId, int itemId, int quantity);
+    Task<IEnumerable<UserInventory>> GetUserInventoryAsync(int userId);
 }

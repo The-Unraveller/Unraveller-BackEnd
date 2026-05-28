@@ -26,44 +26,46 @@ public class LlmProviderService : ILLMProviderService
         // Safe-guard against Prompt Injection
         var safeUserMessage = $"[USER_TEXT]\n{userMessage}\n[/USER_TEXT]";
 
+        // Gemini expects a combined prompt or separate parts. We'll combine system and user for simplicity in Gemini 1.5.
+        var combinedPrompt = $"{systemPrompt}\n\nUser Message: {safeUserMessage}";
+
         var requestBody = new
         {
-            model = _model,
-            response_format = new { type = "json_object" },
-            messages = new[]
+            contents = new[]
             {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = safeUserMessage }
+                new { parts = new[] { new { text = combinedPrompt } } }
             },
-            temperature = 0.7
+            generationConfig = new
+            {
+                temperature = 0.7,
+                response_mime_type = "application/json"
+            }
         };
 
-        var targetUrl = $"{_baseUrl.TrimEnd('/')}/chat/completions";
+        var targetUrl = $"{_baseUrl.TrimEnd('/')}?key={_apiKey}";
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
-        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
         try
         {
-            // Adding a cancellation token to enforce a 5 second timeout in reality, 
-            // HttpClient timeout would be set in Program.cs configuration.
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var response = await _httpClient.SendAsync(request, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
-                return GetFallbackResponse("System Error: The NPC is currently unavailable.");
+                return GetFallbackResponse($"System Error: Gemini API returned {response.StatusCode}");
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync(cts.Token);
             using var document = JsonDocument.Parse(jsonResponse);
+
             var contentString = document.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
+                .GetProperty("candidates")[0]
                 .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
                 .GetString();
 
-            // Sanitize Markdown JSON tags if present
             contentString = contentString?.Trim() ?? string.Empty;
             if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
             if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
@@ -74,9 +76,9 @@ public class LlmProviderService : ILLMProviderService
         {
             return GetFallbackResponse("System Error: The NPC is taking too long to think. Timeout reached.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return GetFallbackResponse("System Error: Unexpected error occurred while contacting NPC.");
+            return GetFallbackResponse($"System Error: Unexpected error occurred: {ex.Message}");
         }
     }
 
