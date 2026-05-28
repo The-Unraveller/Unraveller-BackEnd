@@ -1,4 +1,5 @@
 using TheUnraveller.Service.DTOs;
+using PayOS.Models.Webhooks;
 
 namespace TheUnraveller.Service.Interfaces;
 
@@ -32,9 +33,9 @@ public interface ILLMProviderService
 
 public interface IPaymentService
 {
-    Task<PaymentResponseDto> CreatePaymentAsync(CreatePaymentRequestDto request);
+    Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, string planId, int amount);
+    Task<bool> VerifyPayOSWebhookAsync(Webhook webhookPayload);
     Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId);
-    Task<bool> VerifyAndProcessVnpayIPNAsync(IDictionary<string, string> vnpayData, string hashSecret);
 }
 
 public interface IUserService

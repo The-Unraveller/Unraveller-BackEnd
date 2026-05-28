@@ -1,8 +1,8 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Net;
-using System.Web;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using PayOS;
+using PayOS.Models.V2.PaymentRequests;
+using PayOS.Models.Webhooks;
 using TheUnraveller.Core.Entities;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
@@ -16,46 +16,136 @@ public class PaymentService : IPaymentService
     private readonly IPaymentRepository _paymentRepository;
     private readonly IUserRepository _userRepository;
     private readonly AppDbContext _context;
+    private readonly PayOSClient _payOSClient;
+    private readonly string _returnUrl;
+    private readonly string _cancelUrl;
 
-    public PaymentService(IPaymentRepository paymentRepository, IUserRepository userRepository, AppDbContext context)
+    public PaymentService(
+        IPaymentRepository paymentRepository,
+        IUserRepository userRepository,
+        AppDbContext context,
+        PayOSClient payOSClient,
+        IConfiguration configuration)
     {
         _paymentRepository = paymentRepository;
         _userRepository = userRepository;
         _context = context;
+        _payOSClient = payOSClient;
+        _returnUrl = configuration["PayOS:ReturnUrl"] ?? "http://localhost:5173/premium?payment=success";
+        _cancelUrl = configuration["PayOS:CancelUrl"] ?? "http://localhost:5173/premium?payment=failed";
     }
 
-    public async Task<PaymentResponseDto> CreatePaymentAsync(CreatePaymentRequestDto request)
+    /// <summary>
+    /// Creates a payOS hosted checkout link and persists a Pending payment record.
+    /// </summary>
+    public async Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, string planId, int amount)
     {
         try
         {
+            // Generate a unique numeric order code required by payOS (must be a positive integer)
+            // Using last 9 digits of Unix-millisecond timestamp — unique enough for a university project
+            long orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 1_000_000_000L;
+
+            // Persist pending payment record first so we can match on webhook
             var payment = new Payment
             {
-                UserId = request.UserId,
-                PlanId = request.PlanId,
-                Amount = request.Amount,
+                UserId = userId,
+                PlanId = planId,
+                Amount = amount,
                 Status = "Pending",
+                OrderId = orderCode.ToString(),
                 CreatedAt = DateTime.UtcNow
             };
 
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
 
-            var paymentUrl = $"https://vnpay.example.com/pay?orderId={payment.Id}&amount={request.Amount}";
+            // Build the payOS payment request
+            var paymentRequest = new CreatePaymentLinkRequest
+            {
+                OrderCode = orderCode,
+                Amount = amount,
+                Description = $"Unraveller {planId}",
+                ReturnUrl = _returnUrl,
+                CancelUrl = _cancelUrl
+            };
 
-            return new PaymentResponseDto
+            var paymentLink = await _payOSClient.PaymentRequests.CreateAsync(paymentRequest);
+
+            return new CreatePayOSLinkResponseDto
             {
                 Success = true,
-                PaymentUrl = paymentUrl,
-                OrderId = $"ORDER_{payment.Id}",
-                Message = "Payment created successfully"
+                CheckoutUrl = paymentLink.CheckoutUrl
             };
         }
         catch (Exception ex)
         {
-            return new PaymentResponseDto { Success = false, Message = $"Failed: {ex.Message}" };
+            return new CreatePayOSLinkResponseDto
+            {
+                Success = false,
+                Message = $"Failed to create payment link: {ex.Message}"
+            };
         }
     }
 
+    /// <summary>
+    /// Verifies the payOS webhook HMAC signature and upgrades user to Premium on success.
+    /// </summary>
+    public async Task<bool> VerifyPayOSWebhookAsync(Webhook webhookPayload)
+    {
+        try
+        {
+            // SDK verifies the HMAC-SHA256 signature using ChecksumKey internally
+            // If the signature is invalid, it will throw an exception.
+            var webhookData = await _payOSClient.Webhooks.VerifyAsync(webhookPayload);
+
+            // Once the signature is verified, we should return true (200 OK) to payOS
+            // to confirm receipt of the authenticated webhook, even if the order was already completed.
+            if (webhookPayload.Code == "00" && webhookPayload.Success)
+            {
+                var orderCode = webhookData.OrderCode.ToString();
+
+                // If it is a test/verification order code (123), return true immediately
+                if (webhookData.OrderCode == 123)
+                {
+                    return true;
+                }
+
+                // Find the matching Pending payment record
+                var payment = await _context.Set<Payment>()
+                    .FirstOrDefaultAsync(p => p.OrderId == orderCode && p.Status == "Pending");
+
+                if (payment != null)
+                {
+                    // Mark payment as completed
+                    payment.Status = "Completed";
+                    payment.CompletedAt = DateTime.UtcNow;
+                    _paymentRepository.Update(payment);
+                    await _paymentRepository.SaveChangesAsync();
+
+                    // Upgrade user to Premium
+                    var user = await _userRepository.GetByIdAsync(payment.UserId);
+                    if (user != null)
+                    {
+                        user.IsPremium = true;
+                        user.MaxEnergy = 200;
+                        _userRepository.Update(user);
+                        await _userRepository.SaveChangesAsync();
+                    }
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the payment history for a given user.
+    /// </summary>
     public async Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId)
     {
         var payments = await _paymentRepository.GetPaymentsByUserIdAsync(userId);
@@ -68,77 +158,5 @@ public class PaymentService : IPaymentService
             CreatedAt = p.CreatedAt,
             OrderId = p.OrderId
         });
-    }
-
-    public async Task<bool> VerifyAndProcessVnpayIPNAsync(IDictionary<string, string> vnpayData, string hashSecret)
-    {
-        try
-        {
-            string vnpSecureHash = vnpayData.ContainsKey("vnp_SecureHash") ? vnpayData["vnp_SecureHash"] : string.Empty;
-
-            var sortedParams = vnpayData
-                .Where(kvp => kvp.Key.StartsWith("vnp_") && kvp.Key != "vnp_SecureHash" && kvp.Key != "vnp_SecureHashType")
-                .OrderBy(kvp => kvp.Key)
-                .ToList();
-
-            StringBuilder signData = new StringBuilder();
-            foreach (var kvp in sortedParams)
-            {
-                signData.Append(WebUtility.UrlEncode(kvp.Key) + "=" + WebUtility.UrlEncode(kvp.Value) + "&");
-            }
-            if (signData.Length > 0) signData.Length--;
-
-            string myChecksum = ComputeHmacSha512(hashSecret, signData.ToString());
-
-            if (myChecksum.Equals(vnpSecureHash, StringComparison.InvariantCultureIgnoreCase))
-            {
-                string responseCode = vnpayData.ContainsKey("vnp_ResponseCode") ? vnpayData["vnp_ResponseCode"] : string.Empty;
-                string orderIdStr = vnpayData.ContainsKey("vnp_TxnRef") ? vnpayData["vnp_TxnRef"] : string.Empty;
-
-                if (responseCode == "00")
-                {
-                    int paymentId = int.Parse(orderIdStr.Replace("ORDER_", ""));
-                    var payment = await _paymentRepository.GetByIdAsync(paymentId);
-
-                    if (payment != null && payment.Status == "Pending")
-                    {
-                        payment.Status = "Completed";
-                        payment.OrderId = vnpayData.ContainsKey("vnp_TransactionNo") ? vnpayData["vnp_TransactionNo"] : string.Empty;
-
-                        var user = await _userRepository.GetByIdAsync(payment.UserId);
-                        if (user != null)
-                        {
-                            user.IsPremium = true;
-                            user.MaxEnergy = 200;
-                        }
-
-                        _paymentRepository.Update(payment);
-                        await _paymentRepository.SaveChangesAsync();
-
-                        if (user != null)
-                        {
-                            _userRepository.Update(user);
-                            await _userRepository.SaveChangesAsync();
-                        }
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private string ComputeHmacSha512(string key, string data)
-    {
-        var encoding = new ASCIIEncoding();
-        byte[] keyByte = encoding.GetBytes(key);
-        byte[] messageBytes = encoding.GetBytes(data);
-        using var hmacsha512 = new HMACSHA512(keyByte);
-        byte[] hashmessage = hmacsha512.ComputeHash(messageBytes);
-        return Convert.ToBase64String(hashmessage);
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using PayOS;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Infrastructure.Repositories;
@@ -51,6 +52,7 @@ builder.Services.AddScoped<IShopRepository, ShopRepository>();
 
 // Register Services
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
+builder.Services.AddHttpClient<IAIEvaluationService, AIEvaluationService>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -58,6 +60,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
+
+// Register payOS Client (singleton — thread-safe)
+builder.Services.AddSingleton<PayOSClient>(sp =>
+{
+    var cfg = builder.Configuration.GetSection("PayOS");
+    return new PayOSClient(cfg["ClientId"]!, cfg["ApiKey"]!, cfg["ChecksumKey"]!);
+});
 
 // CORS for Frontend
 builder.Services.AddCors(options =>

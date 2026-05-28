@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using PayOS.Models.Webhooks;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
 
@@ -11,10 +12,12 @@ namespace TheUnraveller.API.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
+    private readonly ILogger<PaymentController> _logger;
 
-    public PaymentController(IPaymentService paymentService)
+    public PaymentController(IPaymentService paymentService, ILogger<PaymentController> logger)
     {
         _paymentService = paymentService;
+        _logger = logger;
     }
 
     private int GetUserId()
@@ -24,40 +27,55 @@ public class PaymentController : ControllerBase
         return int.Parse(userIdClaim.Value);
     }
 
+    /// <summary>
+    /// Creates a payOS hosted checkout link and returns it to the frontend.
+    /// Frontend should redirect the user to the returned checkoutUrl.
+    /// </summary>
     [Authorize]
-    [HttpPost("create-vnpay-url")]
-    public async Task<ActionResult<PaymentResponseDto>> CreateVnpayUrl([FromBody] CreatePaymentRequestDto request)
+    [HttpPost("create-payos-link")]
+    public async Task<ActionResult<CreatePayOSLinkResponseDto>> CreatePayOSLink([FromBody] CreatePaymentRequestDto request)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(new PaymentResponseDto
-            {
-                Success = false,
-                Message = "Invalid request data"
-            });
-        }
+            return BadRequest(new CreatePayOSLinkResponseDto { Success = false, Message = "Invalid request data" });
 
         try
         {
             var userId = GetUserId();
-            request.UserId = userId;
-            var result = await _paymentService.CreatePaymentAsync(request);
+            var result = await _paymentService.CreatePayOSLinkAsync(userId, request.PlanId, (int)request.Amount);
 
-            if (result.Success)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return StatusCode(500, result);
-            }
+            return result.Success ? Ok(result) : StatusCode(500, result);
         }
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(ex.Message);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating payOS payment link");
+            return StatusCode(500, new CreatePayOSLinkResponseDto { Success = false, Message = "Internal server error" });
+        }
     }
 
+    /// <summary>
+    /// Webhook endpoint for payOS IPN (Instant Payment Notification).
+    /// No [Authorize] — payOS server posts here directly.
+    /// </summary>
+    [HttpPost("payos-webhook")]
+    public async Task<IActionResult> PayOSWebhook([FromBody] Webhook webhookPayload)
+    {
+        _logger.LogInformation("payOS webhook received: code={Code}, success={Success}", webhookPayload.Code, webhookPayload.Success);
+
+        var isValid = await _paymentService.VerifyPayOSWebhookAsync(webhookPayload);
+
+        if (isValid)
+            return Ok(new { message = "Payment processed successfully" });
+
+        return BadRequest(new { message = "Invalid or already-processed webhook" });
+    }
+
+    /// <summary>
+    /// Returns payment history for the authenticated user.
+    /// </summary>
     [Authorize]
     [HttpGet("history")]
     public async Task<ActionResult<IEnumerable<PaymentHistoryDto>>> GetPaymentHistory()
@@ -71,25 +89,6 @@ public class PaymentController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(ex.Message);
-        }
-    }
-
-    [HttpPost("vnpay-ipn")]
-    public async Task<IActionResult> VnpayIpn([FromForm] IFormCollection vnpayData)
-    {
-        // Sử dụng hashSecret từ config
-        string hashSecret = "YOUR_VNPAY_HASH_SECRET";
-
-        var dataDict = vnpayData.ToDictionary(k => k.Key, v => v.Value.ToString());
-        bool isValid = await _paymentService.VerifyAndProcessVnpayIPNAsync(dataDict, hashSecret);
-
-        if (isValid)
-        {
-            return Ok(new { Message = "Payment processed successfully" });
-        }
-        else
-        {
-            return BadRequest(new { Message = "Invalid IPN request" });
         }
     }
 }

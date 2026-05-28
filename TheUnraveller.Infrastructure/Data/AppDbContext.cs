@@ -22,6 +22,66 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Explicitly map entities to PostgreSQL tables and identity columns
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("Users");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.Property(e => e.Email).IsRequired();
+        });
+
+        modelBuilder.Entity<Npc>(entity =>
+        {
+            entity.ToTable("Npcs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
+        modelBuilder.Entity<Mission>(entity =>
+        {
+            entity.ToTable("Missions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
+        modelBuilder.Entity<Dialogue>(entity =>
+        {
+            entity.ToTable("Dialogues");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
+        modelBuilder.Entity<UserProgress>(entity =>
+        {
+            entity.ToTable("UserProgresses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.HasIndex(e => new { e.UserId, e.MissionId }).IsUnique();
+        });
+
+        modelBuilder.Entity<ShopItem>(entity =>
+        {
+            entity.ToTable("ShopItems");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
+        modelBuilder.Entity<UserInventory>(entity =>
+        {
+            entity.ToTable("UserInventories");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.HasIndex(e => new { e.UserId, e.ItemId }).IsUnique();
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("Payments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
         // Configure relationships if necessary
         modelBuilder.Entity<Dialogue>()
             .HasOne(d => d.User)

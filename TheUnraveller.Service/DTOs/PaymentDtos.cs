@@ -7,11 +7,20 @@ public class CreatePaymentRequestDto
     public decimal Amount { get; set; }
 }
 
+// Legacy DTO — kept for history endpoint
 public class PaymentResponseDto
 {
     public bool Success { get; set; }
     public string? PaymentUrl { get; set; }
     public string? OrderId { get; set; }
+    public string? Message { get; set; }
+}
+
+// payOS checkout link response
+public class CreatePayOSLinkResponseDto
+{
+    public bool Success { get; set; }
+    public string? CheckoutUrl { get; set; }
     public string? Message { get; set; }
 }
 

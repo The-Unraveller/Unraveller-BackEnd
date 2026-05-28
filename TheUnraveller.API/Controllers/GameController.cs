@@ -11,11 +11,11 @@ namespace TheUnraveller.API.Controllers;
 [Route("api/[controller]")]
 public class GameController : ControllerBase
 {
-    private readonly IGameEngineService _gameService;
+    private readonly IAIEvaluationService _aiEvaluationService;
 
-    public GameController(IGameEngineService gameService)
+    public GameController(IAIEvaluationService aiEvaluationService)
     {
-        _gameService = gameService;
+        _aiEvaluationService = aiEvaluationService;
     }
 
     [Authorize]
@@ -28,8 +28,7 @@ public class GameController : ControllerBase
             if (userIdClaim == null) return Unauthorized("User ID not found in token");
             int userId = int.Parse(userIdClaim.Value);
 
-            var secureRequest = request with { UserId = userId };
-            var result = await _gameService.ProcessPlayerMessageAsync(secureRequest);
+            var result = await _aiEvaluationService.EvaluateMessageAsync(userId, request.MissionId, request.Message);
             return Ok(result);
         }
         catch (Exception ex)
