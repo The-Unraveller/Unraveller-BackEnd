@@ -115,7 +115,10 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            throw new UnauthorizedAccessException($"Google authentication failed: {ex.Message}");
+            var innerDetail = ex.InnerException != null 
+                ? $" | InnerException: {ex.InnerException.Message} | StackTrace: {ex.InnerException.StackTrace}" 
+                : "";
+            throw new UnauthorizedAccessException($"Google authentication failed: {ex.Message}{innerDetail}");
         }
     }
 
