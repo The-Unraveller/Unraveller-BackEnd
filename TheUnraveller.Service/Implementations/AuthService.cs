@@ -63,11 +63,29 @@ public class AuthService : IAuthService
 
         try
         {
-            // Verify the ID token with Google
-            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
+            // Verify the ID token with Google (with retry logic for transient network/DNS errors)
+            GoogleJsonWebSignature.Payload? payload = null;
+            int maxRetries = 3;
+            for (int i = 0; i < maxRetries; i++)
             {
-                Audience = new[] { clientId }
-            });
+                try
+                {
+                    payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { clientId }
+                    });
+                    break; // Success, exit retry loop
+                }
+                catch (Exception ex) when (ex.Message.Contains("transient") && i < maxRetries - 1)
+                {
+                    await Task.Delay(1000 * (i + 1)); // Wait 1s, 2s... then retry
+                }
+            }
+
+            if (payload == null)
+            {
+                throw new InvalidOperationException("Failed to validate Google token due to persistent transient network errors on the server.");
+            }
 
             var email = payload.Email;
             var name = payload.Name;
