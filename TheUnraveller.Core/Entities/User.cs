@@ -19,20 +19,19 @@ public class User
 
     public UserRole Role { get; set; } = UserRole.User;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 
     // --- CÁC TRƯỜNG THÊM MỚI THEO ROADMAP ---
     public int Energy { get; set; } = 100;
     public int MaxEnergy { get; set; } = 100;
-    [NotMapped]
-    public DateTime LastEnergyRechargedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LastEnergyRechargedAt { get; set; }
 
     public int StreakCount { get; set; } = 0;
-    [NotMapped]
     public DateTime? LastActiveDate { get; set; } // REMOVED TEMPORARILY
 
     public int XpBalance { get; set; } = 0; // Điểm XP khả dụng để tiêu dùng trong shop
     public bool IsPremium { get; set; } = false; // Trạng thái tài khoản VIP
+    public string EnglishLevel { get; set; } = "B1"; // Trình độ Tiếng Anh thích ứng (CEFR)
 
     public ICollection<UserProgress> Progresses { get; set; } = new List<UserProgress>();
 }

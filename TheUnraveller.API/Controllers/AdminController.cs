@@ -27,7 +27,7 @@ public class AdminController : ControllerBase
     {
         var users = await _userRepository.GetAllAsync();
         return Ok(users.Select(u => new {
-            u.Id, u.Username, u.Email, u.Role, u.XpBalance, u.Energy, u.IsPremium
+            u.Id, u.Username, u.Email, u.Role, u.XpBalance, u.Energy, u.IsPremium, u.EnglishLevel
         }));
     }
 
@@ -41,6 +41,7 @@ public class AdminController : ControllerBase
         if (update.Energy.HasValue) user.Energy = update.Energy.Value;
         if (update.Role.HasValue) user.Role = (UserRole)update.Role.Value;
         if (update.IsPremium.HasValue) user.IsPremium = update.IsPremium.Value;
+        if (!string.IsNullOrEmpty(update.EnglishLevel)) user.EnglishLevel = update.EnglishLevel;
 
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();

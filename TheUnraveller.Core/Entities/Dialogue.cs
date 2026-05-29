@@ -17,5 +17,5 @@ public class Dialogue
     public string Feedback { get; set; } = string.Empty; // AI explanation (grammar/style)
     
     public int SuspicionChange { get; set; } // + or - based on the interaction
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public DateTime Timestamp { get; set; }
 }

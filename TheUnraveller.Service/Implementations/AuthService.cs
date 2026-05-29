@@ -48,6 +48,9 @@ public class AuthService : IAuthService
             MaxEnergy = 100,
             XpBalance = 0,
             IsPremium = false,
+            EnglishLevel = "B1",
+            CreatedAt = DateTime.UtcNow,
+            LastEnergyRechargedAt = DateTime.UtcNow,
             LastActiveDate = DateTime.UtcNow
         };
 
@@ -105,6 +108,9 @@ public class AuthService : IAuthService
                     MaxEnergy = 100,
                     XpBalance = 0,
                     IsPremium = false,
+                    EnglishLevel = "B1",
+                    CreatedAt = DateTime.UtcNow,
+                    LastEnergyRechargedAt = DateTime.UtcNow,
                     LastActiveDate = DateTime.UtcNow
                 };
                 await _userRepository.AddAsync(user);

@@ -22,5 +22,5 @@ public class UserProgress
     public int TurnCount { get; set; } = 0; // Tracks game progression
     public int XpEarned { get; set; } = 0;
     
-    public DateTime LastActivity { get; set; } = DateTime.UtcNow;
+    public DateTime LastActivity { get; set; }
 }

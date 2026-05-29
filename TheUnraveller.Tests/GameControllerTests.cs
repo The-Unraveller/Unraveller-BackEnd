@@ -5,6 +5,7 @@ using Moq;
 using TheUnraveller.API.Controllers;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
+using TheUnraveller.Core.Interfaces;
 using Xunit;
 
 namespace TheUnraveller.Tests;
@@ -12,11 +13,15 @@ namespace TheUnraveller.Tests;
 public class GameControllerTests
 {
     private readonly Mock<IAIEvaluationService> _aiServiceMock;
+    private readonly Mock<IShopRepository> _shopRepoMock;
+    private readonly Mock<IUserProgressRepository> _progressRepoMock;
     private readonly GameController _controller;
 
     public GameControllerTests()
     {
         _aiServiceMock = new Mock<IAIEvaluationService>();
+        _shopRepoMock = new Mock<IShopRepository>();
+        _progressRepoMock = new Mock<IUserProgressRepository>();
 
         // Set up Mock User Claims for Authorized Endpoint
         var userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -24,7 +29,7 @@ public class GameControllerTests
             new Claim(ClaimTypes.NameIdentifier, "1")
         }, "mock"));
 
-        _controller = new GameController(_aiServiceMock.Object)
+        _controller = new GameController(_aiServiceMock.Object, _shopRepoMock.Object, _progressRepoMock.Object)
         {
             ControllerContext = new ControllerContext
             {

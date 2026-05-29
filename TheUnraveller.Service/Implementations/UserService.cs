@@ -35,6 +35,7 @@ public class UserService : IUserService
             LastActiveDate = user.LastActiveDate,
             XpBalance = user.XpBalance,
             IsPremium = user.IsPremium,
+            EnglishLevel = user.EnglishLevel,
             CreatedAt = user.CreatedAt
         };
     }

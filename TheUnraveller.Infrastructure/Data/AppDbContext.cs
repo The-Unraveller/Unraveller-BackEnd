@@ -128,10 +128,10 @@ public class AppDbContext : DbContext
 
         // Seed default users
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAECxHpxxx", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "HASH2", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "HASH3", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "HASH4", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAECxHpxxx", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
+            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "HASH2", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
+            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "HASH3", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
+            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "HASH4", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null }
         );
 
         // Seed NPCs
