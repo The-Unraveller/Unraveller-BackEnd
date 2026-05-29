@@ -21,7 +21,9 @@ public class MissionRepository : GenericRepository<Mission>, IMissionRepository
     public MissionRepository(AppDbContext context) : base(context) { }
 
     public async Task<IEnumerable<Mission>> GetAvailableMissionsAsync() =>
-        await _dbSet.Include(m => m.Npc).ToListAsync();
+        await _dbSet.Include(m => m.Npc)
+                    .Where(m => m.ApprovalStatus == ApprovalStatus.Approved)
+                    .ToListAsync();
 
     public override async Task<Mission?> GetByIdAsync(int id) =>
         await _dbSet.Include(m => m.Npc).FirstOrDefaultAsync(m => m.Id == id);

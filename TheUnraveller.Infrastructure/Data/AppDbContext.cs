@@ -120,6 +120,12 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(ui => ui.ItemId);
 
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(m => m.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Seed default users
         modelBuilder.Entity<User>().HasData(
             new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAECxHpxxx", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },

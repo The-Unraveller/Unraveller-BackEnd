@@ -57,6 +57,7 @@ builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
 builder.Services.AddHttpClient<IAIEvaluationService, AIEvaluationService>();
 builder.Services.AddScoped<IMissionService, MissionService>();
+builder.Services.AddScoped<IMissionManagementService, MissionManagementService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -96,6 +97,7 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ModeratorMiddleware>();
 app.UseMiddleware<AdminMiddleware>();
 
 app.MapControllers();

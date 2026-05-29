@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using TheUnraveller.Core.Entities;
+using TheUnraveller.Core.Exceptions;
 using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
@@ -31,15 +32,16 @@ public class AIEvaluationService : IAIEvaluationService
     {
         // 1. Fetch User, Mission, NPC, and current progress
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null) throw new Exception("User not found.");
+        if (user == null) throw new DomainException("User not found.");
 
         var mission = await _context.Missions
             .Include(m => m.Npc)
             .FirstOrDefaultAsync(m => m.Id == missionId);
-        if (mission == null) throw new Exception("Mission not found.");
+        if (mission == null || mission.ApprovalStatus != ApprovalStatus.Approved) 
+            throw new DomainException("Mission not found or not approved.");
 
         var npc = mission.Npc;
-        if (npc == null) throw new Exception("NPC details not found for this mission.");
+        if (npc == null) throw new DomainException("NPC details not found for this mission.");
 
         // Lazy Energy Recharge
         RechargeEnergyLazy(user);

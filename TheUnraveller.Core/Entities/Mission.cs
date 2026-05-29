@@ -1,5 +1,12 @@
 namespace TheUnraveller.Core.Entities;
 
+public enum ApprovalStatus
+{
+    Approved = 0,
+    Pending = 1,
+    Rejected = 2
+}
+
 public class Mission
 {
     public int Id { get; set; }
@@ -18,4 +25,10 @@ public class Mission
     
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;
+
+    public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Approved;
+    public string? RejectionReason { get; set; }
+
+    public int? CreatedByUserId { get; set; }
+    public User? CreatedByUser { get; set; }
 }

@@ -1,4 +1,5 @@
 using TheUnraveller.Core.Entities;
+using TheUnraveller.Core.Exceptions;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
@@ -30,14 +31,14 @@ public class GameEngineService : IGameEngineService
     public async Task<DialogueResponseDto> ProcessPlayerMessageAsync(DialogueRequestDto request)
     {
         var user = await _userRepo.GetByIdAsync(request.UserId);
-        if (user == null) throw new Exception("User not found.");
+        if (user == null) throw new DomainException("User not found.");
 
         // Apply Lazy Recharge Energy
         RechargeEnergyLazy(user);
 
         if (user.Energy < 5)
         {
-            throw new Exception("Not enough energy. Each message requires 5 energy.");
+            throw new DomainException("Not enough energy. Each message requires 5 energy.");
         }
 
         user.Energy -= 5;
@@ -47,7 +48,8 @@ public class GameEngineService : IGameEngineService
         var progress = await _progressRepo.GetUserProgressAsync(request.UserId, request.MissionId);
         var mission = await _missionRepo.GetByIdAsync(request.MissionId);
         
-        if (mission == null) throw new Exception("Mission not found.");
+        if (mission == null || mission.ApprovalStatus != ApprovalStatus.Approved) 
+            throw new DomainException("Mission not found or not approved.");
         
         if (progress == null)
         {

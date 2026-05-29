@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using TheUnraveller.Core.Entities;
+using TheUnraveller.Core.Exceptions;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
-using System.Collections.Generic;
+using TheUnraveller.Service.Interfaces;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,12 +14,12 @@ namespace TheUnraveller.API.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
-    private readonly IMissionRepository _missionRepository;
+    private readonly IMissionManagementService _missionManagementService;
 
-    public AdminController(IUserRepository userRepository, IMissionRepository missionRepository)
+    public AdminController(IUserRepository userRepository, IMissionManagementService missionManagementService)
     {
         _userRepository = userRepository;
-        _missionRepository = missionRepository;
+        _missionManagementService = missionManagementService;
     }
 
     [HttpGet("users")]
@@ -49,23 +50,61 @@ public class AdminController : ControllerBase
     [HttpGet("missions")]
     public async Task<IActionResult> GetAllMissions()
     {
-        var missions = await _missionRepository.GetAllAsync();
+        var missions = await _missionManagementService.GetAllMissionsForManagementAsync();
         return Ok(missions);
     }
 
     [HttpPut("missions/{id}")]
     public async Task<IActionResult> UpdateMission(int id, [FromBody] MissionUpdateDto update)
     {
-        var mission = await _missionRepository.GetByIdAsync(id);
-        if (mission == null) return NotFound();
+        try
+        {
+            await _missionManagementService.UpdateMissionAsync(id, update);
+            return Ok(new { message = "Mission updated successfully" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 
-        if (!string.IsNullOrEmpty(update.Title)) mission.Title = update.Title;
-        if (!string.IsNullOrEmpty(update.Goal)) mission.Goal = update.Goal;
-        if (!string.IsNullOrEmpty(update.Description)) mission.Description = update.Description;
-        if (update.XpReward.HasValue) mission.XpReward = update.XpReward.Value;
+    [HttpGet("missions/pending")]
+    public async Task<IActionResult> GetPendingMissions()
+    {
+        var missions = await _missionManagementService.GetPendingMissionsAsync();
+        return Ok(missions);
+    }
 
-        await _missionRepository.UpdateAsync(mission);
-        await _missionRepository.SaveChangesAsync();
-        return Ok(new { message = "Mission updated successfully" });
+    [HttpPost("missions/{id}/approve")]
+    public async Task<IActionResult> ApproveMission(int id)
+    {
+        try
+        {
+            await _missionManagementService.ApproveMissionAsync(id);
+            return Ok(new { message = "Mission approved successfully." });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    public class RejectionDto
+    {
+        public string Reason { get; set; } = string.Empty;
+    }
+
+    [HttpPost("missions/{id}/reject")]
+    public async Task<IActionResult> RejectMission(int id, [FromBody] RejectionDto body)
+    {
+        try
+        {
+            await _missionManagementService.RejectMissionAsync(id, body.Reason);
+            return Ok(new { message = "Mission rejected successfully." });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

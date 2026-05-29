@@ -51,3 +51,13 @@ public interface IShopService
     Task<UseItemResponseDto> UseItemAsync(int userId, UseItemRequestDto request);
     Task<IEnumerable<UserInventoryDto>> GetUserInventoryAsync(int userId);
 }
+
+public interface IMissionManagementService
+{
+    Task<IEnumerable<MissionManagementDto>> GetAllMissionsForManagementAsync();
+    Task<IEnumerable<MissionManagementDto>> GetPendingMissionsAsync();
+    Task<bool> CreateMissionAsync(MissionCreateDto dto, int creatorId);
+    Task<bool> UpdateMissionAsync(int id, MissionUpdateDto dto);
+    Task<bool> ApproveMissionAsync(int id);
+    Task<bool> RejectMissionAsync(int id, string reason);
+}
