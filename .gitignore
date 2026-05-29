@@ -62,9 +62,6 @@ _TeamCity*
 .*crunch*.local.xml
 nCrunchTemp_*
 
-## MightyBryceFinger
-*.i*/*
-
 ## Build Results
 *_i.c
 *_p.c
