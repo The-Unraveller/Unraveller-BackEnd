@@ -150,30 +150,45 @@ ROLEPLAY & EVALUATION RULES:
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Gemini API returned status code {response.StatusCode}. Details: {errorContent}");
+                // Do NOT throw — set fallback response so the game degrades gracefully
+                geminiResponse = new GeminiResponse
+                {
+                    NpcResponse = "I didn't quite catch that. Can you repeat it?",
+                    Feedback = $"System Error: Failed to process AI response (Gemini API returned status code {response.StatusCode}. Details: {errorContent}).",
+                    SuspicionChange = 0,
+                    XpEarned = 0
+                };
             }
+            else
+            {
+                rawLlmResponse = await response.Content.ReadAsStringAsync(cts.Token);
+                using var document = JsonDocument.Parse(rawLlmResponse);
 
-            rawLlmResponse = await response.Content.ReadAsStringAsync(cts.Token);
-            using var document = JsonDocument.Parse(rawLlmResponse);
+                var contentString = document.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
 
-            var contentString = document.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+                contentString = contentString?.Trim() ?? string.Empty;
+                if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
+                if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
+                contentString = contentString.Trim();
 
-            contentString = contentString?.Trim() ?? string.Empty;
-            if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
-            if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
-            contentString = contentString.Trim();
-
-            geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(contentString);
+                geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(contentString);
+            }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not DomainException)
         {
-            // Throw exception to prevent database transaction (energy deduction, turn count, and dirty dialogues) on system failures
-            throw new Exception($"Gemini API error: {ex.Message}");
+            // Network errors, timeouts, JSON parse failures → graceful fallback
+            geminiResponse = new GeminiResponse
+            {
+                NpcResponse = "I didn't quite catch that. Can you repeat it?",
+                Feedback = $"System Error: Failed to process AI response ({ex.Message}).",
+                SuspicionChange = 0,
+                XpEarned = 0
+            };
         }
 
         if (geminiResponse == null)
