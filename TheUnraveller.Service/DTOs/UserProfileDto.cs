@@ -19,6 +19,7 @@ public class UserProfileDto
     // Shop fields
     public int XpBalance { get; set; }
     public bool IsPremium { get; set; }
+    public string EnglishLevel { get; set; } = "B1";
 
     // Created info
     public DateTime CreatedAt { get; set; }

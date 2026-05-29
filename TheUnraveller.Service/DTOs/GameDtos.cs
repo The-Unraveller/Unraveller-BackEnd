@@ -37,3 +37,12 @@ public class LlmResponseDto
 }
 
 public record LeaderboardEntryDto(int Rank, string Name, int Xp, string Badge, bool IsYou);
+
+public record UseGameItemRequestDto(int ItemId, int MissionId);
+
+public record UseGameItemResponseDto(
+    bool Success,
+    string Message,
+    int NewSuspicionLevel,
+    string? Hint
+);

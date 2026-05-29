@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529113036_AddMissionApprovals")]
+    partial class AddMissionApprovals
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -489,10 +492,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                     b.Property<int>("Energy")
                         .HasColumnType("integer");
 
-                    b.Property<string>("EnglishLevel")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsPremium")
                         .HasColumnType("boolean");
 
@@ -533,7 +532,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "khoapro@gmail.com",
                             Energy = 100,
-                            EnglishLevel = "B1",
                             IsPremium = false,
                             LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MaxEnergy = 100,
@@ -549,7 +547,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "minhkhoi@gmail.com",
                             Energy = 100,
-                            EnglishLevel = "B1",
                             IsPremium = false,
                             LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MaxEnergy = 100,
@@ -565,7 +562,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "lananh@gmail.com",
                             Energy = 100,
-                            EnglishLevel = "B1",
                             IsPremium = false,
                             LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MaxEnergy = 100,
@@ -581,7 +577,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "tuankhoa@gmail.com",
                             Energy = 100,
-                            EnglishLevel = "B1",
                             IsPremium = false,
                             LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MaxEnergy = 100,

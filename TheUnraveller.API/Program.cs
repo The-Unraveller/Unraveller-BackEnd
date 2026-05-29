@@ -42,7 +42,8 @@ builder.Services.AddAuthorization();
 
 // Configure DbContext (PostgreSQL - Supabase)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!)
+           .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // Register Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

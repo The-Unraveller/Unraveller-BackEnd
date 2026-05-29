@@ -6,6 +6,7 @@ public class UserUpdateDto
     public int? Energy { get; set; }
     public int? Role { get; set; } // Using int for UserRole enum
     public bool? IsPremium { get; set; }
+    public string? EnglishLevel { get; set; }
 }
 
 public class MissionUpdateDto

@@ -38,7 +38,7 @@ public class LlmProviderService : ILLMProviderService
             generationConfig = new
             {
                 temperature = 0.7,
-                response_mime_type = "application/json"
+                responseMimeType = "application/json"
             }
         };
 
@@ -53,7 +53,8 @@ public class LlmProviderService : ILLMProviderService
 
             if (!response.IsSuccessStatusCode)
             {
-                return GetFallbackResponse($"System Error: Gemini API returned {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return GetFallbackResponse($"System Error: Gemini API returned {response.StatusCode}. Details: {errorContent}");
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync(cts.Token);
