@@ -46,3 +46,21 @@ public record UseGameItemResponseDto(
     int NewSuspicionLevel,
     string? Hint
 );
+
+public class DialogueMessageHistoryDto
+{
+    public string Role { get; set; } = string.Empty; // "player" or "npc"
+    public string PlayerMessage { get; set; } = string.Empty;
+    public string NpcResponse { get; set; } = string.Empty;
+    public string Feedback { get; set; } = string.Empty;
+    public int SuspicionChange { get; set; }
+}
+
+public class GameSessionDto
+{
+    public bool HasActiveSession { get; set; }
+    public int CurrentSuspicion { get; set; }
+    public int TurnCount { get; set; }
+    public int XpEarned { get; set; }
+    public List<DialogueMessageHistoryDto> History { get; set; } = new();
+}

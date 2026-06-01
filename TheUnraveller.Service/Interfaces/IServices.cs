@@ -42,6 +42,8 @@ public interface IUserService
 {
     Task<UserProfileDto> GetProfileAsync(int userId);
     Task UpdateStreakAsync(int userId);
+    Task UpdateEnglishLevelAsync(int userId, string englishLevel);
+    Task UpdateProfileAsync(int userId, string username, string email);
 }
 
 public interface IShopService

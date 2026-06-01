@@ -54,4 +54,46 @@ public class UserController : ControllerBase
             return Unauthorized(ex.Message);
         }
     }
+
+    [HttpPost("english-level")]
+    public async Task<IActionResult> UpdateEnglishLevel([FromBody] UpdateEnglishLevelRequestDto request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            await _userService.UpdateEnglishLevelAsync(userId, request.EnglishLevel);
+            return Ok(new { Message = "Cập nhật trình độ tiếng Anh thành công." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = $"Lỗi hệ thống: {ex.Message}" });
+        }
+    }
+
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDto request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            await _userService.UpdateProfileAsync(userId, request.Username, request.Email);
+            return Ok(new { Message = "Cập nhật hồ sơ cá nhân thành công." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = $"Lỗi hệ thống: {ex.Message}" });
+        }
+    }
 }

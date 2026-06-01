@@ -24,3 +24,14 @@ public class UserProfileDto
     // Created info
     public DateTime CreatedAt { get; set; }
 }
+
+public class UpdateEnglishLevelRequestDto
+{
+    public string EnglishLevel { get; set; } = string.Empty;
+}
+
+public class UpdateProfileRequestDto
+{
+    public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+}

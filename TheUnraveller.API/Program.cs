@@ -12,6 +12,38 @@ using TheUnraveller.Service.Interfaces;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// Load environment variables from .env file if it exists
+var currentDir = Directory.GetCurrentDirectory();
+var envFiles = new[] 
+{ 
+    Path.Combine(currentDir, ".env"),
+    Path.Combine(currentDir, "..", ".env"),
+    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env")
+};
+
+foreach (var envFilePath in envFiles)
+{
+    if (File.Exists(envFilePath))
+    {
+        foreach (var line in File.ReadAllLines(envFilePath))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+            var parts = line.Split('=', 2);
+            if (parts.Length == 2)
+            {
+                var envKey = parts[0].Trim();
+                var envVal = parts[1].Trim();
+                if ((envVal.StartsWith("\"") && envVal.EndsWith("\"")) || (envVal.StartsWith("'") && envVal.EndsWith("'")))
+                {
+                    envVal = envVal[1..^1];
+                }
+                Environment.SetEnvironmentVariable(envKey, envVal);
+            }
+        }
+        break; // Stop at the first .env file found
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

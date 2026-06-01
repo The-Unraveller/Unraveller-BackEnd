@@ -103,18 +103,22 @@ YOUR LANGUAGE CONSTRAINT & CEFR RULES:
 
 ROLEPLAY & EVALUATION RULES:
 1. Stay in character as {npc.Name} at all times. Never break character in the 'npcResponse' field.
-2. The complexity of your English in 'npcResponse' MUST perfectly match the player's {user.EnglishLevel} level constraint defined above.
-3. Evaluate the player's English message:
-   - For A1-A2: Be very forgiving. If there are major errors, correct them simply.
-   - For B1-B2: Grade strictly on natural conversational flow.
-   - For C1-C2: Grade extremely strictly. Even if correct, suggest sophisticated vocabulary/idioms.
-   - Adjust 'suspicionChange' (between -10 and 30) and 'xpEarned' (between 0 and 20) based on their accuracy relative to their {user.EnglishLevel} CEFR level.
-4. Provide a constructive, helpful out-of-character English coaching tip in the 'feedback' field.
-   - CRITICAL L10N RULE: THIS FEEDBACK MUST BE WRITTEN IN VIETNAMESE. Explain their errors or suggest native-like phrasings according to their level.
+2. The complexity of your English in 'npcResponse' MUST match the player's {user.EnglishLevel} level constraint.
+3. Perform a strict, word-by-word spelling, capitalization, and grammar evaluation of the PLAYER'S message (""{playerMessage}""):
+   - Identify typos (e.g. ""cofffe"" -> ""coffee"", ""i"" -> ""I""). If there are typos, you MUST document them in the 'Sửa lỗi' section; do NOT say 'Không có lỗi'.
+   - Grade the player's grammar and naturalness based on their level ({user.EnglishLevel}).
+   - Calculate 'suspicionChange': Bad spelling/grammar should INCREASE suspicion (+10 to +30), while correct/natural phrasing should DECREASE suspicion (-10 to 0).
+4. Provide a constructive English coaching tip for the PLAYER in the 'feedback' field:
+   - CRITICAL: THIS FEEDBACK MUST BE FOR THE PLAYER'S MESSAGE (""{playerMessage}""). Do NOT review or mention your own NPC response (""npcResponse"") in this feedback field.
+   - CRITICAL L10N RULE: THIS FEEDBACK MUST BE WRITTEN IN VIETNAMESE.
+   - Format the feedback string strictly using this structure:
+     * Sửa lỗi (nếu có): [Nếu người chơi viết sai chính tả, viết thường đầu câu, hay sai ngữ pháp, hãy ghi rõ lỗi và sửa lại ở đây. Nếu không có lỗi nào, ghi: ""Không phát hiện lỗi.""]
+     * Diễn đạt tự nhiên hơn: [Cách viết trôi chảy, bản xứ hơn cho ý định của người chơi]
+     * Giải thích ngắn gọn: [Giải thích quy tắc hoặc từ vựng bằng tiếng Việt]
 5. Output MUST be a single, valid JSON object with exactly the following structure (no markdown formatting, no other text):
 {{
   ""npcResponse"": ""your dialogue response in character (in English, adapted to CEFR)"",
-  ""feedback"": ""helpful out-of-character English coaching tip (IN VIETNAMESE)"",
+  ""feedback"": ""helpful out-of-character English coaching tip (IN VIETNAMESE, strictly formatted as specified above)"",
   ""suspicionChange"": integer (-10 to 30),
   ""xpEarned"": integer (0 to 20)
 }}";
@@ -380,6 +384,94 @@ Task:
         catch (Exception ex)
         {
             return $"Không thể kết nối với AI gợi ý: {ex.Message}. Bạn hãy thử trả lời NPC một cách lịch sự và tự nhiên.";
+        }
+    }
+
+    public async Task<GameSessionDto> GetActiveSessionAsync(int userId, int missionId)
+    {
+        var progress = await _context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.MissionId == missionId);
+
+        if (progress == null || progress.Status != MissionStatus.InProgress)
+        {
+            return new GameSessionDto { HasActiveSession = false };
+        }
+
+        var history = await _context.Dialogues
+            .Where(d => d.UserId == userId && d.MissionId == missionId)
+            .OrderBy(d => d.Timestamp)
+            .ToListAsync();
+
+        return new GameSessionDto
+        {
+            HasActiveSession = true,
+            CurrentSuspicion = progress.CurrentSuspicion,
+            TurnCount = progress.TurnCount,
+            XpEarned = progress.XpEarned,
+            History = history.Select(h => new DialogueMessageHistoryDto
+            {
+                Role = h.PlayerMessage == null ? "npc" : "player", // If PlayerMessage exists, it was player turn. Let's make it robust: we can map or distinguish.
+                PlayerMessage = h.PlayerMessage,
+                NpcResponse = h.NpcResponse,
+                Feedback = h.Feedback,
+                SuspicionChange = h.SuspicionChange
+            }).ToList()
+        };
+    }
+
+    public async Task<bool> ResetSessionAsync(int userId, int missionId)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var progress = await _context.UserProgresses
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.MissionId == missionId);
+
+            var mission = await _context.Missions.FirstOrDefaultAsync(m => m.Id == missionId);
+            var startSuspicion = mission?.StartSuspicion ?? 10;
+
+            if (progress != null)
+            {
+                progress.CurrentSuspicion = startSuspicion;
+                progress.Status = MissionStatus.InProgress;
+                progress.TurnCount = 0;
+                progress.XpEarned = 0;
+                progress.LastActivity = DateTime.UtcNow;
+                _context.UserProgresses.Update(progress);
+            }
+            else
+            {
+                progress = new UserProgress
+                {
+                    UserId = userId,
+                    MissionId = missionId,
+                    CurrentSuspicion = startSuspicion,
+                    Status = MissionStatus.InProgress,
+                    TurnCount = 0,
+                    XpEarned = 0,
+                    LastActivity = DateTime.UtcNow
+                };
+                await _context.UserProgresses.AddAsync(progress);
+            }
+
+            // Remove all dialogues
+            var dialogues = await _context.Dialogues
+                .Where(d => d.UserId == userId && d.MissionId == missionId)
+                .ToListAsync();
+
+            if (dialogues.Any())
+            {
+                _context.Dialogues.RemoveRange(dialogues);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
