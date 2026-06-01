@@ -6,4 +6,6 @@ public interface IAIEvaluationService
 {
     Task<DialogueResponseDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage);
     Task<string> GenerateHintAsync(int userId, int missionId);
+    Task<GameSessionDto> GetActiveSessionAsync(int userId, int missionId);
+    Task<bool> ResetSessionAsync(int userId, int missionId);
 }

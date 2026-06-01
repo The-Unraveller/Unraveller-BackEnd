@@ -45,6 +45,44 @@ public class GameController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("session/{missionId}")]
+    public async Task<ActionResult<GameSessionDto>> GetSession(int missionId)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized("User ID not found in token");
+            int userId = int.Parse(userIdClaim.Value);
+
+            var result = await _aiEvaluationService.GetActiveSessionAsync(userId, missionId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("reset/{missionId}")]
+    public async Task<ActionResult> ResetSession(int missionId)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized("User ID not found in token");
+            int userId = int.Parse(userIdClaim.Value);
+
+            await _aiEvaluationService.ResetSessionAsync(userId, missionId);
+            return Ok(new { message = "Khởi động lại nhiệm vụ thành công." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [Authorize]
     [HttpPost("use-item")]
     public async Task<ActionResult<UseGameItemResponseDto>> UseItem([FromBody] UseGameItemRequestDto request)
     {

@@ -74,6 +74,54 @@ public class UserService : IUserService
         await _userRepository.SaveChangesAsync();
     }
 
+    public async Task UpdateEnglishLevelAsync(int userId, string englishLevel)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null) throw new Exception("User not found");
+
+        var level = englishLevel?.Trim().ToUpper() ?? "B1";
+        if (level != "A1" && level != "A2" && level != "B1" && level != "B2" && level != "C1" && level != "C2")
+        {
+            throw new ArgumentException("Trình độ không hợp lệ. Phải thuộc một trong các cấp độ: A1, A2, B1, B2, C1, C2.");
+        }
+
+        user.EnglishLevel = level;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+    }
+
+    public async Task UpdateProfileAsync(int userId, string username, string email)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null) throw new Exception("User not found");
+
+        var cleanUsername = username?.Trim();
+        var cleanEmail = email?.Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanUsername)) throw new ArgumentException("Tên người dùng không được để trống.");
+        if (string.IsNullOrWhiteSpace(cleanEmail)) throw new ArgumentException("Email không được để trống.");
+
+        // Check unique username
+        var existingUsername = await _userRepository.GetByUsernameAsync(cleanUsername);
+        if (existingUsername != null && existingUsername.Id != userId)
+        {
+            throw new InvalidOperationException("Tên người dùng đã được sử dụng.");
+        }
+
+        // Check unique email
+        var existingEmail = await _userRepository.GetByEmailAsync(cleanEmail);
+        if (existingEmail != null && existingEmail.Id != userId)
+        {
+            throw new InvalidOperationException("Email đã được sử dụng.");
+        }
+
+        user.Username = cleanUsername;
+        user.Email = cleanEmail;
+
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+    }
+
     private void RechargeEnergyLazy(User user)
     {
         var now = DateTime.UtcNow;
