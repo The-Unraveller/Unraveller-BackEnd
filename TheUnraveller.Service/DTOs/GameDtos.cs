@@ -14,7 +14,8 @@ public record MissionDto(
     string ImageUrl,
     string NpcName,
     string NpcEmoji,
-    bool Locked
+    bool Locked,
+    string GrammarTarget
 );
 
 public record DialogueRequestDto(int UserId, int MissionId, string Message);

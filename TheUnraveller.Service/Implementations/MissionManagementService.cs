@@ -73,7 +73,8 @@ public class MissionManagementService : IMissionManagementService
             NpcId = dto.NpcId,
             ApprovalStatus = ApprovalStatus.Pending,
             RejectionReason = null,
-            CreatedByUserId = creatorId
+            CreatedByUserId = creatorId,
+            GrammarTarget = dto.GrammarTarget
         };
 
         // 3. Save
@@ -151,7 +152,8 @@ public class MissionManagementService : IMissionManagementService
             NpcEmoji = m.Npc?.NpcEmoji ?? string.Empty,
             ApprovalStatus = (int)m.ApprovalStatus,
             RejectionReason = m.RejectionReason,
-            CreatedByUserId = m.CreatedByUserId
+            CreatedByUserId = m.CreatedByUserId,
+            GrammarTarget = m.GrammarTarget
         };
     }
 }
