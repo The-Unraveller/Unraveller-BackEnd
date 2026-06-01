@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS "Missions" (
     "Description" TEXT,
     "Difficulty" TEXT,
     "TargetSuspicion" INTEGER,
-    "RewardXp" INTEGER
+    "RewardXp" INTEGER,
+    "GrammarTarget" TEXT
 );
 
 -- 4. Table: Dialogues

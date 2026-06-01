@@ -22,6 +22,7 @@ public class Mission
     public int XpReward { get; set; } = 0;
     public string ImageUrl { get; set; } = string.Empty;
     public bool Locked { get; set; } = false;
+    public string GrammarTarget { get; set; } = string.Empty; // e.g., "Sử dụng câu điều kiện loại 1 (If...)"
     
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;

@@ -28,7 +28,8 @@ public class MissionService : IMissionService
             m.ImageUrl,
             m.Npc?.Name ?? string.Empty,
             m.Npc?.NpcEmoji ?? string.Empty,
-            m.Locked
+            m.Locked,
+            m.GrammarTarget
         ));
     }
 
@@ -48,7 +49,8 @@ public class MissionService : IMissionService
             m.ImageUrl,
             m.Npc?.Name ?? string.Empty,
             m.Npc?.NpcEmoji ?? string.Empty,
-            m.Locked
+            m.Locked,
+            m.GrammarTarget
         );
     }
 }

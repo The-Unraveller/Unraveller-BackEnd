@@ -29,6 +29,7 @@ public class MissionCreateDto
     public int XpReward { get; set; } = 0;
     public string ImageUrl { get; set; } = string.Empty;
     public int NpcId { get; set; } = 1;
+    public string GrammarTarget { get; set; } = string.Empty;
 }
 
 public class MissionManagementDto
@@ -50,4 +51,5 @@ public class MissionManagementDto
     public int ApprovalStatus { get; set; }
     public string? RejectionReason { get; set; }
     public int? CreatedByUserId { get; set; }
+    public string GrammarTarget { get; set; } = string.Empty;
 }

@@ -192,4 +192,68 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.NotNull(updatedUser);
         Assert.Equal(95, updatedUser!.Energy);
     }
+
+    [Theory]
+    [InlineData("A1", "Use very simple English vocabulary (A1-A2 level). Write short, direct, simple sentences.")]
+    [InlineData("C1", "Use advanced, nuanced, professional, and highly idiomatic English (C1-C2 level).")]
+    public async Task EvaluateMessageAsync_ShouldIncludeCefrInstructions_BasedOnUserEnglishLevel(string level, string expectedInstructionSubstring)
+    {
+        // Arrange
+        SeedDatabase();
+        var user = await _context.Users.FindAsync(1);
+        Assert.NotNull(user);
+        user!.EnglishLevel = level;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        var geminiResponseText = @"{
+            ""npcResponse"": ""Roger that."",
+            ""feedback"": ""Good response."",
+            ""suspicionChange"": -5,
+            ""xpEarned"": 15
+        }";
+
+        string capturedRequestContent = null;
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .Callback<HttpRequestMessage, CancellationToken>(async (req, token) =>
+            {
+                capturedRequestContent = await req.Content!.ReadAsStringAsync(token);
+            })
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"{
+                    ""candidates"": [
+                        {
+                            ""content"": {
+                                ""parts"": [
+                                    {
+                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }")
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object);
+
+        // Act
+        var result = await service.EvaluateMessageAsync(1, 1, "Testing levels");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(capturedRequestContent);
+        Assert.Contains(expectedInstructionSubstring, capturedRequestContent);
+        Assert.Contains($"PLAYER ENGLISH LEVEL: {level}", capturedRequestContent);
+    }
 }

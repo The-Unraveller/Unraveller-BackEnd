@@ -91,6 +91,7 @@ CHARACTER PROFILE:
 
 MISSION GOAL: {mission.Goal}
 MISSION SCENARIO: {mission.Description}
+MISSION GRAMMAR TARGET (MỤC TIÊU NGỮ PHÁP): {mission.GrammarTarget}
 
 CURRENT STATE:
 - Turns played: {history.Count}
@@ -107,19 +108,22 @@ ROLEPLAY & EVALUATION RULES:
 3. Perform a strict, word-by-word spelling, capitalization, and grammar evaluation of the PLAYER'S message (""{playerMessage}""):
    - Identify typos (e.g. ""cofffe"" -> ""coffee"", ""i"" -> ""I""). If there are typos, you MUST document them in the 'Sửa lỗi' section; do NOT say 'Không có lỗi'.
    - Grade the player's grammar and naturalness based on their level ({user.EnglishLevel}).
-   - Calculate 'suspicionChange': Bad spelling/grammar should INCREASE suspicion (+10 to +30), while correct/natural phrasing should DECREASE suspicion (-10 to 0).
+   - **CRITICAL GRAMMAR QUEST TARGET CHECK**: Verify if the player successfully used or attempted the MISSION GRAMMAR TARGET (""{mission.GrammarTarget}""):
+     * If they SUCCESSFULY applied the target structure: Reduce suspicion significantly (suspicionChange = -15 to -5) and award higher XP (xpEarned = 15 to 20).
+     * If they completely IGNORED or FAILED the target structure: Penalize them by increasing suspicion (suspicionChange = +5 to +20) and award minimal XP (xpEarned = 0 to 5).
+     * Otherwise, for general spelling/grammar errors, Bad spelling/grammar should INCREASE suspicion (+10 to +30), while correct/natural phrasing should DECREASE suspicion (-10 to 0).
 4. Provide a constructive English coaching tip for the PLAYER in the 'feedback' field:
    - CRITICAL: THIS FEEDBACK MUST BE FOR THE PLAYER'S MESSAGE (""{playerMessage}""). Do NOT review or mention your own NPC response (""npcResponse"") in this feedback field.
    - CRITICAL L10N RULE: THIS FEEDBACK MUST BE WRITTEN IN VIETNAMESE.
    - Format the feedback string strictly using this structure:
      * Sửa lỗi (nếu có): [Nếu người chơi viết sai chính tả, viết thường đầu câu, hay sai ngữ pháp, hãy ghi rõ lỗi và sửa lại ở đây. Nếu không có lỗi nào, ghi: ""Không phát hiện lỗi.""]
      * Diễn đạt tự nhiên hơn: [Cách viết trôi chảy, bản xứ hơn cho ý định của người chơi]
-     * Giải thích ngắn gọn: [Giải thích quy tắc hoặc từ vựng bằng tiếng Việt]
+     * Giải thích ngắn gọn: [Giải thích quy tắc hoặc từ vựng bằng tiếng Việt. Bạn BẮT BUỘC nhận xét rõ người chơi đã đạt mục tiêu ngữ pháp ""{mission.GrammarTarget}"" hay chưa, giải thích cấu trúc đó một cách ngắn gọn.]
 5. Output MUST be a single, valid JSON object with exactly the following structure (no markdown formatting, no other text):
 {{
   ""npcResponse"": ""your dialogue response in character (in English, adapted to CEFR)"",
   ""feedback"": ""helpful out-of-character English coaching tip (IN VIETNAMESE, strictly formatted as specified above)"",
-  ""suspicionChange"": integer (-10 to 30),
+  ""suspicionChange"": integer (-20 to 30),
   ""xpEarned"": integer (0 to 20)
 }}";
 
@@ -207,7 +211,7 @@ ROLEPLAY & EVALUATION RULES:
         }
 
         // Clamp suspicionChange and xpEarned to target constraints
-        geminiResponse.SuspicionChange = Math.Clamp(geminiResponse.SuspicionChange, -10, 30);
+        geminiResponse.SuspicionChange = Math.Clamp(geminiResponse.SuspicionChange, -20, 30);
         geminiResponse.XpEarned = Math.Clamp(geminiResponse.XpEarned, 0, 20);
 
         // 3. Database Updates inside a Database Transaction for consistency
