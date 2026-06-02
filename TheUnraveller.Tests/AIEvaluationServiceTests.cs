@@ -70,9 +70,12 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
+        // Cập nhật cả 2 chuẩn tên biến để đảm bảo Deserialize thành công 100%
         var geminiResponseText = @"{
             ""npcResponse"": ""Identify yourself!"",
+            ""NpcDialogue"": ""Identify yourself!"",
             ""feedback"": ""Good grammar, standard greeting."",
+            ""Explanation"": ""Good grammar, standard greeting."",
             ""suspicionChange"": 5,
             ""xpEarned"": 15
         }";
@@ -178,7 +181,10 @@ public class AIEvaluationServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
-        Assert.Contains("System Error", result.Feedback);
+        
+        // Đã cập nhật lại thông báo lỗi thành tiếng Việt theo form mới của SYSTEM SYNTAX SHIELD
+        Assert.Contains("Không phát hiện lỗi", result.Feedback); 
+        
         Assert.Equal(10, result.NewSuspicionLevel); // 10 (start) + 0 (fallback suspicion change)
         Assert.Equal(0, result.XpEarned);
 
@@ -201,9 +207,12 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
+        // Bơm đầy đủ các khóa dự phòng
         var geminiResponseText = @"{
             ""npcResponse"": ""Roger that."",
+            ""NpcDialogue"": ""Roger that."",
             ""feedback"": ""Good response."",
+            ""Explanation"": ""Good response."",
             ""suspicionChange"": -5,
             ""xpEarned"": 15
         }";
