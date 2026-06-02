@@ -413,43 +413,105 @@ Task:
 3. Keep the hint short, highly actionable, and encouraging (maximum 3 sentences).
 4. Do NOT output any JSON, markdown code block backticks (like ```), or formatting. Just output the plain Vietnamese text directly.";
 
-        var requestBody = new
+        var messages = new[]
         {
-            contents = new[]
-            {
-                new { parts = new[] { new { text = systemPrompt } } }
-            },
-            generationConfig = new
-            {
-                temperature = 0.7
-            }
+            new { role = "user", content = "Hãy gợi ý một câu tiếng Anh để trả lời NPC." }
         };
 
-        var targetUrl = $"{_baseUrl}?key={_apiKey}";
+        var requestBody = new
+        {
+            model = _model,
+            max_tokens = 1024,
+            system = systemPrompt,
+            messages = messages,
+            temperature = 0.7
+        };
+
+        var targetUrl = _baseUrl;
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
+        request.Headers.Add("x-api-key", _apiKey);
+        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-            var response = await _httpClient.SendAsync(request, cts.Token);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Gemini API returned status code {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Claude API returned {response.StatusCode}. Details: {errorContent}");
             }
 
-            var rawLlmResponse = await response.Content.ReadAsStringAsync(cts.Token);
-            using var document = JsonDocument.Parse(rawLlmResponse);
+            string contentString = string.Empty;
+            var textBuilder = new System.Text.StringBuilder();
 
-            var contentString = document.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            try
+            {
+                using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
+                using (var reader = new System.IO.StreamReader(stream))
+                {
+                    bool isSse = false;
+                    string? line;
 
-            return contentString?.Trim() ?? "Hãy thử chào hỏi NPC và hỏi thêm thông tin một cách lịch sự.";
+                    while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+                    {
+                        if (line.StartsWith("event:") || line.StartsWith("data:"))
+                        {
+                            isSse = true;
+                        }
+
+                        if (isSse)
+                        {
+                            if (line.StartsWith("data:"))
+                            {
+                                var json = line.Substring(line.IndexOf(':') + 1).Trim();
+                                if (json.StartsWith("{") && json.EndsWith("}"))
+                                {
+                                    try
+                                    {
+                                        using var doc = JsonDocument.Parse(json);
+                                        if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
+                                        {
+                                            break;
+                                        }
+
+                                        if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
+                                            deltaProp.TryGetProperty("text", out var textProp))
+                                        {
+                                            textBuilder.Append(textProp.GetString());
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Ignore malformed JSON lines
+                                    }
+                                }
+                            }
+                            else if (line.StartsWith("event: message_stop"))
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            textBuilder.AppendLine(line);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // If we already have some text, ignore the network termination exception
+                if (textBuilder.Length == 0)
+                {
+                    throw;
+                }
+            }
+
+            contentString = textBuilder.ToString().Trim();
+            return contentString;
         }
         catch (Exception ex)
         {
