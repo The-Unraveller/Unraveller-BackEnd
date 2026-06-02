@@ -89,15 +89,10 @@ public class AIEvaluationServiceTests : IDisposable
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(@"{
-                    ""candidates"": [
+                    ""content"": [
                         {
-                            ""content"": {
-                                ""parts"": [
-                                    {
-                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                                    }
-                                ]
-                            }
+                            ""type"": ""text"",
+                            ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
                         }
                     ]
                 }")
@@ -230,15 +225,10 @@ public class AIEvaluationServiceTests : IDisposable
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(@"{
-                    ""candidates"": [
+                    ""content"": [
                         {
-                            ""content"": {
-                                ""parts"": [
-                                    {
-                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                                    }
-                                ]
-                            }
+                            ""type"": ""text"",
+                            ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
                         }
                     ]
                 }")
