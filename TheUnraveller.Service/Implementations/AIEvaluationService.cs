@@ -16,6 +16,7 @@ public class AIEvaluationService : IAIEvaluationService
     private readonly AppDbContext _context;
     private readonly string _apiKey;
     private readonly string _baseUrl;
+    private readonly string _model;
 
     public AIEvaluationService(
         HttpClient httpClient,
@@ -25,7 +26,8 @@ public class AIEvaluationService : IAIEvaluationService
         _httpClient = httpClient;
         _context = context;
         _apiKey = configuration["LlmApi:ApiKey"] ?? "dummy_key";
-        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://claude.zunef.com/v1/ai/messages";
+        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
     }
 
     public async Task<DialogueResponseDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage)
@@ -130,89 +132,153 @@ ROLEPLAY & EVALUATION RULES:
         var safeUserMessage = $"[USER_TEXT]\n{playerMessage}\n[/USER_TEXT]";
         var combinedPrompt = $"{systemPrompt}\n\nUser Message: {safeUserMessage}";
 
-        var requestBody = new
+        var messages = new[]
         {
-            contents = new[]
-            {
-                new { parts = new[] { new { text = combinedPrompt } } }
-            },
-            generationConfig = new
-            {
-                temperature = 0.7,
-                responseMimeType = "application/json"
-            }
+            new { role = "user", content = safeUserMessage }
         };
 
-        var targetUrl = $"{_baseUrl}?key={_apiKey}";
+        var requestBody = new
+        {
+            model = _model,
+            max_tokens = 4096,
+            system = systemPrompt,
+            messages = messages,
+            temperature = 0.7
+        };
+
+        var targetUrl = _baseUrl;
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
+        request.Headers.Add("x-api-key", _apiKey);
+        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
-        string rawLlmResponse = string.Empty;
-        GeminiResponse? geminiResponse = null;
+        ClaudeResponse? claudeResponse = null;
 
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-            var response = await _httpClient.SendAsync(request, cts.Token);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            // Use ResponseHeadersRead to begin streaming immediately without buffering the entire body
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 // Do NOT throw — set fallback response so the game degrades gracefully
-                geminiResponse = new GeminiResponse
-                {
-                    NpcResponse = "I didn't quite catch that. Can you repeat it?",
-                    Feedback = $"System Error: Failed to process AI response (Gemini API returned status code {response.StatusCode}. Details: {errorContent}).",
-                    SuspicionChange = 0,
-                    XpEarned = 0
-                };
+                claudeResponse = GetFallbackResponse($"Claude API returned status code {response.StatusCode}. Details: {errorContent}");
             }
             else
             {
-                rawLlmResponse = await response.Content.ReadAsStringAsync(cts.Token);
-                using var document = JsonDocument.Parse(rawLlmResponse);
+                string contentString = string.Empty;
+                var textBuilder = new System.Text.StringBuilder();
 
-                var contentString = document.RootElement
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
+                try
+                {
+                    // Stream line by line to break immediately when message_stop is encountered, avoiding 19s keep-alive socket delays
+                    using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
+                    using (var reader = new System.IO.StreamReader(stream))
+                    {
+                        bool isSse = false;
+                        string? line;
 
-                contentString = contentString?.Trim() ?? string.Empty;
+                        while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+                        {
+                            if (line.StartsWith("event:") || line.StartsWith("data:"))
+                            {
+                                isSse = true;
+                            }
+
+                            if (isSse)
+                            {
+                                if (line.StartsWith("data:"))
+                                {
+                                    var json = line.Substring(line.IndexOf(':') + 1).Trim();
+                                    if (json.StartsWith("{") && json.EndsWith("}"))
+                                    {
+                                        try
+                                        {
+                                            using var doc = JsonDocument.Parse(json);
+                                            if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
+                                            {
+                                                break; // Stream finished, exit immediately!
+                                            }
+
+                                            if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
+                                                deltaProp.TryGetProperty("text", out var textProp))
+                                            {
+                                                textBuilder.Append(textProp.GetString());
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            // Ignore malformed JSON lines in the stream
+                                        }
+                                    }
+                                }
+                                else if (line.StartsWith("event: message_stop"))
+                                {
+                                    break; // Stream finished, exit immediately!
+                                }
+                            }
+                            else
+                            {
+                                textBuilder.AppendLine(line);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // If we already have a potential JSON block in our builder, ignore the network termination exception
+                    var tempString = textBuilder.ToString().Trim();
+                    int first = tempString.IndexOf('{');
+                    int last = tempString.LastIndexOf('}');
+                    if (first < 0 || last <= first)
+                    {
+                        // No valid JSON accumulated, rethrow the exception to let the outer fallback handle it
+                        throw;
+                    }
+                }
+
+                contentString = textBuilder.ToString().Trim();
                 if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
                 if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
                 contentString = contentString.Trim();
 
-                geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(contentString);
+                // Robust JSON extraction to prevent issues with reasoning token wrapper prefixes
+                int firstBrace = contentString.IndexOf('{');
+                int lastBrace = contentString.LastIndexOf('}');
+                if (firstBrace >= 0 && lastBrace > firstBrace)
+                {
+                    contentString = contentString.Substring(firstBrace, lastBrace - firstBrace + 1);
+                    try
+                    {
+                        claudeResponse = JsonSerializer.Deserialize<ClaudeResponse>(contentString);
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        claudeResponse = GetFallbackResponse($"JSON Deserialization failed: {jsonEx.Message}. Raw text: {contentString}");
+                    }
+                }
+                else
+                {
+                    claudeResponse = GetFallbackResponse($"No JSON object found in response. Raw text: {contentString}");
+                }
             }
         }
         catch (Exception ex) when (ex is not DomainException)
         {
             // Network errors, timeouts, JSON parse failures → graceful fallback
-            geminiResponse = new GeminiResponse
-            {
-                NpcResponse = "I didn't quite catch that. Can you repeat it?",
-                Feedback = $"System Error: Failed to process AI response ({ex.Message}).",
-                SuspicionChange = 0,
-                XpEarned = 0
-            };
+            claudeResponse = GetFallbackResponse($"{ex.GetType().Name}: {ex.Message}");
         }
 
-        if (geminiResponse == null)
+        if (claudeResponse == null)
         {
-            geminiResponse = new GeminiResponse
-            {
-                NpcResponse = "I didn't quite catch that. Can you repeat it?",
-                Feedback = "System Error: Failed to parse NPC response.",
-                SuspicionChange = 0,
-                XpEarned = 0
-            };
+            claudeResponse = GetFallbackResponse("Unknown parse error (claudeResponse was null).");
         }
 
         // Clamp suspicionChange and xpEarned to target constraints
-        geminiResponse.SuspicionChange = Math.Clamp(geminiResponse.SuspicionChange, -20, 30);
-        geminiResponse.XpEarned = Math.Clamp(geminiResponse.XpEarned, 0, 20);
+        claudeResponse.SuspicionChange = Math.Clamp(claudeResponse.SuspicionChange, -20, 30);
+        claudeResponse.XpEarned = Math.Clamp(claudeResponse.XpEarned, 0, 20);
 
         // 3. Database Updates inside a Database Transaction for consistency
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -249,9 +315,9 @@ ROLEPLAY & EVALUATION RULES:
 
             // Update Progress values
             progress.TurnCount += 1;
-            progress.CurrentSuspicion += geminiResponse.SuspicionChange;
+            progress.CurrentSuspicion += claudeResponse.SuspicionChange;
             progress.CurrentSuspicion = Math.Clamp(progress.CurrentSuspicion, 0, mission.MaxSuspicion);
-            progress.XpEarned += geminiResponse.XpEarned;
+            progress.XpEarned += claudeResponse.XpEarned;
             progress.LastActivity = DateTime.UtcNow;
 
             // Check Win/Lose Conditions
@@ -262,7 +328,7 @@ ROLEPLAY & EVALUATION RULES:
             else if (isLose) progress.Status = MissionStatus.Failed;
 
             // Add XP to User Balance
-            user.XpBalance += geminiResponse.XpEarned;
+            user.XpBalance += claudeResponse.XpEarned;
 
             // Create Dialogue record
             var dialogue = new Dialogue
@@ -271,9 +337,9 @@ ROLEPLAY & EVALUATION RULES:
                 NpcId = npc.Id,
                 MissionId = missionId,
                 PlayerMessage = playerMessage,
-                NpcResponse = geminiResponse.NpcResponse,
-                Feedback = geminiResponse.Feedback,
-                SuspicionChange = geminiResponse.SuspicionChange,
+                NpcResponse = claudeResponse.NpcResponse,
+                Feedback = claudeResponse.Feedback,
+                SuspicionChange = claudeResponse.SuspicionChange,
                 Timestamp = DateTime.UtcNow
             };
             await _context.Dialogues.AddAsync(dialogue);
@@ -285,13 +351,13 @@ ROLEPLAY & EVALUATION RULES:
             await transaction.CommitAsync();
 
             return new DialogueResponseDto(
-                geminiResponse.NpcResponse,
-                geminiResponse.Feedback,
+                claudeResponse.NpcResponse,
+                claudeResponse.Feedback,
                 progress.CurrentSuspicion,
                 isWin,
                 isLose,
                 progress.TurnCount,
-                geminiResponse.XpEarned
+                claudeResponse.XpEarned
             );
         }
         catch
@@ -347,43 +413,105 @@ Task:
 3. Keep the hint short, highly actionable, and encouraging (maximum 3 sentences).
 4. Do NOT output any JSON, markdown code block backticks (like ```), or formatting. Just output the plain Vietnamese text directly.";
 
-        var requestBody = new
+        var messages = new[]
         {
-            contents = new[]
-            {
-                new { parts = new[] { new { text = systemPrompt } } }
-            },
-            generationConfig = new
-            {
-                temperature = 0.7
-            }
+            new { role = "user", content = "Hãy gợi ý một câu tiếng Anh để trả lời NPC." }
         };
 
-        var targetUrl = $"{_baseUrl}?key={_apiKey}";
+        var requestBody = new
+        {
+            model = _model,
+            max_tokens = 1024,
+            system = systemPrompt,
+            messages = messages,
+            temperature = 0.7
+        };
+
+        var targetUrl = _baseUrl;
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
+        request.Headers.Add("x-api-key", _apiKey);
+        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-            var response = await _httpClient.SendAsync(request, cts.Token);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Gemini API returned status code {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Claude API returned {response.StatusCode}. Details: {errorContent}");
             }
 
-            var rawLlmResponse = await response.Content.ReadAsStringAsync(cts.Token);
-            using var document = JsonDocument.Parse(rawLlmResponse);
+            string contentString = string.Empty;
+            var textBuilder = new System.Text.StringBuilder();
 
-            var contentString = document.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            try
+            {
+                using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
+                using (var reader = new System.IO.StreamReader(stream))
+                {
+                    bool isSse = false;
+                    string? line;
 
-            return contentString?.Trim() ?? "Hãy thử chào hỏi NPC và hỏi thêm thông tin một cách lịch sự.";
+                    while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+                    {
+                        if (line.StartsWith("event:") || line.StartsWith("data:"))
+                        {
+                            isSse = true;
+                        }
+
+                        if (isSse)
+                        {
+                            if (line.StartsWith("data:"))
+                            {
+                                var json = line.Substring(line.IndexOf(':') + 1).Trim();
+                                if (json.StartsWith("{") && json.EndsWith("}"))
+                                {
+                                    try
+                                    {
+                                        using var doc = JsonDocument.Parse(json);
+                                        if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
+                                        {
+                                            break;
+                                        }
+
+                                        if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
+                                            deltaProp.TryGetProperty("text", out var textProp))
+                                        {
+                                            textBuilder.Append(textProp.GetString());
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Ignore malformed JSON lines
+                                    }
+                                }
+                            }
+                            else if (line.StartsWith("event: message_stop"))
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            textBuilder.AppendLine(line);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // If we already have some text, ignore the network termination exception
+                if (textBuilder.Length == 0)
+                {
+                    throw;
+                }
+            }
+
+            contentString = textBuilder.ToString().Trim();
+            return contentString;
         }
         catch (Exception ex)
         {
@@ -494,7 +622,18 @@ Task:
         }
     }
 
-    private class GeminiResponse
+    private ClaudeResponse GetFallbackResponse(string technicalDetails)
+    {
+        return new ClaudeResponse
+        {
+            NpcResponse = "I didn't quite catch that. Can you repeat it?",
+            Feedback = $"* Sửa lỗi (nếu có): Không phát hiện lỗi.\n* Diễn đạt tự nhiên hơn:\n* Giải thích ngắn gọn: Hệ thống AI đang tạm thời quá tải hoặc gặp lỗi kết nối. Vui lòng gửi lại câu trả lời sau giây lát.\nChi tiết kỹ thuật: {technicalDetails}",
+            SuspicionChange = 0,
+            XpEarned = 0
+        };
+    }
+
+    private class ClaudeResponse
     {
         [JsonPropertyName("npcResponse")]
         public string NpcResponse { get; set; } = string.Empty;

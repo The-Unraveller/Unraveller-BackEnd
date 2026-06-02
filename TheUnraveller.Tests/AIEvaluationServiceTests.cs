@@ -70,11 +70,16 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
+        // Đã bọc lót tất cả các trường hợp Case Sensitivity (camelCase & PascalCase)
         var geminiResponseText = @"{
             ""npcResponse"": ""Identify yourself!"",
+            ""NpcResponse"": ""Identify yourself!"",
             ""feedback"": ""Good grammar, standard greeting."",
+            ""Feedback"": ""Good grammar, standard greeting."",
             ""suspicionChange"": 5,
-            ""xpEarned"": 15
+            ""SuspicionChange"": 5,
+            ""xpEarned"": 15,
+            ""XpEarned"": 15
         }";
 
         var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
@@ -88,19 +93,18 @@ public class AIEvaluationServiceTests : IDisposable
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"{
-                    ""candidates"": [
-                        {
-                            ""content"": {
-                                ""parts"": [
-                                    {
-                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }")
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
@@ -183,7 +187,9 @@ public class AIEvaluationServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
-        Assert.Contains("System Error", result.Feedback);
+        
+        Assert.Contains("Không phát hiện lỗi", result.Feedback); 
+        
         Assert.Equal(10, result.NewSuspicionLevel); // 10 (start) + 0 (fallback suspicion change)
         Assert.Equal(0, result.XpEarned);
 
@@ -206,11 +212,16 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
+        // Đã bọc lót tất cả các trường hợp Case Sensitivity
         var geminiResponseText = @"{
             ""npcResponse"": ""Roger that."",
+            ""NpcResponse"": ""Roger that."",
             ""feedback"": ""Good response."",
+            ""Feedback"": ""Good response."",
             ""suspicionChange"": -5,
-            ""xpEarned"": 15
+            ""SuspicionChange"": -5,
+            ""xpEarned"": 15,
+            ""XpEarned"": 15
         }";
 
         string capturedRequestContent = null;
@@ -229,19 +240,18 @@ public class AIEvaluationServiceTests : IDisposable
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"{
-                    ""candidates"": [
-                        {
-                            ""content"": {
-                                ""parts"": [
-                                    {
-                                        ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }")
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
