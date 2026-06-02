@@ -53,3 +53,22 @@ public class MissionManagementDto
     public int? CreatedByUserId { get; set; }
     public string GrammarTarget { get; set; } = string.Empty;
 }
+
+public class NpcDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string NpcEmoji { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Personality { get; set; } = string.Empty;
+}
+
+public class NpcCreateDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Personality { get; set; } = string.Empty;
+    public string NpcEmoji { get; set; } = string.Empty;
+}

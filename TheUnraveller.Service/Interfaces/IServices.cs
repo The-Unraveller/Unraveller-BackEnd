@@ -62,4 +62,7 @@ public interface IMissionManagementService
     Task<bool> UpdateMissionAsync(int id, MissionUpdateDto dto);
     Task<bool> ApproveMissionAsync(int id);
     Task<bool> RejectMissionAsync(int id, string reason);
+    Task<IEnumerable<NpcDto>> GetAllNpcsAsync();
+    Task<NpcDto> CreateNpcAsync(NpcCreateDto dto);
+    Task<bool> UpdateNpcAsync(int id, NpcCreateDto dto);
 }
