@@ -93,14 +93,18 @@ public class AIEvaluationServiceTests : IDisposable
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"{
-                    ""content"": [
-                        {
-                            ""type"": ""text"",
-                            ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                        }
-                    ]
-                }")
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
@@ -182,7 +186,7 @@ public class AIEvaluationServiceTests : IDisposable
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("Identify yourself!", result.NpcResponse);
+        Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
         
         Assert.Contains("Không phát hiện lỗi", result.Feedback); 
         
@@ -236,14 +240,18 @@ public class AIEvaluationServiceTests : IDisposable
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"{
-                    ""content"": [
-                        {
-                            ""type"": ""text"",
-                            ""text"": """ + geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + @"""
-                        }
-                    ]
-                }")
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
             });
 
         var httpClient = new HttpClient(handlerMock.Object);

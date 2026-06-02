@@ -169,8 +169,77 @@ ROLEPLAY & EVALUATION RULES:
             else
             {
                 string contentString = string.Empty;
+                var textBuilder = new System.Text.StringBuilder();
 
-                contentString = contentString.Trim();
+                try
+                {
+                    // Stream line by line to break immediately when message_stop is encountered, avoiding 19s keep-alive socket delays
+                    using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
+                    using (var reader = new System.IO.StreamReader(stream))
+                    {
+                        bool isSse = false;
+                        string? line;
+
+                        while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+                        {
+                            if (line.StartsWith("event:") || line.StartsWith("data:"))
+                            {
+                                isSse = true;
+                            }
+
+                            if (isSse)
+                            {
+                                if (line.StartsWith("data:"))
+                                {
+                                    var json = line.Substring(line.IndexOf(':') + 1).Trim();
+                                    if (json.StartsWith("{") && json.EndsWith("}"))
+                                    {
+                                        try
+                                        {
+                                            using var doc = JsonDocument.Parse(json);
+                                            if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
+                                            {
+                                                break; // Stream finished, exit immediately!
+                                            }
+
+                                            if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
+                                                deltaProp.TryGetProperty("text", out var textProp))
+                                            {
+                                                textBuilder.Append(textProp.GetString());
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            // Ignore malformed JSON lines in the stream
+                                        }
+                                    }
+                                }
+                                else if (line.StartsWith("event: message_stop"))
+                                {
+                                    break; // Stream finished, exit immediately!
+                                }
+                            }
+                            else
+                            {
+                                textBuilder.AppendLine(line);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // If we already have a potential JSON block in our builder, ignore the network termination exception
+                    var tempString = textBuilder.ToString().Trim();
+                    int first = tempString.IndexOf('{');
+                    int last = tempString.LastIndexOf('}');
+                    if (first < 0 || last <= first)
+                    {
+                        // No valid JSON accumulated, rethrow the exception to let the outer fallback handle it
+                        throw;
+                    }
+                }
+
+                contentString = textBuilder.ToString().Trim();
                 if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
                 if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
                 contentString = contentString.Trim();
