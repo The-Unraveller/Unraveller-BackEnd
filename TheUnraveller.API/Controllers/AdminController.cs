@@ -27,7 +27,7 @@ public class AdminController : ControllerBase
     {
         var users = await _userRepository.GetAllAsync();
         return Ok(users.Select(u => new {
-            u.Id, u.Username, u.Email, u.Role, u.XpBalance, u.Energy, u.IsPremium, u.EnglishLevel
+            u.Id, u.Username, u.Email, Role = u.Role.ToString(), u.XpBalance, u.Energy, u.IsPremium, u.EnglishLevel
         }));
     }
 
