@@ -2,7 +2,13 @@
 -- THE UNRAVELLER - DATABASE SCHEMA FOR SUPABASE (POSTGRESQL)
 -- =============================================================================
 
--- 1. Table: Users
+-- 1. Table: Roles
+CREATE TABLE IF NOT EXISTS "Roles" (
+    "Id" INTEGER PRIMARY KEY,
+    "RoleName" VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- 2. Table: Users
 CREATE TABLE IF NOT EXISTS "Users" (
     "Id" SERIAL PRIMARY KEY,
     "Username" TEXT NOT NULL,
@@ -15,7 +21,8 @@ CREATE TABLE IF NOT EXISTS "Users" (
     "StreakCount" INTEGER DEFAULT 0,
     "LastActiveDate" TIMESTAMP WITH TIME ZONE,
     "XpBalance" INTEGER DEFAULT 0,
-    "IsPremium" BOOLEAN DEFAULT FALSE
+    "IsPremium" BOOLEAN DEFAULT FALSE,
+    "Role" INTEGER DEFAULT 0 REFERENCES "Roles"("Id")
 );
 
 -- 2. Table: Npcs
@@ -115,8 +122,14 @@ CREATE TABLE IF NOT EXISTS "UserSubscriptions" (
 -- SEED DATA (Dữ liệu mẫu ban đầu)
 -- =============================================================================
 
-INSERT INTO "Users" ("Username", "Email", "PasswordHash", "IsPremium")
-VALUES ('Admin', 'admin@example.com', 'admin123', true)
+INSERT INTO "Roles" ("Id", "RoleName") VALUES
+(0, 'User'),
+(1, 'Moderator'),
+(2, 'Admin')
+ON CONFLICT ("Id") DO NOTHING;
+
+INSERT INTO "Users" ("Username", "Email", "PasswordHash", "IsPremium", "Role")
+VALUES ('Admin', 'admin@example.com', 'admin123', true, 2)
 ON CONFLICT ("Email") DO NOTHING;
 
 INSERT INTO "Npcs" ("Name", "Role", "Personality", "BasePrompt")

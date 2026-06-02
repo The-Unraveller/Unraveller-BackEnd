@@ -46,4 +46,45 @@ public class ModeratorController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpGet("npcs")]
+    public async Task<IActionResult> GetNpcs()
+    {
+        var npcs = await _missionManagementService.GetAllNpcsAsync();
+        return Ok(npcs);
+    }
+
+    [HttpPost("npcs")]
+    public async Task<IActionResult> CreateNpc([FromBody] NpcCreateDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null) return Unauthorized();
+
+        try
+        {
+            var npc = await _missionManagementService.CreateNpcAsync(dto);
+            return Ok(npc);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("npcs/{id}")]
+    public async Task<IActionResult> UpdateNpc(int id, [FromBody] NpcCreateDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null) return Unauthorized();
+
+        try
+        {
+            await _missionManagementService.UpdateNpcAsync(id, dto);
+            return Ok(new { message = "NPC updated successfully" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

@@ -132,6 +132,67 @@ public class MissionManagementService : IMissionManagementService
         return true;
     }
 
+    public async Task<IEnumerable<NpcDto>> GetAllNpcsAsync()
+    {
+        var npcs = await _context.Npcs.ToListAsync();
+        return npcs.Select(n => new NpcDto
+        {
+            Id = n.Id,
+            Name = n.Name,
+            Role = n.Role,
+            NpcEmoji = n.NpcEmoji,
+            Description = n.Description,
+            Personality = n.Personality
+        });
+    }
+
+    public async Task<NpcDto> CreateNpcAsync(NpcCreateDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new DomainException("NPC name cannot be empty.");
+        if (string.IsNullOrWhiteSpace(dto.Role))
+            throw new DomainException("NPC role cannot be empty.");
+
+        var npc = new Npc
+        {
+            Name = dto.Name,
+            Role = dto.Role,
+            Description = dto.Description ?? string.Empty,
+            Personality = dto.Personality ?? string.Empty,
+            NpcEmoji = string.IsNullOrWhiteSpace(dto.NpcEmoji) ? "👤" : dto.NpcEmoji
+        };
+
+        _context.Npcs.Add(npc);
+        await _context.SaveChangesAsync();
+
+        return new NpcDto
+        {
+            Id = npc.Id,
+            Name = npc.Name,
+            Role = npc.Role,
+            NpcEmoji = npc.NpcEmoji,
+            Description = npc.Description,
+            Personality = npc.Personality
+        };
+    }
+
+    public async Task<bool> UpdateNpcAsync(int id, NpcCreateDto dto)
+    {
+        var npc = await _context.Npcs.FindAsync(id);
+        if (npc == null)
+            throw new DomainException("NPC not found.");
+
+        if (!string.IsNullOrWhiteSpace(dto.Name)) npc.Name = dto.Name;
+        if (!string.IsNullOrWhiteSpace(dto.Role)) npc.Role = dto.Role;
+        if (dto.Description != null) npc.Description = dto.Description;
+        if (dto.Personality != null) npc.Personality = dto.Personality;
+        if (!string.IsNullOrWhiteSpace(dto.NpcEmoji)) npc.NpcEmoji = dto.NpcEmoji;
+
+        _context.Npcs.Update(npc);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     private static MissionManagementDto MapToManagementDto(Mission m)
     {
         return new MissionManagementDto
