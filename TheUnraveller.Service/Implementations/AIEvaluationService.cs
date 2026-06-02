@@ -26,8 +26,8 @@ public class AIEvaluationService : IAIEvaluationService
         _httpClient = httpClient;
         _context = context;
         _apiKey = configuration["LlmApi:ApiKey"] ?? "dummy_key";
-        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-        _model = configuration["LlmApi:Model"] ?? "claude-sonnet-4-6";
+        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://claude.zunef.com/v1/ai/messages";
+        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
     }
 
     public async Task<DialogueResponseDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage)
@@ -152,7 +152,7 @@ ROLEPLAY & EVALUATION RULES:
         request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
-        GeminiResponse? geminiResponse = null;
+        ClaudeResponse? claudeResponse = null;
 
         try
         {
@@ -164,7 +164,7 @@ ROLEPLAY & EVALUATION RULES:
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 // Do NOT throw — set fallback response so the game degrades gracefully
-                geminiResponse = GetFallbackResponse($"Claude API returned status code {response.StatusCode}. Details: {errorContent}");
+                claudeResponse = GetFallbackResponse($"Claude API returned status code {response.StatusCode}. Details: {errorContent}");
             }
             else
             {
@@ -252,33 +252,33 @@ ROLEPLAY & EVALUATION RULES:
                     contentString = contentString.Substring(firstBrace, lastBrace - firstBrace + 1);
                     try
                     {
-                        geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(contentString);
+                        claudeResponse = JsonSerializer.Deserialize<ClaudeResponse>(contentString);
                     }
                     catch (JsonException jsonEx)
                     {
-                        geminiResponse = GetFallbackResponse($"JSON Deserialization failed: {jsonEx.Message}. Raw text: {contentString}");
+                        claudeResponse = GetFallbackResponse($"JSON Deserialization failed: {jsonEx.Message}. Raw text: {contentString}");
                     }
                 }
                 else
                 {
-                    geminiResponse = GetFallbackResponse($"No JSON object found in response. Raw text: {contentString}");
+                    claudeResponse = GetFallbackResponse($"No JSON object found in response. Raw text: {contentString}");
                 }
             }
         }
         catch (Exception ex) when (ex is not DomainException)
         {
             // Network errors, timeouts, JSON parse failures → graceful fallback
-            geminiResponse = GetFallbackResponse($"{ex.GetType().Name}: {ex.Message}");
+            claudeResponse = GetFallbackResponse($"{ex.GetType().Name}: {ex.Message}");
         }
 
-        if (geminiResponse == null)
+        if (claudeResponse == null)
         {
-            geminiResponse = GetFallbackResponse("Unknown parse error (geminiResponse was null).");
+            claudeResponse = GetFallbackResponse("Unknown parse error (claudeResponse was null).");
         }
 
         // Clamp suspicionChange and xpEarned to target constraints
-        geminiResponse.SuspicionChange = Math.Clamp(geminiResponse.SuspicionChange, -20, 30);
-        geminiResponse.XpEarned = Math.Clamp(geminiResponse.XpEarned, 0, 20);
+        claudeResponse.SuspicionChange = Math.Clamp(claudeResponse.SuspicionChange, -20, 30);
+        claudeResponse.XpEarned = Math.Clamp(claudeResponse.XpEarned, 0, 20);
 
         // 3. Database Updates inside a Database Transaction for consistency
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -315,9 +315,9 @@ ROLEPLAY & EVALUATION RULES:
 
             // Update Progress values
             progress.TurnCount += 1;
-            progress.CurrentSuspicion += geminiResponse.SuspicionChange;
+            progress.CurrentSuspicion += claudeResponse.SuspicionChange;
             progress.CurrentSuspicion = Math.Clamp(progress.CurrentSuspicion, 0, mission.MaxSuspicion);
-            progress.XpEarned += geminiResponse.XpEarned;
+            progress.XpEarned += claudeResponse.XpEarned;
             progress.LastActivity = DateTime.UtcNow;
 
             // Check Win/Lose Conditions
@@ -328,7 +328,7 @@ ROLEPLAY & EVALUATION RULES:
             else if (isLose) progress.Status = MissionStatus.Failed;
 
             // Add XP to User Balance
-            user.XpBalance += geminiResponse.XpEarned;
+            user.XpBalance += claudeResponse.XpEarned;
 
             // Create Dialogue record
             var dialogue = new Dialogue
@@ -337,9 +337,9 @@ ROLEPLAY & EVALUATION RULES:
                 NpcId = npc.Id,
                 MissionId = missionId,
                 PlayerMessage = playerMessage,
-                NpcResponse = geminiResponse.NpcResponse,
-                Feedback = geminiResponse.Feedback,
-                SuspicionChange = geminiResponse.SuspicionChange,
+                NpcResponse = claudeResponse.NpcResponse,
+                Feedback = claudeResponse.Feedback,
+                SuspicionChange = claudeResponse.SuspicionChange,
                 Timestamp = DateTime.UtcNow
             };
             await _context.Dialogues.AddAsync(dialogue);
@@ -351,13 +351,13 @@ ROLEPLAY & EVALUATION RULES:
             await transaction.CommitAsync();
 
             return new DialogueResponseDto(
-                geminiResponse.NpcResponse,
-                geminiResponse.Feedback,
+                claudeResponse.NpcResponse,
+                claudeResponse.Feedback,
                 progress.CurrentSuspicion,
                 isWin,
                 isLose,
                 progress.TurnCount,
-                geminiResponse.XpEarned
+                claudeResponse.XpEarned
             );
         }
         catch
@@ -622,9 +622,9 @@ Task:
         }
     }
 
-    private GeminiResponse GetFallbackResponse(string technicalDetails)
+    private ClaudeResponse GetFallbackResponse(string technicalDetails)
     {
-        return new GeminiResponse
+        return new ClaudeResponse
         {
             NpcResponse = "I didn't quite catch that. Can you repeat it?",
             Feedback = $"* Sửa lỗi (nếu có): Không phát hiện lỗi.\n* Diễn đạt tự nhiên hơn:\n* Giải thích ngắn gọn: Hệ thống AI đang tạm thời quá tải hoặc gặp lỗi kết nối. Vui lòng gửi lại câu trả lời sau giây lát.\nChi tiết kỹ thuật: {technicalDetails}",
@@ -633,7 +633,7 @@ Task:
         };
     }
 
-    private class GeminiResponse
+    private class ClaudeResponse
     {
         [JsonPropertyName("npcResponse")]
         public string NpcResponse { get; set; } = string.Empty;
