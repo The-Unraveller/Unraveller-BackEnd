@@ -182,7 +182,7 @@ public class AIEvaluationServiceTests : IDisposable
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
+        Assert.Equal("Identify yourself!", result.NpcResponse);
         
         Assert.Contains("Không phát hiện lỗi", result.Feedback); 
         
