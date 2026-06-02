@@ -70,14 +70,16 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        // Cập nhật cả 2 chuẩn tên biến để đảm bảo Deserialize thành công 100%
+        // Đã bọc lót tất cả các trường hợp Case Sensitivity (camelCase & PascalCase)
         var geminiResponseText = @"{
             ""npcResponse"": ""Identify yourself!"",
-            ""NpcDialogue"": ""Identify yourself!"",
+            ""NpcResponse"": ""Identify yourself!"",
             ""feedback"": ""Good grammar, standard greeting."",
-            ""Explanation"": ""Good grammar, standard greeting."",
+            ""Feedback"": ""Good grammar, standard greeting."",
             ""suspicionChange"": 5,
-            ""xpEarned"": 15
+            ""SuspicionChange"": 5,
+            ""xpEarned"": 15,
+            ""XpEarned"": 15
         }";
 
         var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
@@ -182,7 +184,6 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.NotNull(result);
         Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
         
-        // Đã cập nhật lại thông báo lỗi thành tiếng Việt theo form mới của SYSTEM SYNTAX SHIELD
         Assert.Contains("Không phát hiện lỗi", result.Feedback); 
         
         Assert.Equal(10, result.NewSuspicionLevel); // 10 (start) + 0 (fallback suspicion change)
@@ -207,14 +208,16 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        // Bơm đầy đủ các khóa dự phòng
+        // Đã bọc lót tất cả các trường hợp Case Sensitivity
         var geminiResponseText = @"{
             ""npcResponse"": ""Roger that."",
-            ""NpcDialogue"": ""Roger that."",
+            ""NpcResponse"": ""Roger that."",
             ""feedback"": ""Good response."",
-            ""Explanation"": ""Good response."",
+            ""Feedback"": ""Good response."",
             ""suspicionChange"": -5,
-            ""xpEarned"": 15
+            ""SuspicionChange"": -5,
+            ""xpEarned"": 15,
+            ""XpEarned"": 15
         }";
 
         string capturedRequestContent = null;
