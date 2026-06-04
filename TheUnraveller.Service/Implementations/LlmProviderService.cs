@@ -27,7 +27,7 @@ public class LlmProviderService : ILLMProviderService
             ? "https://api.openai.com/v1/" 
             : baseUrlConfig;
             
-        _model = configuration["LlmApi:Model"] ?? "claude-sonnet-4-6";
+        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
     }
 
     public async Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage)

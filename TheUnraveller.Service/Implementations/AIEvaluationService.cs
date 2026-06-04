@@ -36,7 +36,7 @@ public class AIEvaluationService : IAIEvaluationService
             ? "https://claude.zunef.com/v1/ai/messages" 
             : baseUrlConfig;
             
-        _model = configuration["LlmApi:Model"] ?? "claude-sonnet-4-6";
+        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
     }
 
     public async Task<DialogueResponseDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage)
