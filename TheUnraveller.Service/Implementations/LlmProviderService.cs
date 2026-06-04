@@ -16,8 +16,17 @@ public class LlmProviderService : ILLMProviderService
     public LlmProviderService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        _apiKey = configuration["LlmApi:ApiKey"] ?? "dummy_key";
-        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://api.openai.com/v1/";
+        
+        var apiKeyConfig = configuration["LlmApi:ApiKey"];
+        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER") 
+            ? "dummy_key" 
+            : apiKeyConfig;
+            
+        var baseUrlConfig = configuration["LlmApi:BaseUrl"];
+        _baseUrl = string.IsNullOrEmpty(baseUrlConfig) || baseUrlConfig.Contains("PLACEHOLDER") || !baseUrlConfig.StartsWith("http")
+            ? "https://api.openai.com/v1/" 
+            : baseUrlConfig;
+            
         _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
     }
 
