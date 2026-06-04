@@ -25,9 +25,18 @@ public class AIEvaluationService : IAIEvaluationService
     {
         _httpClient = httpClient;
         _context = context;
-        _apiKey = configuration["LlmApi:ApiKey"] ?? "dummy_key";
-        _baseUrl = configuration["LlmApi:BaseUrl"] ?? "https://claude.zunef.com/v1/ai/messages";
-        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
+        
+        var apiKeyConfig = configuration["LlmApi:ApiKey"];
+        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER") 
+            ? "dummy_key" 
+            : apiKeyConfig;
+            
+        var baseUrlConfig = configuration["LlmApi:BaseUrl"];
+        _baseUrl = string.IsNullOrEmpty(baseUrlConfig) || baseUrlConfig.Contains("PLACEHOLDER") || !baseUrlConfig.StartsWith("http")
+            ? "https://claude.zunef.com/v1/ai/messages" 
+            : baseUrlConfig;
+            
+        _model = configuration["LlmApi:Model"] ?? "claude-sonnet-4-6";
     }
 
     public async Task<DialogueResponseDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage)
@@ -53,11 +62,11 @@ public class AIEvaluationService : IAIEvaluationService
             throw new Exception("Not enough energy. Each message requires 5 energy.");
         }
 
-        // Get recent conversation history for context (last 10 turns)
+        // Get recent conversation history for context (last 4 turns)
         var historyList = await _context.Dialogues
             .Where(d => d.UserId == userId && d.MissionId == missionId)
             .OrderByDescending(d => d.Timestamp)
-            .Take(10)
+            .Take(4)
             .ToListAsync();
 
         // Sort ascending in memory for chronological dialogue flow
@@ -105,26 +114,25 @@ YOUR LANGUAGE CONSTRAINT & CEFR RULES:
 {cefrInstructions}
 
 ROLEPLAY & EVALUATION RULES:
-1. Stay in character as {npc.Name} at all times. Never break character in the 'npcResponse' field.
-2. The complexity of your English in 'npcResponse' MUST match the player's {user.EnglishLevel} level constraint.
-3. Perform a strict, word-by-word spelling, capitalization, and grammar evaluation of the PLAYER'S message (""{playerMessage}""):
-   - Identify typos (e.g. ""cofffe"" -> ""coffee"", ""i"" -> ""I""). If there are typos, you MUST document them in the 'Sửa lỗi' section; do NOT say 'Không có lỗi'.
-   - Grade the player's grammar and naturalness based on their level ({user.EnglishLevel}).
-   - **CRITICAL GRAMMAR QUEST TARGET CHECK**: Verify if the player successfully used or attempted the MISSION GRAMMAR TARGET (""{mission.GrammarTarget}""):
-     * If they SUCCESSFULY applied the target structure: Reduce suspicion significantly (suspicionChange = -15 to -5) and award higher XP (xpEarned = 15 to 20).
-     * If they completely IGNORED or FAILED the target structure: Penalize them by increasing suspicion (suspicionChange = +5 to +20) and award minimal XP (xpEarned = 0 to 5).
-     * Otherwise, for general spelling/grammar errors, Bad spelling/grammar should INCREASE suspicion (+10 to +30), while correct/natural phrasing should DECREASE suspicion (-10 to 0).
-4. Provide a constructive English coaching tip for the PLAYER in the 'feedback' field:
-   - CRITICAL: THIS FEEDBACK MUST BE FOR THE PLAYER'S MESSAGE (""{playerMessage}""). Do NOT review or mention your own NPC response (""npcResponse"") in this feedback field.
-   - CRITICAL L10N RULE: THIS FEEDBACK MUST BE WRITTEN IN VIETNAMESE.
-   - Format the feedback string strictly using this structure:
-     * Sửa lỗi (nếu có): [Nếu người chơi viết sai chính tả, viết thường đầu câu, hay sai ngữ pháp, hãy ghi rõ lỗi và sửa lại ở đây. Nếu không có lỗi nào, ghi: ""Không phát hiện lỗi.""]
-     * Diễn đạt tự nhiên hơn: [Cách viết trôi chảy, bản xứ hơn cho ý định của người chơi]
-     * Giải thích ngắn gọn: [Giải thích quy tắc hoặc từ vựng bằng tiếng Việt. Bạn BẮT BUỘC nhận xét rõ người chơi đã đạt mục tiêu ngữ pháp ""{mission.GrammarTarget}"" hay chưa, giải thích cấu trúc đó một cách ngắn gọn.]
-5. Output MUST be a single, valid JSON object with exactly the following structure (no markdown formatting, no other text):
+1. Stay in character as {npc.Name} at all times. The complexity of 'npcResponse' must match the player's {user.EnglishLevel} level.
+2. Evaluate spelling, capitalization, and grammar of the PLAYER'S message (""{playerMessage}"") strictly:
+   - Identify typos. If any exist, list them in 'Sửa lỗi' (do NOT say 'Không có lỗi').
+   - **MISSION GRAMMAR TARGET CHECK**: Verify if the player successfully used ""{mission.GrammarTarget}"":
+     * Success: suspicionChange = -15 to -5, xpEarned = 15 to 20.
+     * Fail/Ignore: suspicionChange = +5 to +20, xpEarned = 0 to 5.
+     * General spelling/grammar errors: suspicionChange = +10 to +30.
+     * Correct/natural phrasing: suspicionChange = -10 to 0.
+3. Provide feedback in Vietnamese about the player's message. Format it strictly as follows:
+   * Sửa lỗi (nếu có): [Corrections or ""Không phát hiện lỗi.""]
+   * Diễn đạt tự nhiên hơn: [More natural/native phrasing]
+   * Giải thích ngắn gọn: [Brief explanation of grammar/rules in Vietnamese. State if they achieved ""{mission.GrammarTarget}"" or not.]
+4. CRITICAL LATENCY OPTIMIZATION: Keep responses extremely concise.
+   - 'npcResponse' must be at most 1-2 short sentences.
+   - Each section in the feedback field (Sửa lỗi, Diễn đạt tự nhiên hơn, Giải thích ngắn gọn) must be at most 1-2 brief sentences.
+5. Output MUST be a single, valid JSON object with exactly this structure:
 {{
-  ""npcResponse"": ""your dialogue response in character (in English, adapted to CEFR)"",
-  ""feedback"": ""helpful out-of-character English coaching tip (IN VIETNAMESE, strictly formatted as specified above)"",
+  ""npcResponse"": ""your dialogue response in character (in English)"",
+  ""feedback"": ""helpful English coaching tip (IN VIETNAMESE, strictly formatted as specified above)"",
   ""suspicionChange"": integer (-20 to 30),
   ""xpEarned"": integer (0 to 20)
 }}";
