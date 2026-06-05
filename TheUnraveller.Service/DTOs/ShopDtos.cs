@@ -7,6 +7,7 @@ public class ShopItemDto
     public string Description { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public int PriceXp { get; set; }
+    public int DiscountPriceXp { get; set; }
     public string Emoji { get; set; } = "📦";
 }
 

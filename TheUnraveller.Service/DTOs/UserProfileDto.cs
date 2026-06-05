@@ -23,6 +23,17 @@ public class UserProfileDto
 
     // Created info
     public DateTime CreatedAt { get; set; }
+
+    public List<UserMissionProgressDto> MissionProgresses { get; set; } = new();
+}
+
+public class UserMissionProgressDto
+{
+    public int MissionId { get; set; }
+    public int CurrentSuspicion { get; set; }
+    public string Status { get; set; } = string.Empty; // "InProgress", "Completed", "Failed"
+    public int TurnCount { get; set; }
+    public int XpEarned { get; set; }
 }
 
 public class UpdateEnglishLevelRequestDto

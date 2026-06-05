@@ -21,8 +21,11 @@ public class ShopService : IShopService
         _userProgressRepository = userProgressRepository;
     }
 
-    public async Task<IEnumerable<ShopItemDto>> GetShopItemsAsync()
+    public async Task<IEnumerable<ShopItemDto>> GetShopItemsAsync(int userId)
     {
+        var user = await _userRepository.GetByIdAsync(userId);
+        bool isPremium = user?.IsPremium ?? false;
+
         var items = await _shopRepository.GetAllItemsAsync();
         return items.Select(i => new ShopItemDto
         {
@@ -31,6 +34,7 @@ public class ShopService : IShopService
             Description = i.Description,
             Type = i.Type.ToString(),
             PriceXp = i.PriceXp,
+            DiscountPriceXp = isPremium ? (int)(i.PriceXp * 0.8) : i.PriceXp,
             Emoji = i.Emoji
         });
     }
@@ -45,12 +49,14 @@ public class ShopService : IShopService
             return new BuyItemResponseDto { Success = false, Message = "User or Item not found" };
         }
 
-        if (user.XpBalance < item.PriceXp)
+        int actualPrice = user.IsPremium ? (int)(item.PriceXp * 0.8) : item.PriceXp;
+
+        if (user.XpBalance < actualPrice)
         {
             return new BuyItemResponseDto { Success = false, Message = "Not enough XP balance" };
         }
 
-        user.XpBalance -= item.PriceXp;
+        user.XpBalance -= actualPrice;
         int currentQuantity = await _shopRepository.GetItemQuantityAsync(userId, item.Id);
         await _shopRepository.UpdateItemQuantityAsync(userId, item.Id, currentQuantity + 1);
 

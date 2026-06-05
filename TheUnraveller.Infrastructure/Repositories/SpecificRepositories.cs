@@ -35,6 +35,9 @@ public class UserProgressRepository : GenericRepository<UserProgress>, IUserProg
 
     public async Task<UserProgress?> GetUserProgressAsync(int userId, int missionId) =>
         await _dbSet.FirstOrDefaultAsync(up => up.UserId == userId && up.MissionId == missionId);
+
+    public async Task<IEnumerable<UserProgress>> GetUserProgressesAsync(int userId) =>
+        await _dbSet.Where(up => up.UserId == userId).ToListAsync();
 }
 
 public class DialogueRepository : GenericRepository<Dialogue>, IDialogueRepository

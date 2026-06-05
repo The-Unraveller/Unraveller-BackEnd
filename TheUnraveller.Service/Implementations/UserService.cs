@@ -8,10 +8,12 @@ namespace TheUnraveller.Service.Implementations;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IUserProgressRepository _userProgressRepository;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, IUserProgressRepository userProgressRepository)
     {
         _userRepository = userRepository;
+        _userProgressRepository = userProgressRepository;
     }
 
     public async Task<UserProfileDto> GetProfileAsync(int userId)
@@ -21,6 +23,8 @@ public class UserService : IUserService
 
         // 1. Áp dụng Lazy Recharge Energy
         RechargeEnergyLazy(user);
+
+        var progresses = await _userProgressRepository.GetUserProgressesAsync(userId);
 
         return new UserProfileDto
         {
@@ -36,7 +40,15 @@ public class UserService : IUserService
             XpBalance = user.XpBalance,
             IsPremium = user.IsPremium,
             EnglishLevel = user.EnglishLevel,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            MissionProgresses = progresses.Select(p => new UserMissionProgressDto
+            {
+                MissionId = p.MissionId,
+                CurrentSuspicion = p.CurrentSuspicion,
+                Status = p.Status.ToString(),
+                TurnCount = p.TurnCount,
+                XpEarned = p.XpEarned
+            }).ToList()
         };
     }
 
@@ -130,7 +142,7 @@ public class UserService : IUserService
         if (timeElapsed.TotalMinutes >= 30)
         {
             int intervals = (int)(timeElapsed.TotalMinutes / 30);
-            int energyToRecharge = intervals * 10;
+            int energyToRecharge = intervals * (user.IsPremium ? 20 : 10);
 
             user.Energy = Math.Min(user.MaxEnergy, user.Energy + energyToRecharge);
             // Cập nhật mốc thời gian vừa hồi xong (không dùng now để tránh mất lẻ phút)

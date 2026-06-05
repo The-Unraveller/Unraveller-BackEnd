@@ -48,7 +48,7 @@ public interface IUserService
 
 public interface IShopService
 {
-    Task<IEnumerable<ShopItemDto>> GetShopItemsAsync();
+    Task<IEnumerable<ShopItemDto>> GetShopItemsAsync(int userId);
     Task<BuyItemResponseDto> BuyItemAsync(int userId, BuyItemRequestDto request);
     Task<UseItemResponseDto> UseItemAsync(int userId, UseItemRequestDto request);
     Task<IEnumerable<UserInventoryDto>> GetUserInventoryAsync(int userId);
