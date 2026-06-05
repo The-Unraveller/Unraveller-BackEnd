@@ -130,8 +130,8 @@ ROLEPLAY & EVALUATION RULES:
    * Diễn đạt tự nhiên hơn: [More natural/native phrasing]
    * Giải thích ngắn gọn: [Brief explanation of grammar/rules in Vietnamese. State if they achieved ""{mission.GrammarTarget}"" or not.]
 4. CRITICAL LATENCY OPTIMIZATION: Keep responses extremely concise.
-   - 'npcResponse' must be at most 1-2 short sentences.
-   - Each section in the feedback field (Sửa lỗi, Diễn đạt tự nhiên hơn, Giải thích ngắn gọn) must be at most 1-2 brief sentences.
+   - 'npcResponse' must be at most 1 short sentence (maximum 15 words).
+   - Each section in the feedback field (Sửa lỗi, Diễn đạt tự nhiên hơn, Giải thích ngắn gọn) must be at most 1 brief sentence (maximum 15 words).
 5. Output MUST be a single, valid JSON object with exactly this structure:
 {{
   ""npcResponse"": ""your dialogue response in character (in English)"",
@@ -151,7 +151,7 @@ ROLEPLAY & EVALUATION RULES:
         var requestBody = new
         {
             model = _model,
-            max_tokens = 4096,
+            max_tokens = 400,
             system = systemPrompt,
             messages = messages,
             temperature = 0.7
@@ -434,7 +434,7 @@ Task:
         var requestBody = new
         {
             model = _model,
-            max_tokens = 1024,
+            max_tokens = 300,
             system = systemPrompt,
             messages = messages,
             temperature = 0.7
