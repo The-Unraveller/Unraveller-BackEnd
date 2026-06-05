@@ -16,6 +16,7 @@ public interface IMissionRepository : IGenericRepository<Mission>
 public interface IUserProgressRepository : IGenericRepository<UserProgress>
 {
     Task<UserProgress?> GetUserProgressAsync(int userId, int missionId);
+    Task<IEnumerable<UserProgress>> GetUserProgressesAsync(int userId);
 }
 
 public interface IDialogueRepository : IGenericRepository<Dialogue>

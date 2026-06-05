@@ -7,6 +7,7 @@ using TheUnraveller.Core.Entities;
 using TheUnraveller.Service.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
 
 namespace TheUnraveller.Service.Implementations;
 
@@ -14,6 +15,7 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly PasswordHasher<User> _passwordHasher = new();
 
     public AuthService(IUserRepository userRepository, IConfiguration configuration)
     {
@@ -25,8 +27,13 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(email);
 
-        // Trong production: dùng BCrypt hoặc Argon2 để verify password hash
-        if (user == null || user.PasswordHash != password)
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Invalid email or password");
+        }
+
+        var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        if (verificationResult == PasswordVerificationResult.Failed)
         {
             throw new UnauthorizedAccessException("Invalid email or password");
         }
@@ -43,7 +50,6 @@ public class AuthService : IAuthService
         {
             Username = username,
             Email = email,
-            PasswordHash = password, // Trong production: Hash password trước khi lưu
             Energy = 100,
             MaxEnergy = 100,
             XpBalance = 0,
@@ -53,6 +59,8 @@ public class AuthService : IAuthService
             LastEnergyRechargedAt = DateTime.UtcNow,
             LastActiveDate = DateTime.UtcNow
         };
+
+        newUser.PasswordHash = _passwordHasher.HashPassword(newUser, password);
 
         await _userRepository.AddAsync(newUser);
         await _userRepository.SaveChangesAsync();
@@ -103,7 +111,6 @@ public class AuthService : IAuthService
                 {
                     Username = name ?? email.Split('@')[0],
                     Email = email,
-                    PasswordHash = Guid.NewGuid().ToString(), // Random password for OAuth users
                     Energy = 100,
                     MaxEnergy = 100,
                     XpBalance = 0,
@@ -113,6 +120,8 @@ public class AuthService : IAuthService
                     LastEnergyRechargedAt = DateTime.UtcNow,
                     LastActiveDate = DateTime.UtcNow
                 };
+                user.PasswordHash = _passwordHasher.HashPassword(user, Guid.NewGuid().ToString());
+                
                 await _userRepository.AddAsync(user);
                 await _userRepository.SaveChangesAsync();
             }

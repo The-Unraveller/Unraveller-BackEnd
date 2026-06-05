@@ -57,7 +57,10 @@ public class AIEvaluationService : IAIEvaluationService
         // Lazy Energy Recharge
         RechargeEnergyLazy(user);
 
-        if (user.Energy < 5)
+        await ValidateMissionAccessAsync(user, missionId);
+
+        int energyCost = user.IsPremium ? 0 : 5;
+        if (!user.IsPremium && user.Energy < energyCost)
         {
             throw new Exception("Not enough energy. Each message requires 5 energy.");
         }
@@ -293,7 +296,7 @@ ROLEPLAY & EVALUATION RULES:
         try
         {
             // Deduct Energy
-            user.Energy -= 5;
+            user.Energy -= energyCost;
 
             // Fetch or Initialize User Progress
             var progress = await _context.UserProgresses
@@ -325,7 +328,9 @@ ROLEPLAY & EVALUATION RULES:
             progress.TurnCount += 1;
             progress.CurrentSuspicion += claudeResponse.SuspicionChange;
             progress.CurrentSuspicion = Math.Clamp(progress.CurrentSuspicion, 0, mission.MaxSuspicion);
-            progress.XpEarned += claudeResponse.XpEarned;
+            
+            int finalXpEarned = user.IsPremium ? claudeResponse.XpEarned * 2 : claudeResponse.XpEarned;
+            progress.XpEarned += finalXpEarned;
             progress.LastActivity = DateTime.UtcNow;
 
             // Check Win/Lose Conditions
@@ -336,7 +341,7 @@ ROLEPLAY & EVALUATION RULES:
             else if (isLose) progress.Status = MissionStatus.Failed;
 
             // Add XP to User Balance
-            user.XpBalance += claudeResponse.XpEarned;
+            user.XpBalance += finalXpEarned;
 
             // Create Dialogue record
             var dialogue = new Dialogue
@@ -365,7 +370,7 @@ ROLEPLAY & EVALUATION RULES:
                 isWin,
                 isLose,
                 progress.TurnCount,
-                claudeResponse.XpEarned
+                finalXpEarned
             );
         }
         catch
@@ -529,6 +534,16 @@ Task:
 
     public async Task<GameSessionDto> GetActiveSessionAsync(int userId, int missionId)
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) throw new DomainException("User not found.");
+
+        var mission = await _context.Missions.FirstOrDefaultAsync(m => m.Id == missionId);
+        
+        if (mission != null)
+        {
+            await ValidateMissionAccessAsync(user, missionId);
+        }
+
         var progress = await _context.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.MissionId == missionId);
 
@@ -615,6 +630,34 @@ Task:
         }
     }
 
+    private async Task ValidateMissionAccessAsync(User user, int missionId)
+    {
+        if (user.IsPremium) return;
+
+        if (missionId > 3)
+        {
+            throw new Exception("Kịch bản này yêu cầu nâng cấp gói Premium VIP.");
+        }
+        if (missionId == 2)
+        {
+            var step1Completed = await _context.UserProgresses
+                .AnyAsync(p => p.UserId == user.Id && p.MissionId == 1 && p.Status == MissionStatus.Completed);
+            if (!step1Completed)
+            {
+                throw new Exception("Bạn cần hoàn thành kịch bản 'Giao tiếp tại Quán Cà phê' để mở khóa kịch bản này.");
+            }
+        }
+        if (missionId == 3)
+        {
+            var step2Completed = await _context.UserProgresses
+                .AnyAsync(p => p.UserId == user.Id && p.MissionId == 2 && p.Status == MissionStatus.Completed);
+            if (!step2Completed)
+            {
+                throw new Exception("Bạn cần hoàn thành kịch bản 'Làm theo Chỉ dẫn' để mở khóa kịch bản này.");
+            }
+        }
+    }
+
     private void RechargeEnergyLazy(User user)
     {
         var now = DateTime.UtcNow;
@@ -623,7 +666,7 @@ Task:
         if (timeElapsed.TotalMinutes >= 30)
         {
             int intervals = (int)(timeElapsed.TotalMinutes / 30);
-            int energyToRecharge = intervals * 10;
+            int energyToRecharge = intervals * (user.IsPremium ? 20 : 10);
 
             user.Energy = Math.Min(user.MaxEnergy, user.Energy + energyToRecharge);
             user.LastEnergyRechargedAt = user.LastEnergyRechargedAt.AddMinutes(intervals * 30);

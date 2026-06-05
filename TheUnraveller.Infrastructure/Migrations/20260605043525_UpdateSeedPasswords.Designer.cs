@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260605043525_UpdateSeedPasswords")]
+    partial class UpdateSeedPasswords
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,7 +147,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*The hum of neon lights fills the cozy cyber-café. The Barista wipes down the metallic counter, looking up with a friendly smile.* \"Welcome to Neon Mug! What can I get started for you today? We've got fresh cyber-brews and synthetic pastries.\"",
                             Difficulty = "Beginner",
-                            Goal = "Luyện tập gọi món, trò chuyện ngắn và tiếng Anh giao tiếp trong quán cà phê.",
+                            Goal = "Practice ordering, small talk, and social English in a café setting.",
                             GrammarTarget = "Sử dụng câu nói lịch sự với 'Would like' hoặc động từ khuyết thiếu 'Could/May'.",
                             ImageUrl = "/scenario_coffee.png",
                             Locked = false,
@@ -152,7 +155,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 1,
                             Stage = "Stage 1",
                             StartSuspicion = 10,
-                            Title = "Giao tiếp tại Quán Cà phê",
+                            Title = "Coffee Shop Conversations",
                             XpReward = 150
                         },
                         new
@@ -161,15 +164,15 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*The Supervisor taps their digital clipboard impatiently as you step into the assembly bay. The neon screens flicker behind them.* \"You're late. We have a heavy shipment of hover-car battery cores to calibrate today. Let me know when you're ready for your instructions.\"",
                             Difficulty = "Beginner",
-                            Goal = "Lắng nghe cẩn thận, hiểu nhiệm vụ và thực hiện với độ chính xác cao.",
+                            Goal = "Listen carefully, understand tasks, and execute with precision.",
                             GrammarTarget = "Sử dụng câu mệnh lệnh (Imperatives) hoặc thể bị động (Passive voice) để xác nhận nhiệm vụ.",
                             ImageUrl = "/scenario_classroom.png",
-                            Locked = true,
+                            Locked = false,
                             MaxSuspicion = 100,
                             NpcId = 2,
                             Stage = "Stage 2",
                             StartSuspicion = 10,
-                            Title = "Làm theo Chỉ dẫn",
+                            Title = "Following Instructions",
                             XpReward = 200
                         },
                         new
@@ -178,7 +181,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*The glass walls of the boardroom overlook the sprawling city skyline. The CEO leans forward, folding their hands.* \"Thank you for coming. We need to reach a deal on the technology sharing agreement. If you agree to our terms, we can sign today. What are your thoughts?\"",
                             Difficulty = "Intermediate",
-                            Goal = "Luyện tập bảo vệ quan điểm và đạt được thỏa thuận bằng tiếng Anh.",
+                            Goal = "Practice arguing your point and reaching agreements in English.",
                             GrammarTarget = "Sử dụng câu điều kiện loại 1 (If... will...) hoặc loại 2 (If... would...) để đàm phán.",
                             ImageUrl = "",
                             Locked = true,
@@ -186,7 +189,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 3",
                             StartSuspicion = 10,
-                            Title = "Tranh luận & Đàm phán",
+                            Title = "Debate & Negotiation",
                             XpReward = 300
                         },
                         new
@@ -195,7 +198,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*You sit opposite the interviewer in a sleek high-tech office. The HR manager smiles warmly.* \"Welcome. I've reviewed your credentials and they look impressive. To begin, could you tell me why you want to work here at CyberTech Industries?\"",
                             Difficulty = "Intermediate",
-                            Goal = "Vượt qua buổi phỏng vấn xin việc bằng tiếng Anh với vốn từ vựng chuyên nghiệp và tự tin.",
+                            Goal = "Ace an English job interview with proper vocabulary and confidence.",
                             GrammarTarget = "Sử dụng câu phức chứa mệnh đề quan hệ (Relative Clauses) hoặc liên từ (Because, Although).",
                             ImageUrl = "",
                             Locked = true,
@@ -203,7 +206,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 4",
                             StartSuspicion = 10,
-                            Title = "Phỏng vấn Xin việc",
+                            Title = "Job Interview",
                             XpReward = 350
                         },
                         new
@@ -212,15 +215,15 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*Rain beats against the dirty precinct window. Chief Detective Henderson tosses a case file containing glowing holograms onto the table.* \"Grab a seat. The cyber-vault at Sector 7 was cracked wide open last night. Tell me exactly what you found at the crime scene.\"",
                             Difficulty = "Advanced",
-                            Goal = "Mô tả hiện trường vụ án và phá giải các bí ẩn bằng văn bản tiếng Anh.",
+                            Goal = "Describe scenes and solve mysteries in written English.",
                             GrammarTarget = "Sử dụng trạng từ mô tả (Descriptive Adverbs) và thì Quá khứ đơn (Past Simple) để báo cáo chứng cứ.",
                             ImageUrl = "/scenario_detective.png",
-                            Locked = true,
+                            Locked = false,
                             MaxSuspicion = 100,
                             NpcId = 3,
                             Stage = "Stage 5",
                             StartSuspicion = 10,
-                            Title = "Báo cáo Điều tra",
+                            Title = "Detective Writing",
                             XpReward = 500
                         },
                         new
@@ -229,7 +232,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             ApprovalStatus = 0,
                             Description = "*You stand in the dim undercity market, surrounded by holographic advertisements. A shady merchant whispers from the shadows.* \"Psst... I hear you're looking for the decryption key. I might have it, but it's going to cost you. What did you bring to trade?\"",
                             Difficulty = "Advanced",
-                            Goal = "Xử lý các tình huống phức tạp có nhiều nhân vật với mục tiêu đa lớp.",
+                            Goal = "Complex multi-character scenarios with layered objectives.",
                             GrammarTarget = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao.",
                             ImageUrl = "",
                             Locked = true,
@@ -237,7 +240,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 3,
                             Stage = "Stage 6",
                             StartSuspicion = 10,
-                            Title = "Nhập vai Nâng cao",
+                            Title = "Advanced Roleplay",
                             XpReward = 600
                         });
                 });
@@ -278,29 +281,29 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Một nhân viên pha chế thân thiện trong quán cà phê cyberpunk neon rực rỡ.",
+                            Description = "A friendly coffee shop barista in a cyberpunk neon café.",
                             Name = "Barista",
                             NpcEmoji = "☕",
-                            Personality = "Lịch sự, chu đáo, nhưng dễ bị bối rối trước các yêu cầu phức tạp hoặc hành vi đáng ngờ.",
-                            Role = "Pha chế"
+                            Personality = "Polite, helpful, but easily confused by complex orders or suspicious behavior.",
+                            Role = "Barista"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Giám sát viên vận hành nghiêm khắc kiểm soát hiệu suất làm việc.",
+                            Description = "A strict operations supervisor monitoring efficiency.",
                             Name = "Supervisor",
                             NpcEmoji = "📋",
-                            Personality = "Nghiêm khắc, chú trọng chi tiết, đòi hỏi sự chính xác tuyệt đối và tiếng Anh chuyên nghiệp cao.",
-                            Role = "Giám sát viên"
+                            Personality = "Strict, detail-oriented, expects absolute precision and highly professional English.",
+                            Role = "Supervisor"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Thanh tra kỳ cựu đang phân tích bằng chứng tội phạm.",
+                            Description = "A veteran inspector analyzing crime evidence.",
                             Name = "Chief Detective",
                             NpcEmoji = "🔍",
-                            Personality = "Sắc sảo, hoài nghi, tính phân tích cao, giao tiếp bằng các thuật ngữ thám tử ngắn gọn, trang trọng.",
-                            Role = "Thám tử Trưởng"
+                            Personality = "Sharp, cynical, highly analytical, speaks in short, formal detective terms.",
+                            Role = "Chief Detective"
                         });
                 });
 
@@ -379,27 +382,27 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.",
+                            Description = "Reveals hidden clues and hints in dialogues.",
                             Emoji = "🔍",
-                            Name = "Kính Lúp Thám Tử",
+                            Name = "Detective Magnifier",
                             PriceXp = 200,
                             Type = 1
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Giảm ngay lập tức 20 điểm nghi ngờ từ phía NPC.",
+                            Description = "Instantly reduces suspicion by 20 points.",
                             Emoji = "✨",
-                            Name = "Khéo Ăn Khéo Nói",
+                            Name = "Golden Tongue",
                             PriceXp = 500,
                             Type = 2
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Vật phẩm trang trí hiếm có phù hợp cho một điệp viên xâm nhập bậc thầy.",
+                            Description = "A rare cosmetic item that fits a master infiltrator.",
                             Emoji = "🧥",
-                            Name = "Áo Choàng Bóng Đêm",
+                            Name = "Shadow Cape",
                             PriceXp = 1000,
                             Type = 3
                         });
@@ -442,22 +445,42 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Quyền truy cập miễn phí giới hạn vào các kịch bản bắt đầu",
+                            Description = "Free access to starter missions",
                             DurationDays = 0,
-                            Features = new List<string> { "Kịch bản khởi đầu", "Năng lượng mỗi ngày" },
-                            Name = "Gói Miễn Phí",
+                            Features = new List<string> { "Starter Missions", "Daily Energy" },
+                            Name = "Basic",
                             Price = 0m,
                             Tier = 0
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Mở khóa toàn bộ tính năng và kịch bản cao cấp",
+                            Description = "Unlock all features for 30 days",
                             DurationDays = 30,
-                            Features = new List<string> { "Toàn bộ Kịch bản", "Năng lượng vô cực", "Phản hồi AI nâng cao" },
-                            Name = "Premium VIP",
-                            Price = 199000m,
+                            Features = new List<string> { "All Missions", "Unlimited Energy", "Advanced AI feedback" },
+                            Name = "Monthly Premium",
+                            Price = 49000m,
                             Tier = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Best value for serious learners",
+                            DurationDays = 365,
+                            Features = new List<string> { "All Missions", "Unlimited Energy", "Priority Support", "Certificate" },
+                            Name = "Yearly Premium",
+                            Price = 450000m,
+                            Tier = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Pay once, access forever",
+                            DurationDays = 0,
+                            Features = new List<string> { "All Missions", "Unlimited Energy", "Lifetime Updates", "VIP Badge" },
+                            Name = "Lifetime Premium",
+                            Price = 1200000m,
+                            Tier = 3
                         });
                 });
 

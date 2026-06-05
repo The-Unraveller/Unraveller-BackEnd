@@ -28,8 +28,16 @@ public class ShopController : ControllerBase
     [HttpGet("items")]
     public async Task<ActionResult<IEnumerable<ShopItemDto>>> GetItems()
     {
-        var items = await _shopService.GetShopItemsAsync();
-        return Ok(items);
+        try
+        {
+            var userId = GetUserId();
+            var items = await _shopService.GetShopItemsAsync(userId);
+            return Ok(items);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
     }
 
     [HttpGet("inventory")]
