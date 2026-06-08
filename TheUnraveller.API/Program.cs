@@ -88,7 +88,7 @@ builder.Services.AddScoped<IShopRepository, ShopRepository>();
 
 // Register Services
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
-builder.Services.AddHttpClient<IAIEvaluationService, AIEvaluationService>();
+builder.Services.AddHttpClient<IAIEvaluationService, AIEvaluationService>(client => client.Timeout = TimeSpan.FromSeconds(120));
 builder.Services.AddScoped<IMissionService, MissionService>();
 builder.Services.AddScoped<IMissionManagementService, MissionManagementService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();

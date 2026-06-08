@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608041618_UpdateMissionImages")]
+    partial class UpdateMissionImages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -357,9 +360,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("DiscountPriceXp")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Emoji")
                         .IsRequired()
                         .HasColumnType("text");
@@ -383,7 +383,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         {
                             Id = 1,
                             Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.",
-                            DiscountPriceXp = 0,
                             Emoji = "🔍",
                             Name = "Kính Lúp Thám Tử",
                             PriceXp = 200,
@@ -393,7 +392,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         {
                             Id = 2,
                             Description = "Giảm ngay lập tức 20 điểm nghi ngờ từ phía NPC.",
-                            DiscountPriceXp = 0,
                             Emoji = "✨",
                             Name = "Khéo Ăn Khéo Nói",
                             PriceXp = 500,
@@ -403,7 +401,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         {
                             Id = 3,
                             Description = "Vật phẩm trang trí hiếm có phù hợp cho một điệp viên xâm nhập bậc thầy.",
-                            DiscountPriceXp = 0,
                             Emoji = "🧥",
                             Name = "Áo Choàng Bóng Đêm",
                             PriceXp = 1000,

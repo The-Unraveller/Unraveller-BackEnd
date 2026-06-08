@@ -140,4 +140,44 @@ public class GameController : ControllerBase
             return BadRequest(new UseGameItemResponseDto(false, $"Lỗi hệ thống: {ex.Message}", 0, null));
         }
     }
+
+    [HttpGet("certificate/{token}")]
+    public async Task<ActionResult> GetCertificateByToken(string token)
+    {
+        try
+        {
+            var progress = await _userProgressRepository.GetUserProgressByTokenAsync(token);
+            if (progress == null)
+            {
+                return NotFound(new { error = "Không tìm thấy chứng chỉ tương ứng với mã token này." });
+            }
+
+            return Ok(new
+            {
+                Token = progress.CompletionToken,
+                CompletedAt = progress.CompletedAt ?? progress.LastActivity,
+                XpEarned = progress.XpEarned,
+                TurnCount = progress.TurnCount,
+                User = new
+                {
+                    Username = progress.User.Username,
+                    EnglishLevel = progress.User.EnglishLevel
+                },
+                Mission = new
+                {
+                    Id = progress.Mission.Id,
+                    Title = progress.Mission.Title,
+                    Goal = progress.Mission.Goal,
+                    GrammarTarget = progress.Mission.GrammarTarget,
+                    Stage = progress.Mission.Stage,
+                    Difficulty = progress.Mission.Difficulty,
+                    NpcName = progress.Mission.Npc?.Name ?? "NPC"
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }
