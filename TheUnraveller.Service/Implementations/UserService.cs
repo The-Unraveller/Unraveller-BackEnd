@@ -47,7 +47,9 @@ public class UserService : IUserService
                 CurrentSuspicion = p.CurrentSuspicion,
                 Status = p.Status.ToString(),
                 TurnCount = p.TurnCount,
-                XpEarned = p.XpEarned
+                XpEarned = p.XpEarned,
+                CompletionToken = p.CompletionToken,
+                CompletedAt = p.CompletedAt
             }).ToList()
         };
     }
