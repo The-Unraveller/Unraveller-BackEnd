@@ -23,4 +23,8 @@ public class UserProgress
     public int XpEarned { get; set; } = 0;
     
     public DateTime LastActivity { get; set; }
+    
+    public string? CompletionToken { get; set; }
+    public DateTime? CompletedAt { get; set; }
 }
+

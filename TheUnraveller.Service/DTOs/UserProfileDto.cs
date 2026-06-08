@@ -34,6 +34,8 @@ public class UserMissionProgressDto
     public string Status { get; set; } = string.Empty; // "InProgress", "Completed", "Failed"
     public int TurnCount { get; set; }
     public int XpEarned { get; set; }
+    public string? CompletionToken { get; set; }
+    public DateTime? CompletedAt { get; set; }
 }
 
 public class UpdateEnglishLevelRequestDto

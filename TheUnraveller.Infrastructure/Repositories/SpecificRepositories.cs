@@ -38,6 +38,12 @@ public class UserProgressRepository : GenericRepository<UserProgress>, IUserProg
 
     public async Task<IEnumerable<UserProgress>> GetUserProgressesAsync(int userId) =>
         await _dbSet.Where(up => up.UserId == userId).ToListAsync();
+
+    public async Task<UserProgress?> GetUserProgressByTokenAsync(string token) =>
+        await _dbSet.Include(up => up.User)
+                    .Include(up => up.Mission)
+                    .ThenInclude(m => m.Npc)
+                    .FirstOrDefaultAsync(up => up.CompletionToken == token);
 }
 
 public class DialogueRepository : GenericRepository<Dialogue>, IDialogueRepository
