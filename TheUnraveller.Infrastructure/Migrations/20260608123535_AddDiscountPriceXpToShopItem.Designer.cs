@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608123535_AddDiscountPriceXpToShopItem")]
+    partial class AddDiscountPriceXpToShopItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,7 +183,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Difficulty = "Intermediate",
                             Goal = "Luyện tập bảo vệ quan điểm và đạt được thỏa thuận bằng tiếng Anh.",
                             GrammarTarget = "Sử dụng câu điều kiện loại 1 (If... will...) hoặc loại 2 (If... would...) để đàm phán.",
-                            ImageUrl = "/scenario_boardroom.png",
+                            ImageUrl = "",
                             Locked = true,
                             MaxSuspicion = 100,
                             NpcId = 2,
@@ -197,7 +200,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Difficulty = "Intermediate",
                             Goal = "Vượt qua buổi phỏng vấn xin việc bằng tiếng Anh với vốn từ vựng chuyên nghiệp và tự tin.",
                             GrammarTarget = "Sử dụng câu phức chứa mệnh đề quan hệ (Relative Clauses) hoặc liên từ (Because, Although).",
-                            ImageUrl = "/scenario_interview.png",
+                            ImageUrl = "",
                             Locked = true,
                             MaxSuspicion = 100,
                             NpcId = 2,
@@ -231,7 +234,7 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Difficulty = "Advanced",
                             Goal = "Xử lý các tình huống phức tạp có nhiều nhân vật với mục tiêu đa lớp.",
                             GrammarTarget = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao.",
-                            ImageUrl = "/scenario_undercity.png",
+                            ImageUrl = "",
                             Locked = true,
                             MaxSuspicion = 100,
                             NpcId = 3,
@@ -624,12 +627,6 @@ namespace TheUnraveller.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("CompletionToken")
-                        .HasColumnType("text");
-
                     b.Property<int>("CurrentSuspicion")
                         .HasColumnType("integer");
 
@@ -664,8 +661,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 10,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-2-1",
                             CurrentSuspicion = 15,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 1,
@@ -677,8 +672,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 11,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-2-2",
                             CurrentSuspicion = 20,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 2,
@@ -690,8 +683,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 12,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-2-3",
                             CurrentSuspicion = 25,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 3,
@@ -703,8 +694,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 13,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-2-4",
                             CurrentSuspicion = 30,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 4,
@@ -716,8 +705,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 20,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-3-1",
                             CurrentSuspicion = 10,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 1,
@@ -729,8 +716,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 21,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-3-2",
                             CurrentSuspicion = 15,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 2,
@@ -742,8 +727,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 22,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-3-3",
                             CurrentSuspicion = 20,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 3,
@@ -755,8 +738,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 23,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-3-4",
                             CurrentSuspicion = 25,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 4,
@@ -768,8 +749,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 30,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-4-1",
                             CurrentSuspicion = 20,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 1,
@@ -781,8 +760,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 31,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-4-2",
                             CurrentSuspicion = 22,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 2,
@@ -794,8 +771,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 32,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-4-3",
                             CurrentSuspicion = 25,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 3,
@@ -807,8 +782,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 33,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-4-4",
                             CurrentSuspicion = 28,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 4,
@@ -820,8 +793,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 40,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-1-1",
                             CurrentSuspicion = 30,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 1,
@@ -833,8 +804,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         new
                         {
                             Id = 41,
-                            CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CompletionToken = "UNRV-SEED-1-2",
                             CurrentSuspicion = 35,
                             LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             MissionId = 2,

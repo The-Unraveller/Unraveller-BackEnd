@@ -4,9 +4,9 @@ namespace TheUnraveller.Core.Entities;
 
 public enum ItemType
 {
-    InGameHint = 1,  // Gợi ý câu trả lời tự động trong màn chơi
-    BribeNpc = 2,    // Giảm độ nghi ngờ lập tức
-    Cosmetic = 3     // Khung avatar hoặc huy hiệu trang trí
+    InGameHint = 1, // Gợi ý câu trả lời tự động trong màn chơi
+    BribeNpc = 2, // Giảm độ nghi ngờ lập tức
+    Cosmetic = 3 // Khung avatar hoặc huy hiệu trang trí
 }
 
 public class ShopItem
@@ -24,6 +24,8 @@ public class ShopItem
 
     [Required]
     public int PriceXp { get; set; }
+
+    public int DiscountPriceXp { get; set; }
 
     public string Emoji { get; set; } = "📦";
 }

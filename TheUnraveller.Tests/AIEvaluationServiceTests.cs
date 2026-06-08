@@ -45,12 +45,34 @@ public class AIEvaluationServiceTests : IDisposable
     {
         // Ensure default seeded User 1 has clean energy and XP values for testing
         var user = _context.Users.Find(1);
-        if (user != null)
+        if (user == null)
+        {
+            user = new User
+            {
+                Id = 1,
+                Username = "KHOA_PRO",
+                Email = "khoapro@gmail.com",
+                PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=",
+                Role = UserRole.User,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                Energy = 100,
+                MaxEnergy = 100,
+                LastEnergyRechargedAt = DateTime.UtcNow,
+                StreakCount = 0,
+                LastActiveDate = null,
+                XpBalance = 0,
+                IsPremium = false,
+                EnglishLevel = "B1"
+            };
+            _context.Users.Add(user);
+        }
+        else
         {
             user.Energy = 100;
             user.MaxEnergy = 100;
             user.LastEnergyRechargedAt = DateTime.UtcNow;
             user.XpBalance = 0;
+            user.EnglishLevel = "B1";
             _context.Users.Update(user);
         }
 
@@ -224,7 +246,7 @@ public class AIEvaluationServiceTests : IDisposable
             ""XpEarned"": 15
         }";
 
-        string capturedRequestContent = null;
+        string? capturedRequestContent = null;
         var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         handlerMock
             .Protected()

@@ -124,14 +124,6 @@ public class AppDbContext : DbContext
             .HasForeignKey(m => m.CreatedByUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Seed default users
-        modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null }
-        );
-
         // Seed NPCs
         modelBuilder.Entity<Npc>().HasData(
             new Npc { Id = 1, Name = "Barista", Role = "Pha chế", Description = "Một nhân viên pha chế thân thiện trong quán cà phê cyberpunk neon rực rỡ.", Personality = "Lịch sự, chu đáo, nhưng dễ bị bối rối trước các yêu cầu phức tạp hoặc hành vi đáng ngờ.", NpcEmoji = "☕" },
@@ -148,29 +140,13 @@ public class AppDbContext : DbContext
             new Mission { Id = 6, Title = "Nhập vai Nâng cao", Goal = "Xử lý các tình huống phức tạp có nhiều nhân vật với mục tiêu đa lớp.", Description = "*You stand in the dim undercity market, surrounded by holographic advertisements. A shady merchant whispers from the shadows.* \"Psst... I hear you're looking for the decryption key. I might have it, but it's going to cost you. What did you bring to trade?\"", StartSuspicion = 10, MaxSuspicion = 100, Stage = "Stage 6", Difficulty = "Advanced", XpReward = 600, ImageUrl = "/scenario_undercity.png", Locked = true, NpcId = 3, GrammarTarget = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao." }
         );
 
-        // Seed user progresses
-        modelBuilder.Entity<UserProgress>().HasData(
-            new UserProgress { Id = 10, UserId = 2, MissionId = 1, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-2-1", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 11, UserId = 2, MissionId = 2, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1200, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-2-2", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 12, UserId = 2, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-2-3", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 13, UserId = 2, MissionId = 4, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1300, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-2-4", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 20, UserId = 3, MissionId = 1, CurrentSuspicion = 10, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 950, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-3-1", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 21, UserId = 3, MissionId = 2, CurrentSuspicion = 15, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-3-2", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 22, UserId = 3, MissionId = 3, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-3-3", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 23, UserId = 3, MissionId = 4, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 1000, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-3-4", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 30, UserId = 4, MissionId = 1, CurrentSuspicion = 20, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-4-1", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 31, UserId = 4, MissionId = 2, CurrentSuspicion = 22, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-4-2", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 32, UserId = 4, MissionId = 3, CurrentSuspicion = 25, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-4-3", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 33, UserId = 4, MissionId = 4, CurrentSuspicion = 28, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 800, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-4-4", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 40, UserId = 1, MissionId = 1, CurrentSuspicion = 30, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 600, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-1-1", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new UserProgress { Id = 41, UserId = 1, MissionId = 2, CurrentSuspicion = 35, Status = MissionStatus.Completed, TurnCount = 5, XpEarned = 650, LastActivity = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), CompletionToken = "UNRV-SEED-1-2", CompletedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
-        );
-
         // Seed ShopItems
         modelBuilder.Entity<ShopItem>().HasData(
-            new ShopItem { Id = 1, Name = "Kính Lúp Thám Tử", Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, Emoji = "🔍" },
+            new ShopItem { Id = 1, Name = "Kính Lúp Thám Tử", Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, DiscountPriceXp = 160, Emoji = "🔍" },
             new ShopItem { Id = 2, Name = "Khéo Ăn Khéo Nói", Description = "Giảm ngay lập tức 20 điểm nghi ngờ từ phía NPC.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "✨" },
             new ShopItem { Id = 3, Name = "Áo Choàng Bóng Đêm", Description = "Vật phẩm trang trí hiếm có phù hợp cho một điệp viên xâm nhập bậc thầy.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🧥" }
         );
     }
 }
+
+
