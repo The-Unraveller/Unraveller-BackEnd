@@ -2,6 +2,8 @@ using TheUnraveller.Core.Entities;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace TheUnraveller.Service.Implementations;
 
@@ -12,7 +14,7 @@ public class ShopService : IShopService
     private readonly IUserProgressRepository _userProgressRepository;
 
     public ShopService(
-        IShopRepository shopRepository, 
+        IShopRepository shopRepository,
         IUserRepository userRepository,
         IUserProgressRepository userProgressRepository)
     {
@@ -34,7 +36,7 @@ public class ShopService : IShopService
             Description = i.Description,
             Type = i.Type.ToString(),
             PriceXp = i.PriceXp,
-            DiscountPriceXp = isPremium ? (int)(i.PriceXp * 0.8) : i.PriceXp,
+            DiscountPriceXp = i.DiscountPriceXp > 0 ? i.DiscountPriceXp : (isPremium ? (int)(i.PriceXp * 0.8) : i.PriceXp),
             Emoji = i.Emoji
         });
     }
@@ -57,8 +59,9 @@ public class ShopService : IShopService
         }
 
         user.XpBalance -= actualPrice;
+        int quantityToAdd = request.Quantity > 0 ? request.Quantity : 1;
         int currentQuantity = await _shopRepository.GetItemQuantityAsync(userId, item.Id);
-        await _shopRepository.UpdateItemQuantityAsync(userId, item.Id, currentQuantity + 1);
+        await _shopRepository.UpdateItemQuantityAsync(userId, item.Id, currentQuantity + quantityToAdd);
 
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();
@@ -68,7 +71,7 @@ public class ShopService : IShopService
             Success = true,
             Message = $"Successfully bought {item.Name}!",
             NewXpBalance = user.XpBalance,
-            NewQuantity = currentQuantity + 1
+            NewQuantity = currentQuantity + quantityToAdd
         };
     }
 
@@ -132,5 +135,59 @@ public class ShopService : IShopService
             Quantity = ui.Quantity,
             Emoji = ui.Item?.Emoji ?? "📦"
         });
+    }
+
+    public async Task<ShopItemDto> CreateShopItemAsync(ShopItemCreateDto dto)
+    {
+        var item = new ShopItem
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            Type = dto.Type,
+            PriceXp = dto.PriceXp,
+            DiscountPriceXp = dto.DiscountPriceXp,
+            Emoji = dto.Emoji
+        };
+
+        _shopRepository.Add(item);
+        await _shopRepository.SaveChangesAsync();
+
+        return new ShopItemDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Description = item.Description,
+            Type = item.Type.ToString(),
+            PriceXp = item.PriceXp,
+            DiscountPriceXp = item.DiscountPriceXp,
+            Emoji = item.Emoji
+        };
+    }
+
+    public async Task<bool> UpdateShopItemAsync(int id, ShopItemUpdateDto dto)
+    {
+        var item = await _shopRepository.GetByIdAsync(id);
+        if (item == null) return false;
+
+        if (!string.IsNullOrEmpty(dto.Name)) item.Name = dto.Name;
+        if (dto.Description != null) item.Description = dto.Description;
+        if (dto.Type.HasValue) item.Type = dto.Type.Value;
+        if (dto.PriceXp.HasValue) item.PriceXp = dto.PriceXp.Value;
+        if (dto.DiscountPriceXp.HasValue) item.DiscountPriceXp = dto.DiscountPriceXp.Value;
+        if (!string.IsNullOrEmpty(dto.Emoji)) item.Emoji = dto.Emoji;
+
+        _shopRepository.Update(item);
+        await _shopRepository.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteShopItemAsync(int id)
+    {
+        var item = await _shopRepository.GetByIdAsync(id);
+        if (item == null) return false;
+
+        _shopRepository.Delete(item);
+        await _shopRepository.SaveChangesAsync();
+        return true;
     }
 }

@@ -52,6 +52,9 @@ public interface IShopService
     Task<BuyItemResponseDto> BuyItemAsync(int userId, BuyItemRequestDto request);
     Task<UseItemResponseDto> UseItemAsync(int userId, UseItemRequestDto request);
     Task<IEnumerable<UserInventoryDto>> GetUserInventoryAsync(int userId);
+    Task<ShopItemDto> CreateShopItemAsync(ShopItemCreateDto dto);
+    Task<bool> UpdateShopItemAsync(int id, ShopItemUpdateDto dto);
+    Task<bool> DeleteShopItemAsync(int id);
 }
 
 public interface IMissionManagementService

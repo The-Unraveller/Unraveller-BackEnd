@@ -124,14 +124,6 @@ public class AppDbContext : DbContext
             .HasForeignKey(m => m.CreatedByUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Seed default users
-        modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "KHOA_PRO", Email = "khoapro@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 2, Username = "Minh Khôi", Email = "minhkhoi@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 3, Username = "Lan Anh", Email = "lananh@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null },
-            new User { Id = 4, Username = "Tuấn Khoa", Email = "tuankhoa@gmail.com", PasswordHash = "AQAAAAIAAYagAAAAENK5j34f8aH1J11qK7bV5P9mH0Vn0E9G5tWp2e/o9v8u9p8n8=", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastEnergyRechargedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), LastActiveDate = null }
-        );
-
         // Seed NPCs
         modelBuilder.Entity<Npc>().HasData(
             new Npc { Id = 1, Name = "Barista", Role = "Pha chế", Description = "Một nhân viên pha chế thân thiện trong quán cà phê cyberpunk neon rực rỡ.", Personality = "Lịch sự, chu đáo, nhưng dễ bị bối rối trước các yêu cầu phức tạp hoặc hành vi đáng ngờ.", NpcEmoji = "☕" },
@@ -168,9 +160,11 @@ public class AppDbContext : DbContext
 
         // Seed ShopItems
         modelBuilder.Entity<ShopItem>().HasData(
-            new ShopItem { Id = 1, Name = "Kính Lúp Thám Tử", Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, Emoji = "🔍" },
+            new ShopItem { Id = 1, Name = "Kính Lúp Thám Tử", Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, DiscountPriceXp = 160, Emoji = "🔍" },
             new ShopItem { Id = 2, Name = "Khéo Ăn Khéo Nói", Description = "Giảm ngay lập tức 20 điểm nghi ngờ từ phía NPC.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "✨" },
             new ShopItem { Id = 3, Name = "Áo Choàng Bóng Đêm", Description = "Vật phẩm trang trí hiếm có phù hợp cho một điệp viên xâm nhập bậc thầy.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🧥" }
         );
     }
 }
+
+

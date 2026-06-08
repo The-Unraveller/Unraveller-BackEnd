@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using TheUnraveller.Core.Entities;
 using TheUnraveller.Core.Exceptions;
+using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -12,10 +15,12 @@ namespace TheUnraveller.API.Controllers;
 public class ModeratorController : ControllerBase
 {
     private readonly IMissionManagementService _missionManagementService;
+    private readonly IShopService _shopService;
 
-    public ModeratorController(IMissionManagementService missionManagementService)
+    public ModeratorController(IMissionManagementService missionManagementService, IShopService shopService)
     {
         _missionManagementService = missionManagementService;
+        _shopService = shopService;
     }
 
     [HttpGet("missions")]
@@ -33,7 +38,7 @@ public class ModeratorController : ControllerBase
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null) return Unauthorized();
-        
+
         int creatorId = int.Parse(userIdClaim.Value);
 
         try
@@ -86,5 +91,51 @@ public class ModeratorController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    // ── Shop Items CRUD (Moderator + Admin) ──
+
+    [HttpGet("shop-items")]
+    public async Task<IActionResult> GetShopItems()
+    {
+        var items = await _shopService.GetShopItemsAsync(0);
+        return Ok(items);
+    }
+
+    [HttpPost("shop-items")]
+    public async Task<IActionResult> CreateShopItem([FromBody] ShopItemCreateDto dto)
+    {
+        try
+        {
+            var item = await _shopService.CreateShopItemAsync(dto);
+            return Ok(item);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("shop-items/{id}")]
+    public async Task<IActionResult> UpdateShopItem(int id, [FromBody] ShopItemUpdateDto dto)
+    {
+        try
+        {
+            var success = await _shopService.UpdateShopItemAsync(id, dto);
+            if (!success) return NotFound(new { error = "Shop item not found" });
+            return Ok(new { message = "Shop item updated successfully" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("shop-items/{id}")]
+    public async Task<IActionResult> DeleteShopItem(int id)
+    {
+        var success = await _shopService.DeleteShopItemAsync(id);
+        if (!success) return NotFound(new { error = "Shop item not found" });
+        return Ok(new { message = "Shop item deleted successfully" });
     }
 }

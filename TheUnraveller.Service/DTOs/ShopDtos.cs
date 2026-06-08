@@ -14,6 +14,7 @@ public class ShopItemDto
 public class BuyItemRequestDto
 {
     public int ItemId { get; set; }
+    public int Quantity { get; set; } = 1;
 }
 
 public class BuyItemResponseDto

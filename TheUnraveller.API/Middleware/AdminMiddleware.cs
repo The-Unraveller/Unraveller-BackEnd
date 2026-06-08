@@ -15,15 +15,14 @@ public class AdminMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Only apply to /api/Admin endpoints
         if (context.Request.Path.StartsWithSegments("/api/Admin"))
         {
             var user = context.User;
-            if (user?.Identity?.IsAuthenticated != true || 
-                !user.HasClaim(ClaimTypes.Role, "Admin"))
+            if (user?.Identity?.IsAuthenticated != true ||
+                (!user.HasClaim(ClaimTypes.Role, "Admin") && !user.HasClaim(ClaimTypes.Role, "Moderator")))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsJsonAsync(new { error = "Access denied. Admin privileges required." });
+                await context.Response.WriteAsJsonAsync(new { error = "Access denied. Admin or Moderator privileges required." });
                 return;
             }
         }

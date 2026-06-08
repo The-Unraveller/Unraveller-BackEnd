@@ -46,7 +46,6 @@ public class MissionManagementService : IMissionManagementService
 
     public async Task<bool> CreateMissionAsync(MissionCreateDto dto, int creatorId)
     {
-        // 1. Domain Validation
         if (string.IsNullOrWhiteSpace(dto.Title))
             throw new DomainException("Mission title cannot be empty.");
 
@@ -57,7 +56,6 @@ public class MissionManagementService : IMissionManagementService
         if (npc == null)
             throw new DomainException($"NPC with ID {dto.NpcId} does not exist.");
 
-        // 2. Map Entity
         var newMission = new Mission
         {
             Title = dto.Title,
@@ -69,7 +67,7 @@ public class MissionManagementService : IMissionManagementService
             Difficulty = string.IsNullOrEmpty(dto.Difficulty) ? "Beginner" : dto.Difficulty,
             XpReward = dto.XpReward,
             ImageUrl = dto.ImageUrl,
-            Locked = true, // Default to locked
+            Locked = true,
             NpcId = dto.NpcId,
             ApprovalStatus = ApprovalStatus.Pending,
             RejectionReason = null,
@@ -77,7 +75,6 @@ public class MissionManagementService : IMissionManagementService
             GrammarTarget = dto.GrammarTarget
         };
 
-        // 3. Save
         await _missionRepository.AddAsync(newMission);
         await _missionRepository.SaveChangesAsync();
         return true;
@@ -93,6 +90,10 @@ public class MissionManagementService : IMissionManagementService
         if (!string.IsNullOrEmpty(dto.Goal)) mission.Goal = dto.Goal;
         if (!string.IsNullOrEmpty(dto.Description)) mission.Description = dto.Description;
         if (dto.XpReward.HasValue) mission.XpReward = dto.XpReward.Value;
+        if (!string.IsNullOrEmpty(dto.Stage)) mission.Stage = dto.Stage;
+        if (!string.IsNullOrEmpty(dto.Difficulty)) mission.Difficulty = dto.Difficulty;
+        if (dto.NpcId.HasValue) mission.NpcId = dto.NpcId.Value;
+        if (!string.IsNullOrEmpty(dto.ImageUrl)) mission.ImageUrl = dto.ImageUrl;
 
         await _missionRepository.UpdateAsync(mission);
         await _missionRepository.SaveChangesAsync();
@@ -107,7 +108,7 @@ public class MissionManagementService : IMissionManagementService
 
         mission.ApprovalStatus = ApprovalStatus.Approved;
         mission.RejectionReason = null;
-        mission.Locked = false; // Unlock for gameplay
+        mission.Locked = false;
 
         await _missionRepository.UpdateAsync(mission);
         await _missionRepository.SaveChangesAsync();
@@ -125,7 +126,7 @@ public class MissionManagementService : IMissionManagementService
 
         mission.ApprovalStatus = ApprovalStatus.Rejected;
         mission.RejectionReason = reason;
-        mission.Locked = true; // Keep locked
+        mission.Locked = true;
 
         await _missionRepository.UpdateAsync(mission);
         await _missionRepository.SaveChangesAsync();

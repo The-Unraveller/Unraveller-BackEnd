@@ -15,11 +15,13 @@ public class AdminController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IMissionManagementService _missionManagementService;
+    private readonly IShopService _shopService;
 
-    public AdminController(IUserRepository userRepository, IMissionManagementService missionManagementService)
+    public AdminController(IUserRepository userRepository, IMissionManagementService missionManagementService, IShopService shopService)
     {
         _userRepository = userRepository;
         _missionManagementService = missionManagementService;
+        _shopService = shopService;
     }
 
     [HttpGet("users")]
@@ -107,5 +109,51 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    // ── Shop Items CRUD ──
+
+    [HttpGet("shop-items")]
+    public async Task<IActionResult> GetAllShopItems()
+    {
+        var items = await _shopService.GetShopItemsAsync(0);
+        return Ok(items);
+    }
+
+    [HttpPost("shop-items")]
+    public async Task<IActionResult> CreateShopItem([FromBody] ShopItemCreateDto dto)
+    {
+        try
+        {
+            var item = await _shopService.CreateShopItemAsync(dto);
+            return Ok(item);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("shop-items/{id}")]
+    public async Task<IActionResult> UpdateShopItem(int id, [FromBody] ShopItemUpdateDto dto)
+    {
+        try
+        {
+            var success = await _shopService.UpdateShopItemAsync(id, dto);
+            if (!success) return NotFound(new { error = "Shop item not found" });
+            return Ok(new { message = "Shop item updated successfully" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("shop-items/{id}")]
+    public async Task<IActionResult> DeleteShopItem(int id)
+    {
+        var success = await _shopService.DeleteShopItemAsync(id);
+        if (!success) return NotFound(new { error = "Shop item not found" });
+        return Ok(new { message = "Shop item deleted successfully" });
     }
 }

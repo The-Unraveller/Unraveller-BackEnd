@@ -1,10 +1,12 @@
+using TheUnraveller.Core.Entities;
+
 namespace TheUnraveller.Service.DTOs;
 
 public class UserUpdateDto
 {
     public int? XpBalance { get; set; }
     public int? Energy { get; set; }
-    public int? Role { get; set; } // Using int for UserRole enum
+    public int? Role { get; set; }
     public bool? IsPremium { get; set; }
     public string? EnglishLevel { get; set; }
 }
@@ -15,6 +17,10 @@ public class MissionUpdateDto
     public string? Goal { get; set; }
     public string? Description { get; set; }
     public int? XpReward { get; set; }
+    public string? Stage { get; set; }
+    public string? Difficulty { get; set; }
+    public int? NpcId { get; set; }
+    public string? ImageUrl { get; set; }
 }
 
 public class MissionCreateDto
@@ -71,4 +77,24 @@ public class NpcCreateDto
     public string Description { get; set; } = string.Empty;
     public string Personality { get; set; } = string.Empty;
     public string NpcEmoji { get; set; } = string.Empty;
+}
+
+public class ShopItemCreateDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public ItemType Type { get; set; }
+    public int PriceXp { get; set; }
+    public int DiscountPriceXp { get; set; }
+    public string Emoji { get; set; } = "📦";
+}
+
+public class ShopItemUpdateDto
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public ItemType? Type { get; set; }
+    public int? PriceXp { get; set; }
+    public int? DiscountPriceXp { get; set; }
+    public string? Emoji { get; set; }
 }
