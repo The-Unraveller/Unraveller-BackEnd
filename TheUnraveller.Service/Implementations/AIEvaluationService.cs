@@ -406,7 +406,9 @@ ROLEPLAY & EVALUATION RULES:
                 isLose,
                 progress.TurnCount,
                 finalXpEarned,
-                token
+                token,
+                user.Energy,
+                user.MaxEnergy
             );
         }
         catch
