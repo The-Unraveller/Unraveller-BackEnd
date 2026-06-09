@@ -28,7 +28,9 @@ public record DialogueResponseDto(
     bool IsLose,
     int TurnCount,
     int XpEarned,
-    string? CompletionToken = null
+    string? CompletionToken = null,
+    int? UpdatedEnergy = null,
+    int? UpdatedMaxEnergy = null
 );
 
 public class LlmResponseDto
