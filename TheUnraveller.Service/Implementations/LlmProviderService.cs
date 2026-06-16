@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
@@ -12,25 +13,39 @@ public class LlmProviderService : ILLMProviderService
     private readonly string _apiKey;
     private readonly string _baseUrl;
     private readonly string _model;
+    private readonly string _provider;
 
     public LlmProviderService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        
+
+        _provider = configuration["LlmApi:Provider"]?.ToLower() ?? "claude";
+
         var apiKeyConfig = configuration["LlmApi:ApiKey"];
-        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER") 
-            ? "dummy_key" 
+        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER")
+            ? "dummy_key"
             : apiKeyConfig;
-            
+
         var baseUrlConfig = configuration["LlmApi:BaseUrl"];
         _baseUrl = string.IsNullOrEmpty(baseUrlConfig) || baseUrlConfig.Contains("PLACEHOLDER") || !baseUrlConfig.StartsWith("http")
-            ? "https://api.openai.com/v1/" 
+            ? _provider == "gemini"
+                ? "https://generativelanguage.googleapis.com/v1beta"
+                : "https://api.openai.com/v1/"
             : baseUrlConfig;
-            
-        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
+
+        _model = configuration["LlmApi:Model"] ?? (_provider == "gemini" ? "gemini-2.0-flash" : "claude-haiku-4-5");
     }
 
     public async Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage)
+    {
+        return _provider switch
+        {
+            "gemini" => await GetGeminiResponseAsync(systemPrompt, userMessage),
+            _ => await GetClaudeResponseAsync(systemPrompt, userMessage)
+        };
+    }
+
+    private async Task<LlmResponseDto> GetClaudeResponseAsync(string systemPrompt, string userMessage)
     {
         // Safe-guard against Prompt Injection
         var safeUserMessage = $"[USER_TEXT]\n{userMessage}\n[/USER_TEXT]";
@@ -164,6 +179,87 @@ public class LlmProviderService : ILLMProviderService
             {
                 return GetFallbackResponse($"System Error: No JSON object found in response. Raw text: {contentString}");
             }
+        }
+        catch (TaskCanceledException)
+        {
+            return GetFallbackResponse("System Error: The NPC is taking too long to think. Timeout reached.");
+        }
+        catch (Exception ex)
+        {
+            return GetFallbackResponse($"System Error: Unexpected error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task<LlmResponseDto> GetGeminiResponseAsync(string systemPrompt, string userMessage)
+    {
+        // Combine system and user prompts for Gemini (no separate system message)
+        var combinedPrompt = $"{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
+
+        var requestBody = new
+        {
+            contents = new[]
+            {
+                new { parts = new[] { new { text = combinedPrompt } } }
+            },
+            generationConfig = new
+            {
+                temperature = 0.7,
+                maxOutputTokens = 4096
+            }
+        };
+
+        var apiKey = _apiKey;
+        var model = _model;
+        var url = $"{_baseUrl}/models/{model}:generateContent?key={apiKey}";
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            var response = await _httpClient.SendAsync(request, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return GetFallbackResponse($"System Error: Gemini API returned {response.StatusCode}. Details: {errorContent}");
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(responseJson);
+            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+            {
+                var firstCandidate = candidates[0];
+                if (firstCandidate.TryGetProperty("content", out var content) &&
+                    content.TryGetProperty("parts", out var parts) && parts.GetArrayLength() > 0)
+                {
+                    var text = parts[0].GetProperty("text").GetString() ?? "";
+
+                    // Try to extract JSON from the response
+                    var jsonMatch = Regex.Match(text, @"\{.*\s*""NpcResponse""\s*:.*\}", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                    if (jsonMatch.Success)
+                    {
+                        try
+                        {
+                            var result = JsonSerializer.Deserialize<LlmResponseDto>(jsonMatch.Value);
+                            if (result != null) return result;
+                        }
+                        catch { }
+                    }
+
+                    // Fallback: return plain text as NpcResponse
+                    return new LlmResponseDto
+                    {
+                        NpcResponse = text,
+                        Feedback = "AI did not provide structured feedback in expected JSON format.",
+                        SuspicionDelta = 0
+                    };
+                }
+            }
+
+            return GetFallbackResponse("System Error: Gemini response structure invalid (missing candidates/content).");
         }
         catch (TaskCanceledException)
         {
