@@ -286,6 +286,6 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.NotNull(result);
         Assert.NotNull(capturedRequestContent);
         Assert.Contains(expectedInstructionSubstring, capturedRequestContent);
-        Assert.Contains($"PLAYER ENGLISH LEVEL: {level}", capturedRequestContent);
+        Assert.Contains($"Trình độ tiếng Anh: {level}", capturedRequestContent);
     }
 }

@@ -64,6 +64,25 @@ public class GameController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("check-access/{missionId}")]
+    public async Task<ActionResult> CheckMissionAccess(int missionId)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized("User ID not found in token");
+            int userId = int.Parse(userIdClaim.Value);
+
+            var result = await _aiEvaluationService.CheckMissionAccessAsync(userId, missionId);
+            return Ok(new { isAccessible = result.IsAccessible, message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [Authorize]
     [HttpPost("reset/{missionId}")]
     public async Task<ActionResult> ResetSession(int missionId)
     {
