@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -113,6 +114,7 @@ CỐT TRUYỆN & MỤC TIÊU:
 NGƯỜI CHƠI:
 - Trình độ tiếng Anh: {user.EnglishLevel}
 - Đây là người học, họ có thể mắc lỗi chính tả, ngữ pháp.
+        - Hướng dẫn CEFR: {cefrInstructions}
 
 🎯 **QUY TẮC VAI CHƠN & DẪN CHUYỆN:**
 
@@ -187,7 +189,12 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
         request.Headers.Add("x-api-key", _apiKey);
         request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        var requestJson = JsonSerializer.Serialize(requestBody, jsonOptions);
+        request.Content = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
 
         ClaudeResponse? claudeResponse = null;
 
@@ -495,7 +502,12 @@ Task:
         var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
         request.Headers.Add("x-api-key", _apiKey);
         request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        var requestJson = JsonSerializer.Serialize(requestBody, jsonOptions);
+        request.Content = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
 
         try
         {
