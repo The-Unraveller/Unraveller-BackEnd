@@ -9,4 +9,5 @@ public interface IAIEvaluationService
     Task<GameSessionDto> GetActiveSessionAsync(int userId, int missionId);
     Task<bool> ResetSessionAsync(int userId, int missionId);
     Task<(bool IsAccessible, string Message)> CheckMissionAccessAsync(int userId, int missionId);
+    Task<SkillMapDto> GetWritingSkillMapAsync(int userId);
 }
