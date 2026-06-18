@@ -98,6 +98,8 @@ builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
+builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
 
 // Register payOS Client (singleton — thread-safe)
 builder.Services.AddSingleton<PayOSClient>(sp =>

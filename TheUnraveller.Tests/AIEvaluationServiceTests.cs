@@ -7,6 +7,7 @@ using Moq.Protected;
 using TheUnraveller.Core.Entities;
 using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Service.Implementations;
+using TheUnraveller.Service.Interfaces;
 using Xunit;
 
 namespace TheUnraveller.Tests;
@@ -16,6 +17,7 @@ public class AIEvaluationServiceTests : IDisposable
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _context;
     private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<IBadgeService> _badgeServiceMock;
 
     public AIEvaluationServiceTests()
     {
@@ -33,6 +35,11 @@ public class AIEvaluationServiceTests : IDisposable
         // 2. Mock Configuration
         _configMock = new Mock<IConfiguration>();
         _configMock.Setup(c => c["LlmApi:ApiKey"]).Returns("test-api-key");
+
+        // 3. Mock Badge Service
+        _badgeServiceMock = new Mock<IBadgeService>();
+        _badgeServiceMock.Setup(s => s.AwardBadgesForMissionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+                         .Returns(Task.CompletedTask);
     }
 
     public void Dispose()
@@ -101,7 +108,20 @@ public class AIEvaluationServiceTests : IDisposable
             ""suspicionChange"": 5,
             ""SuspicionChange"": 5,
             ""xpEarned"": 15,
-            ""XpEarned"": 15
+            ""XpEarned"": 15,
+            ""writingFeedback"": {
+                ""scores"": {
+                    ""grammar"": 80,
+                    ""vocabulary"": 80,
+                    ""tone"": 80,
+                    ""naturalness"": 80,
+                    ""clarity"": 80,
+                    ""structure"": 80
+                },
+                ""corrections"": [],
+                ""rewriteSuggestion"": null,
+                ""summary"": ""Good grammar, standard greeting.""
+            }
         }";
 
         var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
@@ -130,7 +150,7 @@ public class AIEvaluationServiceTests : IDisposable
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -138,7 +158,7 @@ public class AIEvaluationServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Identify yourself!", result.NpcResponse);
-        Assert.Equal("Good grammar, standard greeting.", result.Feedback);
+        Assert.Equal("Good grammar, standard greeting.", result.WritingFeedback.Summary);
         Assert.Equal(15, result.NewSuspicionLevel); // 10 (start) + 5 (change)
         Assert.Equal(15, result.XpEarned);
 
@@ -173,7 +193,7 @@ public class AIEvaluationServiceTests : IDisposable
 
         var handlerMock = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() =>
@@ -201,7 +221,7 @@ public class AIEvaluationServiceTests : IDisposable
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -209,9 +229,9 @@ public class AIEvaluationServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
-        
-        Assert.Contains("Không phát hiện lỗi", result.Feedback); 
-        
+
+        Assert.Contains("Không thể đánh giá do lỗi hệ thống.", result.WritingFeedback.Summary);
+
         Assert.Equal(10, result.NewSuspicionLevel); // 10 (start) + 0 (fallback suspicion change)
         Assert.Equal(0, result.XpEarned);
 
@@ -243,7 +263,20 @@ public class AIEvaluationServiceTests : IDisposable
             ""suspicionChange"": -5,
             ""SuspicionChange"": -5,
             ""xpEarned"": 15,
-            ""XpEarned"": 15
+            ""XpEarned"": 15,
+            ""writingFeedback"": {
+                ""scores"": {
+                    ""grammar"": 85,
+                    ""vocabulary"": 85,
+                    ""tone"": 85,
+                    ""naturalness"": 85,
+                    ""clarity"": 85,
+                    ""structure"": 85
+                },
+                ""corrections"": [],
+                ""rewriteSuggestion"": null,
+                ""summary"": ""Good response.""
+            }
         }";
 
         string? capturedRequestContent = null;
@@ -277,7 +310,7 @@ public class AIEvaluationServiceTests : IDisposable
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Testing levels");
@@ -288,4 +321,280 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.Contains(expectedInstructionSubstring, capturedRequestContent);
         Assert.Contains($"Trình độ tiếng Anh: {level}", capturedRequestContent);
     }
-}
+
+    [Fact]
+    public async Task EvaluateMessageAsync_ShouldRecordLoseCondition_WhenSuspicionReachesMaxSuspicion()
+    {
+        // Arrange
+        SeedDatabase();
+
+        var geminiResponseText = @"{
+            ""npcResponse"": ""You are caught!"",
+            ""NpcResponse"": ""You are caught!"",
+            ""feedback"": ""Bad reply."",
+            ""Feedback"": ""Bad reply."",
+            ""suspicionChange"": 100,
+            ""SuspicionChange"": 100,
+            ""xpEarned"": 0,
+            ""XpEarned"": 0,
+            ""writingFeedback"": {
+                ""scores"": {
+                    ""grammar"": 20,
+                    ""vocabulary"": 20,
+                    ""tone"": 20,
+                    ""naturalness"": 20,
+                    ""clarity"": 20,
+                    ""structure"": 20
+                },
+                ""corrections"": [],
+                ""rewriteSuggestion"": null,
+                ""summary"": ""Failing performance.""
+            }
+        }";
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+
+        // Act
+        var result = await service.EvaluateMessageAsync(1, 1, "suspicious message");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.IsLose);
+        Assert.False(result.IsWin);
+        Assert.Equal(100, result.NewSuspicionLevel);
+
+        var progress = await _context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == 1 && p.MissionId == 1);
+        Assert.NotNull(progress);
+        Assert.Equal(MissionStatus.Failed, progress!.Status);
+        Assert.Equal(100, progress.CurrentSuspicion);
+    }
+
+    [Fact]
+    public async Task EvaluateMessageAsync_ShouldRecordWinConditionAndCreateSnapshotAndAwardBadges_WhenCriteriaMet()
+    {
+        // Arrange
+        SeedDatabase();
+
+        // 1. Add 4 existing dialogue turns for this mission to meet the MinTurnsToComplete = 5 requirement
+        var now = DateTime.UtcNow;
+        for (int i = 1; i <= 4; i++)
+        {
+            var dialogue = new Dialogue
+            {
+                UserId = 1,
+                MissionId = 1,
+                NpcId = 1,
+                PlayerMessage = $"Message {i}",
+                NpcResponse = $"Response {i}",
+                Feedback = "Good",
+                Timestamp = now.AddMinutes(-10 + i),
+                GrammarScore = 80,
+                VocabularyScore = 80,
+                ToneScore = 80,
+                NaturalnessScore = 80,
+                ClarityScore = 80,
+                StructureScore = 80
+            };
+            await _context.Dialogues.AddAsync(dialogue);
+        }
+
+        // 2. Set user progress to TurnCount = 4 and Status = InProgress
+        var progress = new UserProgress
+        {
+            UserId = 1,
+            MissionId = 1,
+            CurrentSuspicion = 20,
+            Status = MissionStatus.InProgress,
+            TurnCount = 4,
+            XpEarned = 50
+        };
+        await _context.UserProgresses.AddAsync(progress);
+        await _context.SaveChangesAsync();
+
+        // 3. Mock the 5th message reply (overallAvg will be 80, turns will be 5, satisfying win)
+        var geminiResponseText = @"{
+            ""npcResponse"": ""Thank you very much."",
+            ""NpcResponse"": ""Thank you very much."",
+            ""feedback"": ""Excellent grammar!"",
+            ""Feedback"": ""Excellent grammar!"",
+            ""suspicionChange"": -5,
+            ""SuspicionChange"": -5,
+            ""xpEarned"": 15,
+            ""XpEarned"": 15,
+            ""writingFeedback"": {
+                ""scores"": {
+                    ""grammar"": 80,
+                    ""vocabulary"": 80,
+                    ""tone"": 80,
+                    ""naturalness"": 80,
+                    ""clarity"": 80,
+                    ""structure"": 80
+                },
+                ""corrections"": [],
+                ""rewriteSuggestion"": ""Perfect response."",
+                ""summary"": ""Great job!""
+            }
+        }";
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+
+        // Act
+        var result = await service.EvaluateMessageAsync(1, 1, "I would like a cup of coffee, please.");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.IsWin);
+        Assert.False(result.IsLose);
+        Assert.Equal(5, result.TurnCount);
+        Assert.NotNull(result.CompletionToken);
+
+        // Verify user progress is completed
+        var updatedProgress = await _context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == 1 && p.MissionId == 1);
+        Assert.NotNull(updatedProgress);
+        Assert.Equal(MissionStatus.Completed, updatedProgress!.Status);
+        Assert.Equal(result.CompletionToken, updatedProgress.CompletionToken);
+
+        // Verify WritingSkillSnapshot was created
+        var snapshot = await _context.WritingSkillSnapshots.FirstOrDefaultAsync(s => s.UserId == 1 && s.MissionId == 1);
+        Assert.NotNull(snapshot);
+        Assert.Equal(80, snapshot!.GrammarScore);
+        Assert.Equal(80, snapshot.VocabularyScore);
+        Assert.Equal(80, snapshot.AverageScore);
+        Assert.Equal("Perfect response.", snapshot.AiRewriteSuggestion);
+
+        // Verify BadgeService was called on win
+        _badgeServiceMock.Verify(s => s.AwardBadgesForMissionAsync(1, 1, It.Is<decimal>(v => v == 80m), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EvaluateMessageAsync_ShouldCreateCorrections_WhenResponseContainsCorrections()
+    {
+        // Arrange
+        SeedDatabase();
+
+        var geminiResponseText = @"{
+            ""npcResponse"": ""Sorry?"",
+            ""NpcResponse"": ""Sorry?"",
+            ""feedback"": ""Correction needed."",
+            ""Feedback"": ""Correction needed."",
+            ""suspicionChange"": 10,
+            ""SuspicionChange"": 10,
+            ""xpEarned"": 5,
+            ""XpEarned"": 5,
+            ""writingFeedback"": {
+                ""scores"": {
+                    ""grammar"": 50,
+                    ""vocabulary"": 60,
+                    ""tone"": 70,
+                    ""naturalness"": 60,
+                    ""clarity"": 50,
+                    ""structure"": 60
+                },
+                ""corrections"": [
+                    {
+                        ""axis"": 0,
+                        ""original"": ""I goes to coffee shop"",
+                        ""corrected"": ""I go to the coffee shop"",
+                        ""explanation"": ""Subject-verb agreement and missing article.""
+                    }
+                ],
+                ""rewriteSuggestion"": ""I would like to go to the coffee shop."",
+                ""summary"": ""Fix grammar issues.""
+            }
+        }";
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(
+                    "event: message_start\n" +
+                    "data: {\"type\":\"message_start\"}\n\n" +
+                    "event: content_block_start\n" +
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+                    "event: content_block_delta\n" +
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
+                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
+                    "\"}}\n\n" +
+                    "event: message_stop\n" +
+                    "data: {\"type\":\"message_stop\"}\n\n"
+                )
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+
+        // Act
+        var result = await service.EvaluateMessageAsync(1, 1, "I goes to coffee shop");
+
+        // Assert
+        Assert.NotNull(result);
+        
+        // Verify correction was created in DB
+        var correction = await _context.Corrections.Include(c => c.Dialogue).FirstOrDefaultAsync(c => c.Dialogue.UserId == 1);
+        Assert.NotNull(correction);
+        Assert.Equal("I goes to coffee shop", correction!.OriginalText);
+        Assert.Equal("I go to the coffee shop", correction.CorrectedText);
+        Assert.Equal("Subject-verb agreement and missing article.", correction.Explanation);
+        Assert.Equal(TheUnraveller.Core.Entities.SkillAxis.Grammar, correction.Axis);
+    }
+}

@@ -11,12 +11,17 @@ namespace TheUnraveller.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "DiscountPriceXp",
-                table: "ShopItems",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
+            // Use raw SQL with IF NOT EXISTS to avoid errors if column already exists
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='ShopItems' AND column_name='DiscountPriceXp'
+                    ) THEN
+                        ALTER TABLE ""ShopItems"" ADD COLUMN ""DiscountPriceXp"" integer NOT NULL DEFAULT 0;
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.UpdateData(
                 table: "ShopItems",
@@ -57,9 +62,16 @@ namespace TheUnraveller.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "DiscountPriceXp",
-                table: "ShopItems");
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='ShopItems' AND column_name='DiscountPriceXp'
+                    ) THEN
+                        ALTER TABLE ""ShopItems"" DROP COLUMN ""DiscountPriceXp"";
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.UpdateData(
                 table: "SubscriptionPlans",

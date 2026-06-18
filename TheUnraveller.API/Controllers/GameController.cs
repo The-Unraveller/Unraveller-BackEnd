@@ -4,6 +4,7 @@ using TheUnraveller.Service.Interfaces;
 using TheUnraveller.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using TheUnraveller.Service.DTOs;
 
 namespace TheUnraveller.API.Controllers;
 
@@ -27,7 +28,7 @@ public class GameController : ControllerBase
 
     [Authorize]
     [HttpPost("message")]
-    public async Task<ActionResult<DialogueResponseDto>> SendMessage([FromBody] DialogueRequestDto request)
+    public async Task<ActionResult<DialogueResponseWithScoresDto>> SendMessage([FromBody] DialogueRequestDto request)
     {
         try
         {
