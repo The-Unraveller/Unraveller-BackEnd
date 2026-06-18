@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618063805_AddWritingCoachSchema")]
+    partial class AddWritingCoachSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -338,204 +341,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Title = "Nhập vai Nâng cao",
                             WritingObjective = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao.",
                             XpReward = 600
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ApprovalStatus = 0,
-                            CefrLevel = 2,
-                            Description = "*Your supervisor hands you a crumpled note.* \"We need to schedule a team meeting about the Q3 projections. Draft the invitation email to all department heads. Make it professional but urgent.\"",
-                            Difficulty = "Intermediate",
-                            Domain = 1,
-                            Goal = "Tạo email chuyên nghiệp với cấu trúc rõ ràng và ngôn ngữ phù hợp.",
-                            GrammarTarget = "Sử dụng câu bị động (Passive Voice) và từ nối (Furthermore, However) trong văn bản hành chính.",
-                            ImageUrl = "/scenario_email.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 65,
-                            MinTurnsToComplete = 5,
-                            NpcId = 2,
-                            Stage = "Stage 7",
-                            StartSuspicion = 10,
-                            Title = "Viết Email Công việc",
-                            WritingObjective = "Sử dụng câu bị động (Passive Voice) và từ nối (Furthermore, However) trong văn bản hành chính.",
-                            XpReward = 280
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ApprovalStatus = 0,
-                            CefrLevel = 3,
-                            Description = "*The conference room is full of investors. The product manager nods at you.* \"We're counting on you to pitch the new neural interface. Remember: features, benefits, market potential. Make it compelling.\"",
-                            Difficulty = "Advanced",
-                            Domain = 0,
-                            Goal = "Giới thiệu sản phẩm mới bằng tiếng Anh với cấu trúc logic và từ vựng phong phú.",
-                            GrammarTarget = "Sử dụng thì tương lai đơn (Future Simple) và câu so sánh hơn (Comparative forms) để mô tả ưu điểm.",
-                            ImageUrl = "/scenario_presentation.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 70,
-                            MinTurnsToComplete = 6,
-                            NpcId = 2,
-                            Stage = "Stage 8",
-                            StartSuspicion = 10,
-                            Title = "Thuyết trình Sản phẩm",
-                            WritingObjective = "Sử dụng thì tương lai đơn (Future Simple) và câu so sánh hơn (Comparative forms) để mô tả ưu điểm.",
-                            XpReward = 400
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ApprovalStatus = 0,
-                            CefrLevel = 4,
-                            Description = "*Across the polished table, the potential partner taps a holographic contract.* \"We can offer exclusive distribution rights, but your margin demands are steep. Let's find a middle ground that works for both corporations.\"",
-                            Difficulty = "Advanced",
-                            Domain = 0,
-                            Goal = "Thương lượng các điều khoản hợp đồng và tìm điểm chung.",
-                            GrammarTarget = "Sử dụng câu điều kiện loại 2 (If I were...) và từ trung lập (Compromise, Concession) trong đàm phán.",
-                            ImageUrl = "/scenario_negotiation.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 75,
-                            MinTurnsToComplete = 6,
-                            NpcId = 2,
-                            Stage = "Stage 9",
-                            StartSuspicion = 10,
-                            Title = "Đàm phán Hợp đồng",
-                            WritingObjective = "Sử dụng câu điều kiện loại 2 (If I were...) và từ trung lập (Compromise, Concession) trong đàm phán.",
-                            XpReward = 450
-                        },
-                        new
-                        {
-                            Id = 10,
-                            ApprovalStatus = 0,
-                            CefrLevel = 1,
-                            Description = "*You find yourself at a rooftop party overlooking the neon cityscape. A friendly stranger offers you a drink.* \"So, what brings you to the upper levels? Don't see many new faces up here.\"",
-                            Difficulty = "Beginner",
-                            Domain = 2,
-                            Goal = "Tham gia cuộc trò chuyện thân thiện với từ ngữ tự nhiên và phong cách lịch sự.",
-                            GrammarTarget = "Sử dụng thì quá khứ đơn (Past Simple) để kể chuyện và câu hỏi mở (What about you?).",
-                            ImageUrl = "/scenario_party.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 55,
-                            MinTurnsToComplete = 5,
-                            NpcId = 3,
-                            Stage = "Stage 10",
-                            StartSuspicion = 10,
-                            Title = "Trò chuyện Xã giao",
-                            WritingObjective = "Sử dụng thì quá khứ đơn (Past Simple) để kể chuyện và câu hỏi mở (What about you?).",
-                            XpReward = 180
-                        },
-                        new
-                        {
-                            Id = 11,
-                            ApprovalStatus = 0,
-                            CefrLevel = 4,
-                            Description = "*The seminar room is filled with researchers. The professor clears their throat.* \"Today's topic: the ethical implications of AI consciousness. I'd like to hear your perspective on the Turing Test limitations.\"",
-                            Difficulty = "Advanced",
-                            Domain = 1,
-                            Goal = "Tham gia thảo luận học thuật với lập luận có cấu trúc và từ nối học thuật.",
-                            GrammarTarget = "Sử dụng mệnh đề tương quan (Relative Clauses) và từ nối học thuật (Therefore, Consequently).",
-                            ImageUrl = "/scenario_seminar.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 75,
-                            MinTurnsToComplete = 6,
-                            NpcId = 2,
-                            Stage = "Stage 11",
-                            StartSuspicion = 10,
-                            Title = "Thảo luận Học thuật",
-                            WritingObjective = "Sử dụng mệnh đề tương quan (Relative Clauses) và từ nối học thuật (Therefore, Consequently).",
-                            XpReward = 420
-                        },
-                        new
-                        {
-                            Id = 12,
-                            ApprovalStatus = 0,
-                            CefrLevel = 2,
-                            Description = "*The customer service console flashes red. An irate customer's message scrolls across the screen:* \"My order was supposed to arrive yesterday! This is unacceptable!\" *You type your response.*",
-                            Difficulty = "Intermediate",
-                            Domain = 0,
-                            Goal = "Giải quyết phàn nàn của khách hàng với thái độ tích cực và giải pháp hiệu quả.",
-                            GrammarTarget = "Sử dụng câu bị động (Passive Voice) và lời xin lỗi lịch sự (I apologize for...).",
-                            ImageUrl = "/scenario_customer.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 65,
-                            MinTurnsToComplete = 5,
-                            NpcId = 1,
-                            Stage = "Stage 12",
-                            StartSuspicion = 10,
-                            Title = "Dịch vụ Khách hàng",
-                            WritingObjective = "Sử dụng câu bị động (Passive Voice) và lời xin lỗi lịch sự (I apologize for...).",
-                            XpReward = 260
-                        },
-                        new
-                        {
-                            Id = 13,
-                            ApprovalStatus = 0,
-                            CefrLevel = 4,
-                            Description = "*The debate stage is set, cameras rolling. Your opponent smirks.* \"Obviously, the new surveillance law is necessary for security. Anyone who disagrees is naive.\" *The moderator hands you the microphone.*",
-                            Difficulty = "Advanced",
-                            Domain = 1,
-                            Goal = "Xây dựng lập luận mạnh mẽ với bằng chứng và phản bác quan điểm đối lập.",
-                            GrammarTarget = "Sử dụng câu điều kiện loại 3 (If we had...) và từ nối phản lập (However, On the other hand).",
-                            ImageUrl = "/scenario_debate.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 78,
-                            MinTurnsToComplete = 7,
-                            NpcId = 3,
-                            Stage = "Stage 13",
-                            StartSuspicion = 10,
-                            Title = " tranh luận Chính trị",
-                            WritingObjective = "Sử dụng câu điều kiện loại 3 (If we had...) và từ nối phản lập (However, On the other hand).",
-                            XpReward = 480
-                        },
-                        new
-                        {
-                            Id = 14,
-                            ApprovalStatus = 0,
-                            CefrLevel = 2,
-                            Description = "*You're at the annual Tech Futures mixer. A venture capitalist approaches the bar.* \"I heard your startup is working on quantum encryption. Sounds ambitious. Tell me, what makes your team unique?\"",
-                            Difficulty = "Intermediate",
-                            Domain = 2,
-                            Goal = "Tạo ấn tượng tốt với các chuyên gia qua cuộc trò chuyện ngắn ngủi.",
-                            GrammarTarget = "Sử dụng thì hiện tại hoàn thành (Present Perfect) để mô tả thành tích và câu hỏi Follow-up questions.",
-                            ImageUrl = "/scenario_networking.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 68,
-                            MinTurnsToComplete = 5,
-                            NpcId = 2,
-                            Stage = "Stage 14",
-                            StartSuspicion = 10,
-                            Title = "Sự kiện Kết nối",
-                            WritingObjective = "Sử dụng thì hiện tại hoàn thành (Present Perfect) để mô tả thành tích và câu hỏi Follow-up questions.",
-                            XpReward = 320
-                        },
-                        new
-                        {
-                            Id = 15,
-                            ApprovalStatus = 0,
-                            CefrLevel = 4,
-                            Description = "*After the keynote on neural interfaces, the speaker opens the floor. You raise your hand.* \"Professor Chen, your research mentions ethical concerns. How do you respond to critics who fear mind-reading technology?\"",
-                            Difficulty = "Advanced",
-                            Domain = 1,
-                            Goal = "Đặt câu hỏi học thuật và nhận xét về bài thuyết trình.",
-                            GrammarTarget = "Sử dụng câu gián tiếp (Indirect Questions) và từ nối học thuật (While, Whereas).",
-                            ImageUrl = "/scenario_conference.png",
-                            Locked = true,
-                            MaxSuspicion = 100,
-                            MinAverageScore = 72,
-                            MinTurnsToComplete = 6,
-                            NpcId = 2,
-                            Stage = "Stage 15",
-                            StartSuspicion = 10,
-                            Title = "Hỏi & Đáp Hội nghị",
-                            WritingObjective = "Sử dụng câu gián tiếp (Indirect Questions) và từ nối học thuật (While, Whereas).",
-                            XpReward = 380
                         });
                 });
 

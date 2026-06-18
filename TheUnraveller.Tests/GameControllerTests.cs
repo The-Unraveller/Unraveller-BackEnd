@@ -43,9 +43,14 @@ public class GameControllerTests
     {
         // Arrange
         var request = new DialogueRequestDto(0, 1, "Hello officer");
-        var mockResponse = new DialogueResponseDto(
+        var mockResponse = new DialogueResponseWithScoresDto(
             "Who goes there?",
-            "Good spelling.",
+            new WritingFeedbackDto(
+                new WritingScoreDto(80, 85, 90, 75, 88, 82),
+                new List<CorrectionDto>(),
+                null,
+                "Good spelling."
+            ),
             15,
             false,
             false,
@@ -61,12 +66,12 @@ public class GameControllerTests
         var result = await _controller.SendMessage(request);
 
         // Assert
-        var actionResult = Assert.IsType<ActionResult<DialogueResponseDto>>(result);
+        var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-        var returnedDto = Assert.IsType<DialogueResponseDto>(okResult.Value);
+        var returnedDto = Assert.IsType<DialogueResponseWithScoresDto>(okResult.Value);
 
         Assert.Equal("Who goes there?", returnedDto.NpcResponse);
-        Assert.Equal("Good spelling.", returnedDto.Feedback);
+        Assert.Equal("Good spelling.", returnedDto.WritingFeedback.Summary);
         Assert.Equal(15, returnedDto.NewSuspicionLevel);
         Assert.Equal(5, returnedDto.XpEarned);
     }
@@ -85,9 +90,9 @@ public class GameControllerTests
         var result = await _controller.SendMessage(request);
 
         // Assert
-        var actionResult = Assert.IsType<ActionResult<DialogueResponseDto>>(result);
+        var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
-        
+
         // Assert error message exists in returned object
         var errorObj = badRequestResult.Value;
         Assert.NotNull(errorObj);

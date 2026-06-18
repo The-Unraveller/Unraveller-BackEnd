@@ -1,3 +1,5 @@
+using TheUnraveller.Core.Entities;
+
 namespace TheUnraveller.Core.Entities;
 
 public enum ApprovalStatus
@@ -13,9 +15,15 @@ public class Mission
     public string Title { get; set; } = string.Empty;
     public string Goal { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string WritingObjective { get; set; } = string.Empty; // Specific writing task for this scenario
+    public DomainType Domain { get; set; } = DomainType.Professional; // Professional, Academic, Social
+    public CefrLevel CefrLevel { get; set; } = CefrLevel.B1; // Language difficulty level
+
     public int StartSuspicion { get; set; } = 0; // Default: 0
     public int MaxSuspicion { get; set; } = 100; // Threshold to "Lose"
-    
+    public int MinTurnsToComplete { get; set; } = 5; // Minimum turns to complete scenario
+    public int MinAverageScore { get; set; } = 70; // Minimum average writing score to complete
+
     // Rendering & Session Metadata
     public string Stage { get; set; } = string.Empty; // e.g., "Stage 1"
     public string Difficulty { get; set; } = string.Empty; // e.g., "Beginner"
@@ -23,7 +31,7 @@ public class Mission
     public string ImageUrl { get; set; } = string.Empty;
     public bool Locked { get; set; } = false;
     public string GrammarTarget { get; set; } = string.Empty; // e.g., "Sử dụng câu điều kiện loại 1 (If...)"
-    
+
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;
 
