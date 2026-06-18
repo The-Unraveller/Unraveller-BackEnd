@@ -200,4 +200,26 @@ public class GameController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Retrieves the user's Writing Skill Map showing current averages and historical trends
+    /// </summary>
+    [Authorize]
+    [HttpGet("writing-skill-map")]
+    public async Task<ActionResult<SkillMapDto>> GetWritingSkillMap()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized("User ID not found in token");
+            int userId = int.Parse(userIdClaim.Value);
+
+            var result = await _aiEvaluationService.GetWritingSkillMapAsync(userId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

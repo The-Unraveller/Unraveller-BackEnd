@@ -3,10 +3,10 @@ namespace TheUnraveller.Service.DTOs;
 public record UserDto(int Id, string Username, string Email);
 
 public record MissionDto(
-    int Id, 
-    string Title, 
-    string Goal, 
-    string Description, 
+    int Id,
+    string Title,
+    string Goal,
+    string Description,
     int StartSuspicion,
     string Stage,
     string Difficulty,
@@ -15,7 +15,8 @@ public record MissionDto(
     string NpcName,
     string NpcEmoji,
     bool Locked,
-    string GrammarTarget
+    string GrammarTarget,
+    int Domain
 );
 
 public record DialogueRequestDto(int UserId, int MissionId, string Message);

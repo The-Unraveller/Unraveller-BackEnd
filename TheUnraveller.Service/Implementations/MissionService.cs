@@ -17,10 +17,10 @@ public class MissionService : IMissionService
     {
         var missions = await _missionRepo.GetAvailableMissionsAsync();
         return missions.Select(m => new MissionDto(
-            m.Id, 
-            m.Title, 
-            m.Goal, 
-            m.Description, 
+            m.Id,
+            m.Title,
+            m.Goal,
+            m.Description,
             m.StartSuspicion,
             m.Stage,
             m.Difficulty,
@@ -29,7 +29,8 @@ public class MissionService : IMissionService
             m.Npc?.Name ?? string.Empty,
             m.Npc?.NpcEmoji ?? string.Empty,
             m.Locked,
-            m.GrammarTarget
+            m.GrammarTarget,
+            (int)m.Domain
         ));
     }
 
@@ -38,10 +39,10 @@ public class MissionService : IMissionService
         var m = await _missionRepo.GetByIdAsync(id);
         if (m == null) return null;
         return new MissionDto(
-            m.Id, 
-            m.Title, 
-            m.Goal, 
-            m.Description, 
+            m.Id,
+            m.Title,
+            m.Goal,
+            m.Description,
             m.StartSuspicion,
             m.Stage,
             m.Difficulty,
@@ -50,7 +51,8 @@ public class MissionService : IMissionService
             m.Npc?.Name ?? string.Empty,
             m.Npc?.NpcEmoji ?? string.Empty,
             m.Locked,
-            m.GrammarTarget
+            m.GrammarTarget,
+            (int)m.Domain
         );
     }
 }
