@@ -64,6 +64,7 @@ public record WeeklyReportDto(
 );
 
 // Existing enums for DTO usage (already defined in Core.Entities but expose for serialization)
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SkillAxis
 {
     Grammar = 0,

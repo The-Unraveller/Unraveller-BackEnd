@@ -15,34 +15,18 @@ namespace TheUnraveller.Service.Implementations;
 
 public class AIEvaluationService : IAIEvaluationService
 {
-    private readonly HttpClient _httpClient;
     private readonly AppDbContext _context;
-    private readonly string _apiKey;
-    private readonly string _baseUrl;
-    private readonly string _model;
     private readonly IBadgeService _badgeService;
+    private readonly ILLMProviderService _llmProvider;
 
     public AIEvaluationService(
-        HttpClient httpClient,
         AppDbContext context,
-        IConfiguration configuration,
-        IBadgeService badgeService)
+        IBadgeService badgeService,
+        ILLMProviderService llmProvider)
     {
-        _httpClient = httpClient;
         _context = context;
         _badgeService = badgeService;
-
-        var apiKeyConfig = configuration["LlmApi:ApiKey"];
-        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER")
-            ? "dummy_key"
-            : apiKeyConfig;
-
-        var baseUrlConfig = configuration["LlmApi:BaseUrl"];
-        _baseUrl = string.IsNullOrEmpty(baseUrlConfig) || baseUrlConfig.Contains("PLACEHOLDER") || !baseUrlConfig.StartsWith("http")
-            ? "https://claude.zunef.com/v1/ai/messages"
-            : baseUrlConfig;
-
-        _model = configuration["LlmApi:Model"] ?? "claude-haiku-4-5";
+        _llmProvider = llmProvider;
     }
 
     public async Task<DialogueResponseWithScoresDto> EvaluateMessageAsync(int userId, int missionId, string playerMessage)
@@ -219,217 +203,87 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             new { role = "user", content = safeUserMessage }
         };
 
-        var requestBody = new
-        {
-            model = _model,
-            max_tokens = 4000,
-            stream = true,
-            system = systemPrompt,
-            messages = messages,
-            temperature = 0.7
-        };
-
-        var targetUrl = _baseUrl;
-        var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
-        request.Headers.Add("x-api-key", _apiKey);
-        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-        var jsonOptions = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        var requestJson = JsonSerializer.Serialize(requestBody, jsonOptions);
-        request.Content = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
-
-        ClaudeResponse? claudeResponse = null;
-
+        // 2. Get AI evaluation from provider (Gemini primary, Claude fallback)
+        ClaudeResponse claudeResponse;
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-            // Use ResponseHeadersRead to begin streaming immediately without buffering the entire body
-            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            var providerResponse = await _llmProvider.GetEvaluationResponseAsync(systemPrompt, safeUserMessage);
 
-            if (!response.IsSuccessStatusCode)
+            // Map to ClaudeResponse for compatibility with existing validation/DB logic
+            claudeResponse = new ClaudeResponse
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                // Do NOT throw — set fallback response so the game degrades gracefully
-                claudeResponse = GetFallbackResponse($"Claude API returned status code {response.StatusCode}. Details: {errorContent}");
+                NpcResponse = providerResponse.NpcResponse,
+                WritingFeedback = providerResponse.WritingFeedback,
+                SuspicionChange = providerResponse.SuspicionChange,
+                XpEarned = providerResponse.XpEarned
+            };
+        }
+        catch (Exception ex)
+        {
+            claudeResponse = GetFallbackResponse($"Provider exception: {ex.Message}");
+        }
+
+        // POST-DESERIALIZATION VALIDATION: Ensure critical fields are present and valid
+        if (claudeResponse == null)
+        {
+            claudeResponse = GetFallbackResponse("Provider returned null");
+        }
+        else
+        {
+            // Ensure NpcResponse is not null or empty
+            if (string.IsNullOrWhiteSpace(claudeResponse.NpcResponse))
+            {
+                claudeResponse.NpcResponse = "I need to think about that carefully.";
+            }
+
+            // Ensure WritingFeedback is not null
+            if (claudeResponse.WritingFeedback == null)
+            {
+                claudeResponse.WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                    new List<CorrectionDto>(),
+                    null,
+                    "Không có phản hồi chi tiết từ AI."
+                );
             }
             else
             {
-                string contentString = string.Empty;
-                var textBuilder = new System.Text.StringBuilder();
-
-                try
+                var feedback = claudeResponse.WritingFeedback;
+                // Ensure Scores are valid
+                if (feedback.Scores == null)
                 {
-                    // Stream line by line to break immediately when message_stop is encountered, avoiding 19s keep-alive socket delays
-                    using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
-                    using (var reader = new System.IO.StreamReader(stream))
-                    {
-                        bool isSse = false;
-                        string? line;
-
-                        while ((line = await reader.ReadLineAsync(cts.Token)) != null)
-                        {
-                            if (line.StartsWith("event:") || line.StartsWith("data:"))
-                            {
-                                isSse = true;
-                            }
-
-                            if (isSse)
-                            {
-                                if (line.StartsWith("data:"))
-                                {
-                                    var json = line.Substring(line.IndexOf(':') + 1).Trim();
-                                    if (json.StartsWith("{") && json.EndsWith("}"))
-                                    {
-                                        try
-                                        {
-                                            using var doc = JsonDocument.Parse(json);
-                                            if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
-                                            {
-                                                break; // Stream finished, exit immediately!
-                                            }
-
-                                            if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
-                                                deltaProp.TryGetProperty("text", out var textProp))
-                                            {
-                                                textBuilder.Append(textProp.GetString());
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            // Ignore malformed JSON lines in the stream
-                                        }
-                                    }
-                                }
-                                else if (line.StartsWith("event: message_stop"))
-                                {
-                                    break; // Stream finished, exit immediately!
-                                }
-                            }
-                            else
-                            {
-                                textBuilder.AppendLine(line);
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    // If we already have a potential JSON block in our builder, ignore the network termination exception
-                    var tempString = textBuilder.ToString().Trim();
-                    int first = tempString.IndexOf('{');
-                    int last = tempString.LastIndexOf('}');
-                    if (first < 0 || last <= first)
-                    {
-                        // No valid JSON accumulated, rethrow the exception to let the outer fallback handle it
-                        throw;
-                    }
+                    feedback = feedback with { Scores = new WritingScoreDto(50, 50, 50, 50, 50, 50) };
                 }
 
-                contentString = textBuilder.ToString().Trim();
-                if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
-                if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
-                contentString = contentString.Trim();
-
-                // Robust JSON extraction to prevent issues with reasoning token wrapper prefixes
-                int firstBrace = contentString.IndexOf('{');
-                int lastBrace = contentString.LastIndexOf('}');
-                if (firstBrace >= 0 && lastBrace > firstBrace)
+                // Ensure corrections list is not null
+                if (feedback.Corrections == null)
                 {
-                    contentString = contentString.Substring(firstBrace, lastBrace - firstBrace + 1);
-                    try
-                    {
-                        var deserializeOptions = new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        };
-                        claudeResponse = JsonSerializer.Deserialize<ClaudeResponse>(contentString, deserializeOptions);
-
-                        // POST-DESERIALIZATION VALIDATION: Ensure critical fields are present and valid
-                        if (claudeResponse == null)
-                        {
-                            claudeResponse = GetFallbackResponse("Deserialized response was null");
-                        }
-                        else
-                        {
-                            // Ensure NpcResponse is not null or empty
-                            if (string.IsNullOrWhiteSpace(claudeResponse.NpcResponse))
-                            {
-                                claudeResponse.NpcResponse = "I need to think about that carefully.";
-                            }
-
-                            // Ensure WritingFeedback is not null
-                            if (claudeResponse.WritingFeedback == null)
-                            {
-                                claudeResponse.WritingFeedback = new WritingFeedbackDto(
-                                    new WritingScoreDto(50, 50, 50, 50, 50, 50),
-                                    new List<CorrectionDto>(),
-                                    null,
-                                    "Không có phản hồi chi tiết từ AI."
-                                );
-                            }
-                            else
-                            {
-                                var feedback = claudeResponse.WritingFeedback;
-                                // Ensure Scores are valid
-                                if (feedback.Scores == null)
-                                {
-                                    feedback = feedback with { Scores = new WritingScoreDto(50, 50, 50, 50, 50, 50) };
-                                }
-
-                                // Ensure corrections list is not null
-                                if (feedback.Corrections == null)
-                                {
-                                    feedback = feedback with { Corrections = new List<CorrectionDto>() };
-                                }
-
-                                // Ensure summary is in Vietnamese and not empty
-                                if (string.IsNullOrWhiteSpace(feedback.Summary))
-                                {
-                                    feedback = feedback with { Summary = "Không có phản hồi chi tiết." };
-                                }
-                                else if (!feedback.Summary.Contains("*") && !feedback.Summary.StartsWith("•"))
-                                {
-                                    // Add Vietnamese bullet prefix if missing
-                                    feedback = feedback with { Summary = "* " + feedback.Summary };
-                                }
-
-                                claudeResponse.WritingFeedback = feedback;
-                            }
-
-                            // Ensure SuspicionChange and XpEarned are within valid ranges (will be clamped later anyway)
-                            if (claudeResponse.SuspicionChange < -50 || claudeResponse.SuspicionChange > 200)
-                            {
-                                claudeResponse.SuspicionChange = 0; // Reset invalid values
-                            }
-
-                            if (claudeResponse.XpEarned < 0 || claudeResponse.XpEarned > 100)
-                            {
-                                claudeResponse.XpEarned = 0; // Reset invalid values
-                            }
-                        }
-                    }
-                    catch (JsonException jsonEx)
-                    {
-                        claudeResponse = GetFallbackResponse($"JSON Deserialization failed: {jsonEx.Message}. Raw text: {contentString}");
-                    }
+                    feedback = feedback with { Corrections = new List<CorrectionDto>() };
                 }
-                else
+
+                // Ensure summary is in Vietnamese and not empty
+                if (string.IsNullOrWhiteSpace(feedback.Summary))
                 {
-                    claudeResponse = GetFallbackResponse($"No JSON object found in response. Raw text: {contentString}");
+                    feedback = feedback with { Summary = "Không có phản hồi chi tiết." };
                 }
+                else if (!feedback.Summary.Contains("*") && !feedback.Summary.StartsWith("•"))
+                {
+                    feedback = feedback with { Summary = "* " + feedback.Summary };
+                }
+
+                claudeResponse.WritingFeedback = feedback;
             }
-        }
-        catch (Exception ex) when (ex is not DomainException)
-        {
-            // Network errors, timeouts, JSON parse failures → graceful fallback
-            claudeResponse = GetFallbackResponse($"{ex.GetType().Name}: {ex.Message}");
-        }
 
-        if (claudeResponse == null)
-        {
-            claudeResponse = GetFallbackResponse("Unknown parse error (claudeResponse was null).");
+            // Ensure SuspicionChange and XpEarned are within valid ranges
+            if (claudeResponse.SuspicionChange < -50 || claudeResponse.SuspicionChange > 200)
+            {
+                claudeResponse.SuspicionChange = 0;
+            }
+
+            if (claudeResponse.XpEarned < 0 || claudeResponse.XpEarned > 100)
+            {
+                claudeResponse.XpEarned = 0;
+            }
         }
 
         // Clamp suspicionChange and xpEarned to target constraints
@@ -440,8 +294,9 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
         }
         else
         {
-            claudeResponse.SuspicionChange = 100; // Force maximum suspicion to trigger instant failure
+            claudeResponse.SuspicionChange = 100;
         }
+
         claudeResponse.XpEarned = Math.Clamp(claudeResponse.XpEarned, 0, 20);
 
         // Extract writing feedback, provide fallback if missing
@@ -533,12 +388,12 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             var allScored = existingScored.Concat(new[] { dialogue }).ToList();
 
             int scoredTurnCount = allScored.Count;
-            decimal avgGrammar = Convert.ToDecimal(allScored.Average(d => d.GrammarScore.Value));
-            decimal avgVocabulary = Convert.ToDecimal(allScored.Average(d => d.VocabularyScore.Value));
-            decimal avgTone = Convert.ToDecimal(allScored.Average(d => d.ToneScore.Value));
-            decimal avgNaturalness = Convert.ToDecimal(allScored.Average(d => d.NaturalnessScore.Value));
-            decimal avgClarity = Convert.ToDecimal(allScored.Average(d => d.ClarityScore.Value));
-            decimal avgStructure = Convert.ToDecimal(allScored.Average(d => d.StructureScore.Value));
+            decimal avgGrammar = Convert.ToDecimal(allScored.Average(d => d.GrammarScore.GetValueOrDefault()));
+            decimal avgVocabulary = Convert.ToDecimal(allScored.Average(d => d.VocabularyScore.GetValueOrDefault()));
+            decimal avgTone = Convert.ToDecimal(allScored.Average(d => d.ToneScore.GetValueOrDefault()));
+            decimal avgNaturalness = Convert.ToDecimal(allScored.Average(d => d.NaturalnessScore.GetValueOrDefault()));
+            decimal avgClarity = Convert.ToDecimal(allScored.Average(d => d.ClarityScore.GetValueOrDefault()));
+            decimal avgStructure = Convert.ToDecimal(allScored.Average(d => d.StructureScore.GetValueOrDefault()));
             decimal overallAvg = (avgGrammar + avgVocabulary + avgTone + avgNaturalness + avgClarity + avgStructure) / 6m;
 
             // Re-evaluate win/lose conditions
@@ -672,111 +527,9 @@ Task:
 3. Keep the hint short, highly actionable, and encouraging (maximum 3 sentences).
 4. Do NOT output any JSON, markdown code block backticks (like ```), or formatting. Just output the plain Vietnamese text directly.";
 
-        var messages = new[]
-        {
-            new { role = "user", content = "Hãy gợi ý một câu tiếng Anh để trả lời NPC." }
-        };
-
-        var requestBody = new
-        {
-            model = _model,
-            max_tokens = 2000,
-            stream = true,
-            system = systemPrompt,
-            messages = messages,
-            temperature = 0.7
-        };
-
-        var targetUrl = _baseUrl;
-        var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
-        request.Headers.Add("x-api-key", _apiKey);
-        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-        var jsonOptions = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        var requestJson = JsonSerializer.Serialize(requestBody, jsonOptions);
-        request.Content = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
-
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Claude API returned {response.StatusCode}. Details: {errorContent}");
-            }
-
-            string contentString = string.Empty;
-            var textBuilder = new System.Text.StringBuilder();
-
-            try
-            {
-                using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
-                using (var reader = new System.IO.StreamReader(stream))
-                {
-                    bool isSse = false;
-                    string? line;
-
-                    while ((line = await reader.ReadLineAsync(cts.Token)) != null)
-                    {
-                        if (line.StartsWith("event:") || line.StartsWith("data:"))
-                        {
-                            isSse = true;
-                        }
-
-                        if (isSse)
-                        {
-                            if (line.StartsWith("data:"))
-                            {
-                                var json = line.Substring(line.IndexOf(':') + 1).Trim();
-                                if (json.StartsWith("{") && json.EndsWith("}"))
-                                {
-                                    try
-                                    {
-                                        using var doc = JsonDocument.Parse(json);
-                                        if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
-                                        {
-                                            break;
-                                        }
-
-                                        if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
-                                            deltaProp.TryGetProperty("text", out var textProp))
-                                        {
-                                            textBuilder.Append(textProp.GetString());
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        // Ignore malformed JSON lines
-                                    }
-                                }
-                            }
-                            else if (line.StartsWith("event: message_stop"))
-                            {
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            textBuilder.AppendLine(line);
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // If we already have some text, ignore the network termination exception
-                if (textBuilder.Length == 0)
-                {
-                    throw;
-                }
-            }
-
-            contentString = textBuilder.ToString().Trim();
-            return contentString;
+            return await _llmProvider.GenerateTextAsync(systemPrompt, "Hãy gợi ý một câu tiếng Anh để trả lời NPC.");
         }
         catch (Exception ex)
         {
@@ -807,6 +560,7 @@ Task:
         var history = await _context.Dialogues
             .Where(d => d.UserId == userId && d.MissionId == missionId)
             .OrderBy(d => d.Timestamp)
+            .Take(50) // Limit to last 50 dialogues to prevent memory issues
             .ToListAsync();
 
         return new GameSessionDto
@@ -818,9 +572,9 @@ Task:
             History = history.Select(h => new DialogueMessageHistoryDto
             {
                 Role = h.PlayerMessage == null ? "npc" : "player", // If PlayerMessage exists, it was player turn. Let's make it robust: we can map or distinguish.
-                PlayerMessage = h.PlayerMessage,
-                NpcResponse = h.NpcResponse,
-                Feedback = h.Feedback,
+                PlayerMessage = h.PlayerMessage ?? string.Empty,
+                NpcResponse = h.NpcResponse ?? string.Empty,
+                Feedback = h.Feedback ?? string.Empty,
                 SuspicionChange = h.SuspicionChange
             }).ToList()
         };

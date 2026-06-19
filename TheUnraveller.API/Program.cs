@@ -88,7 +88,7 @@ builder.Services.AddScoped<IShopRepository, ShopRepository>();
 
 // Register Services
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
-builder.Services.AddHttpClient<IAIEvaluationService, AIEvaluationService>(client => client.Timeout = TimeSpan.FromSeconds(120));
+builder.Services.AddScoped<IAIEvaluationService, AIEvaluationService>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 builder.Services.AddScoped<IMissionManagementService, MissionManagementService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
@@ -97,7 +97,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>();
+builder.Services.AddHttpClient<ILLMProviderService, LlmProviderService>(client => client.Timeout = TimeSpan.FromSeconds(120));
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();
 

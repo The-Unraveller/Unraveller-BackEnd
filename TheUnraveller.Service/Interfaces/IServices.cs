@@ -28,7 +28,8 @@ public interface IGameEngineService
 
 public interface ILLMProviderService
 {
-    Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage);
+    Task<ProviderEvaluationResponse> GetEvaluationResponseAsync(string systemPrompt, string userMessage);
+    Task<string> GenerateTextAsync(string systemPrompt, string userMessage);
 }
 
 public interface IPaymentService

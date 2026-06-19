@@ -1,7 +1,8 @@
+using System.Net;
+using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
 
@@ -9,275 +10,621 @@ namespace TheUnraveller.Service.Implementations;
 
 public class LlmProviderService : ILLMProviderService
 {
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<LlmProviderService> _logger;
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
-    private readonly string _baseUrl;
-    private readonly string _model;
-    private readonly string _provider;
 
-    public LlmProviderService(HttpClient httpClient, IConfiguration configuration)
+    // Primary (Gemini) config
+    private readonly string _geminiBaseUrl;
+    private readonly string _geminiApiKey;
+    private readonly string _geminiModel;
+    private readonly bool _isGeminiConfigured;
+
+    // Fallback (Claude) config
+    private readonly string _claudeBaseUrl;
+    private readonly string _claudeApiKey;
+    private readonly string _claudeModel;
+    private readonly bool _isClaudeConfigured;
+
+    public LlmProviderService(IConfiguration configuration, ILogger<LlmProviderService> logger, HttpClient httpClient)
     {
+        _configuration = configuration;
+        _logger = logger;
         _httpClient = httpClient;
 
-        _provider = configuration["LlmApi:Provider"]?.ToLower() ?? "claude";
+        // Configure timeouts and retry policies
+        _httpClient.Timeout = TimeSpan.FromSeconds(120);
 
-        var apiKeyConfig = configuration["LlmApi:ApiKey"];
-        _apiKey = string.IsNullOrEmpty(apiKeyConfig) || apiKeyConfig.Contains("PLACEHOLDER")
-            ? "dummy_key"
-            : apiKeyConfig;
+        // Use the most up-to-date Google AI SDK endpoints and model naming
+        // Updated to use gemini-2.5-flash for better performance and reliability
+        _geminiBaseUrl = _configuration["LlmApi:BaseUrl"] ?? "https://generativelanguage.googleapis.com/v1";
+        _geminiApiKey = _configuration["LlmApi:ApiKey"] ?? "";
+        _geminiModel = _configuration["LlmApi:Model"] ?? "gemini-2.5-flash";
+        _isGeminiConfigured = !string.IsNullOrWhiteSpace(_geminiApiKey);
 
-        var baseUrlConfig = configuration["LlmApi:BaseUrl"];
-        _baseUrl = string.IsNullOrEmpty(baseUrlConfig) || baseUrlConfig.Contains("PLACEHOLDER") || !baseUrlConfig.StartsWith("http")
-            ? _provider == "gemini"
-                ? "https://generativelanguage.googleapis.com/v1beta"
-                : "https://api.openai.com/v1/"
-            : baseUrlConfig;
+        _logger.LogInformation("Gemini configured: {IsConfigured}, Model: {GeminiModel}", _isGeminiConfigured, _geminiModel);
 
-        _model = configuration["LlmApi:Model"] ?? (_provider == "gemini" ? "gemini-2.0-flash" : "claude-haiku-4-5");
+        // Claude (fallback) with safer defaults and better model for reliability
+        _claudeBaseUrl = _configuration["LlmApi:ClaudeBaseUrl"] ?? "https://claude.zunef.com/v1/ai/messages";
+        _claudeApiKey = _configuration["LlmApi:ClaudeApiKey"] ?? "";
+        _claudeModel = _configuration["LlmApi:ClaudeModel"] ?? "claude-opus-4-8";
+        _isClaudeConfigured = !string.IsNullOrWhiteSpace(_claudeApiKey);
+
+        _logger.LogInformation("Claude configured: {IsConfigured}, Model: {ClaudeModel}", _isClaudeConfigured, _claudeModel);
     }
 
-    public async Task<LlmResponseDto> GetNpcResponseAsync(string systemPrompt, string userMessage)
+    public async Task<ProviderEvaluationResponse> GetEvaluationResponseAsync(string systemPrompt, string userMessage)
     {
-        return _provider switch
+        _logger.LogInformation("Processing evaluation request for user message length: {MessageLength}", userMessage.Length);
+
+        // Try Gemini first (primary provider), fallback to Claude if fails
+        if (_isGeminiConfigured)
         {
-            "gemini" => await GetGeminiResponseAsync(systemPrompt, userMessage),
-            _ => await GetClaudeResponseAsync(systemPrompt, userMessage)
-        };
+            try
+            {
+                _logger.LogInformation("Attempting primary provider: Gemini with model {GeminiModel}", _geminiModel);
+                var geminiResult = await GetGeminiEvaluationResponseAsync(systemPrompt, userMessage);
+                _logger.LogInformation("Gemini provider succeeded - response received");
+                return geminiResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Primary provider Gemini failed, attempting fallback provider...");
+            }
+        }
+        else
+        {
+            _logger.LogWarning("Gemini API key not configured, skipping primary provider");
+        }
+
+        // Try Claude only if configured
+        if (_isClaudeConfigured)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting fallback provider: Claude with model {ClaudeModel}", _claudeModel);
+                var claudeResult = await GetClaudeEvaluationResponseAsync(systemPrompt, userMessage);
+                _logger.LogInformation("Claude provider succeeded - response received");
+                return claudeResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Both providers failed - Gemini and Claude unavailable");
+                return GetUltimateFallbackResponse();
+            }
+        }
+        else
+        {
+            _logger.LogError("No providers configured - both Gemini and Claude API keys missing");
+            return GetUltimateFallbackResponse();
+        }
     }
 
-    private async Task<LlmResponseDto> GetClaudeResponseAsync(string systemPrompt, string userMessage)
+    private async Task<ProviderEvaluationResponse> GetGeminiEvaluationResponseAsync(string systemPrompt, string userMessage)
     {
-        // Safe-guard against Prompt Injection
-        var safeUserMessage = $"[USER_TEXT]\n{userMessage}\n[/USER_TEXT]";
-
-        var messages = new[]
+        // Ensure we have valid API key
+        if (!_isGeminiConfigured || string.IsNullOrWhiteSpace(_geminiApiKey))
         {
-            new { role = "user", content = safeUserMessage }
-        };
+            _logger.LogError("Gemini API key is not configured or is empty");
+            throw new InvalidOperationException("Gemini API key is required but not configured");
+        }
 
-        var requestBody = new
-        {
-            model = _model,
-            max_tokens = 4096,
-            system = systemPrompt,
-            messages = messages,
-            temperature = 0.7
-        };
+        var combinedPrompt = $"{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
 
-        var targetUrl = _baseUrl;
-        var request = new HttpRequestMessage(HttpMethod.Post, targetUrl);
-        request.Headers.Add("x-api-key", _apiKey);
-        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+        var url = $"{_geminiBaseUrl}/models/{_geminiModel}:generateContent?key={_geminiApiKey}";
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
 
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
-            // Use ResponseHeadersRead to begin streaming immediately without buffering the entire body
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new
+                    {
+                        contents = new[]
+                        {
+                            new
+                            {
+                                parts = new[]
+                                {
+                                    new { text = combinedPrompt }
+                                }
+                            }
+                        },
+                        generationConfig = new
+                        {
+                            temperature = 0.7,
+                            topP = 0.9,
+                            maxOutputTokens = 3000,
+                            responseMimeType = "application/json"
+                        },
+                        safetySettings = new[]
+                        {
+                            new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_NONE" },
+                            new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_NONE" },
+                            new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_NONE" },
+                            new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_NONE" }
+                        }
+                    }),
+                    Encoding.UTF8,
+                    "application/json"
+                )
+            };
+
+            // Ensure proper retry policy
             var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                return GetFallbackResponse($"System Error: Claude API returned {response.StatusCode}. Details: {errorContent}");
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                _logger.LogError("Gemini API returned error status {StatusCode}: {ErrorContent}", (int)response.StatusCode, errorContent);
+                throw new Exception($"Gemini API error {response.StatusCode}: {errorContent}");
             }
 
-            string contentString = string.Empty;
-            var textBuilder = new System.Text.StringBuilder();
+            var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
+            _logger.LogDebug("Raw Gemini response received: {ResponseContent}", responseContent);
 
+            string extractedText = string.Empty;
             try
             {
-                // Stream line by line to break immediately when message_stop is encountered, avoiding 19s keep-alive socket delays
-                using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
-                using (var reader = new System.IO.StreamReader(stream))
+                using var doc = JsonDocument.Parse(responseContent);
+                if (doc.RootElement.TryGetProperty("candidates", out var candidates) &&
+                    candidates.GetArrayLength() > 0 &&
+                    candidates[0].TryGetProperty("content", out var contentProp) &&
+                    contentProp.TryGetProperty("parts", out var parts) &&
+                    parts.GetArrayLength() > 0 &&
+                    parts[0].TryGetProperty("text", out var textProp))
                 {
-                    bool isSse = false;
-                    string? line;
-
-                    while ((line = await reader.ReadLineAsync(cts.Token)) != null)
-                    {
-                        if (line.StartsWith("event:") || line.StartsWith("data:"))
-                        {
-                            isSse = true;
-                        }
-
-                        if (isSse)
-                        {
-                            if (line.StartsWith("data:"))
-                            {
-                                var json = line.Substring(line.IndexOf(':') + 1).Trim();
-                                if (json.StartsWith("{") && json.EndsWith("}"))
-                                {
-                                    try
-                                    {
-                                        using var doc = JsonDocument.Parse(json);
-                                        if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
-                                        {
-                                            break; // Stream finished, exit immediately!
-                                        }
-
-                                        if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
-                                            deltaProp.TryGetProperty("text", out var textProp))
-                                        {
-                                            textBuilder.Append(textProp.GetString());
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        // Ignore malformed JSON lines in the stream
-                                    }
-                                }
-                            }
-                            else if (line.StartsWith("event: message_stop"))
-                            {
-                                break; // Stream finished, exit immediately!
-                            }
-                        }
-                        else
-                        {
-                            textBuilder.AppendLine(line);
-                        }
-                    }
+                    extractedText = textProp.GetString() ?? "";
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If we already have a potential JSON block in our builder, ignore the network termination exception
-                var tempString = textBuilder.ToString().Trim();
-                int first = tempString.IndexOf('{');
-                int last = tempString.LastIndexOf('}');
-                if (first < 0 || last <= first)
-                {
-                    // No valid JSON accumulated, rethrow the exception to let the outer fallback handle it
-                    throw;
-                }
+                _logger.LogError(ex, "Failed to parse raw Gemini response JSON");
             }
 
-            contentString = textBuilder.ToString().Trim();
-
-            contentString = contentString.Trim();
-            if (contentString.StartsWith("```json")) contentString = contentString.Substring(7);
-            if (contentString.EndsWith("```")) contentString = contentString.Substring(0, contentString.Length - 3);
-            contentString = contentString.Trim();
-
-            // Robust JSON extraction to prevent issues with reasoning token wrapper prefixes
-            int firstBrace = contentString.IndexOf('{');
-            int lastBrace = contentString.LastIndexOf('}');
-            if (firstBrace >= 0 && lastBrace > firstBrace)
+            if (string.IsNullOrWhiteSpace(extractedText))
             {
-                contentString = contentString.Substring(firstBrace, lastBrace - firstBrace + 1);
-                try
-                {
-                    return JsonSerializer.Deserialize<LlmResponseDto>(contentString) ?? GetFallbackResponse("System Error: Failed to parse NPC response (null deserialization result).");
-                }
-                catch (JsonException jsonEx)
-                {
-                    return GetFallbackResponse($"System Error: JSON parsing failed: {jsonEx.Message}. Raw text: {contentString}");
-                }
+                extractedText = responseContent;
             }
-            else
-            {
-                return GetFallbackResponse($"System Error: No JSON object found in response. Raw text: {contentString}");
-            }
+
+            return ParseAndValidate(extractedText, "Gemini");
         }
         catch (TaskCanceledException)
         {
-            return GetFallbackResponse("System Error: The NPC is taking too long to think. Timeout reached.");
+            _logger.LogWarning("Gemini API request timed out after 90 seconds");
+            throw new TimeoutException("Gemini API request timeout");
         }
         catch (Exception ex)
         {
-            return GetFallbackResponse($"System Error: Unexpected error occurred: {ex.Message}");
+            _logger.LogError(ex, "Exception during Gemini API call");
+            throw;
         }
     }
 
-    private async Task<LlmResponseDto> GetGeminiResponseAsync(string systemPrompt, string userMessage)
+    private async Task<string> StreamGeminiAsync(HttpResponseMessage response, CancellationToken ct)
     {
-        // Combine system and user prompts for Gemini (no separate system message)
-        var combinedPrompt = $"{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
+        var textBuilder = new StringBuilder();
+        using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
 
-        var requestBody = new
-        {
-            contents = new[]
-            {
-                new { parts = new[] { new { text = combinedPrompt } } }
-            },
-            generationConfig = new
-            {
-                temperature = 0.7,
-                maxOutputTokens = 4096
-            }
-        };
-
-        var apiKey = _apiKey;
-        var model = _model;
-        var url = $"{_baseUrl}/models/{model}:generateContent?key={apiKey}";
-
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+        string? line;
+        int charCount = 0;
+        int maxChars = 6000; // Safety limit for response size
 
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
-            var response = await _httpClient.SendAsync(request, cts.Token);
-
-            if (!response.IsSuccessStatusCode)
+            while ((line = await reader.ReadLineAsync(ct)) != null && charCount < maxChars)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                return GetFallbackResponse($"System Error: Gemini API returned {response.StatusCode}. Details: {errorContent}");
-            }
-
-            var responseJson = await response.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(responseJson);
-            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
-            {
-                var firstCandidate = candidates[0];
-                if (firstCandidate.TryGetProperty("content", out var content) &&
-                    content.TryGetProperty("parts", out var parts) && parts.GetArrayLength() > 0)
+                if (line.StartsWith("data:"))
                 {
-                    var text = parts[0].GetProperty("text").GetString() ?? "";
-
-                    // Try to extract JSON from the response
-                    var jsonMatch = Regex.Match(text, @"\{.*\s*""NpcResponse""\s*:.*\}", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                    if (jsonMatch.Success)
+                    var json = line.Substring(5).Trim();
+                    if (json.StartsWith("{") && json.EndsWith("}"))
                     {
                         try
                         {
-                            var result = JsonSerializer.Deserialize<LlmResponseDto>(jsonMatch.Value);
-                            if (result != null) return result;
-                        }
-                        catch { }
-                    }
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+                            {
+                                var first = candidates[0];
+                                if (first.TryGetProperty("content", out var content) &&
+                                    content.TryGetProperty("parts", out var parts) && parts.GetArrayLength() > 0)
+                                {
+                                    var text = parts[0].GetProperty("text").GetString();
+                                    if (!string.IsNullOrEmpty(text))
+                                    {
+                                        textBuilder.Append(text);
+                                        charCount += text.Length;
+                                    }
+                                }
+                            }
 
-                    // Fallback: return plain text as NpcResponse
-                    return new LlmResponseDto
-                    {
-                        NpcResponse = text,
-                        Feedback = "AI did not provide structured feedback in expected JSON format.",
-                        SuspicionDelta = 0
-                    };
+                            // Check for finish reason
+                            if (doc.RootElement.TryGetProperty("candidates", out var candArray) && candArray.GetArrayLength() > 0 &&
+                                candArray[0].TryGetProperty("finishReason", out var reason))
+                            {
+                                _logger.LogDebug("Gemini response finished with reason: {FinishReason}", reason.GetString());
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Error parsing Gemini stream data");
+                        }
+                    }
+                }
+                else if (line.StartsWith("event: done") || line.StartsWith("event: message_stop"))
+                {
+                    break;
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Gemini stream read was cancelled");
+            throw;
+        }
 
-            return GetFallbackResponse("System Error: Gemini response structure invalid (missing candidates/content).");
+        _logger.LogDebug("StreamGemini collected {CharCount} characters of text", textBuilder.Length);
+        return textBuilder.ToString();
+    }
+
+    private async Task<ProviderEvaluationResponse> GetClaudeEvaluationResponseAsync(string systemPrompt, string userMessage)
+    {
+        // Ensure we have valid API key
+        if (!_isClaudeConfigured || string.IsNullOrWhiteSpace(_claudeApiKey))
+        {
+            _logger.LogError("Claude API key is not configured or is empty");
+            throw new InvalidOperationException("Claude API key is required but not configured");
+        }
+
+        var safeUserMessage = $"[USER_TEXT]\n{userMessage}\n[/USER_TEXT]";
+
+        var requestBody = new
+        {
+            model = _claudeModel,
+            max_tokens = 3000,
+            temperature = 0.7,
+            top_p = 0.9,
+            system = systemPrompt,
+            messages = new[] { new { role = "user", content = safeUserMessage } }
+        };
+
+        var url = _claudeBaseUrl;
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
+            };
+
+            // Add both headers as some Claude gateways require both
+            request.Headers.Add("x-api-key", _claudeApiKey);
+            request.Headers.Add("Authorization", $"Bearer {_claudeApiKey}");
+            request.Headers.Add("anthropic-version", "2023-06-01");
+
+            // Ensure proper retry policy and timeout handling
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                _logger.LogError("Claude API returned error status {StatusCode}: {ErrorContent}", (int)response.StatusCode, errorContent);
+                throw new Exception($"Claude API error {response.StatusCode}: {errorContent}");
+            }
+
+            var fullText = await StreamClaudeAsync(response, cts.Token);
+            _logger.LogDebug("Raw Claude response received (first 200 chars): {ResponsePreview}", fullText.Length > 200 ? fullText.Substring(0, 200) : fullText);
+
+            return ParseAndValidate(fullText, "Claude");
         }
         catch (TaskCanceledException)
         {
-            return GetFallbackResponse("System Error: The NPC is taking too long to think. Timeout reached.");
+            _logger.LogWarning("Claude API request timed out after 90 seconds");
+            throw new TimeoutException("Claude API request timeout");
         }
         catch (Exception ex)
         {
-            return GetFallbackResponse($"System Error: Unexpected error occurred: {ex.Message}");
+            _logger.LogError(ex, "Exception during Claude API call");
+            throw;
         }
     }
 
-    private LlmResponseDto GetFallbackResponse(string errorFeedback)
+    private async Task<string> StreamClaudeAsync(HttpResponseMessage response, CancellationToken ct)
     {
-        return new LlmResponseDto
+        var textBuilder = new StringBuilder();
+        using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+
+        bool isSse = false;
+        string? line;
+        int charCount = 0;
+        int maxChars = 6000;
+
+        try
         {
-            NpcResponse = "I didn't quite catch that. Can you say it again?",
-            Feedback = errorFeedback,
-            SuspicionDelta = 0
+            while ((line = await reader.ReadLineAsync(ct)) != null && charCount < maxChars)
+            {
+                if (line.StartsWith("event:") || line.StartsWith("data:"))
+                    isSse = true;
+
+                if (isSse)
+                {
+                    if (line.StartsWith("data:"))
+                    {
+                        var json = line.Substring(line.IndexOf(':') + 1).Trim();
+                        if (json.StartsWith("{") && json.EndsWith("}"))
+                        {
+                            try
+                            {
+                                using var doc = JsonDocument.Parse(json);
+                                if (doc.RootElement.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "message_stop")
+                                    break;
+
+                                if (doc.RootElement.TryGetProperty("delta", out var deltaProp) &&
+                                    deltaProp.TryGetProperty("text", out var textProp))
+                                {
+                                    var text = textProp.GetString();
+                                    if (!string.IsNullOrEmpty(text))
+                                    {
+                                        textBuilder.Append(text);
+                                        charCount += text.Length;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Error parsing Claude stream data");
+                            }
+                        }
+                    }
+                }
+                else if (line.StartsWith("event: message_stop"))
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Claude stream read was cancelled");
+            throw;
+        }
+
+        _logger.LogDebug("StreamClaude collected {CharCount} characters of text", textBuilder.Length);
+        return textBuilder.ToString();
+    }
+
+    private ProviderEvaluationResponse ParseAndValidate(string content, string provider)
+    {
+        try
+        {
+            // Clean up markdown code blocks if present
+            if (content.StartsWith("```json")) content = content[7..];
+            if (content.StartsWith("```")) content = content[3..];
+            if (content.EndsWith("```")) content = content[..^3];
+            content = content.Trim();
+
+            // Extract JSON object
+            int first = content.IndexOf('{');
+            int last = content.LastIndexOf('}');
+            if (first < 0 || last <= first)
+                throw new JsonException("No JSON object found");
+
+            var json = content.Substring(first, last - first + 1);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            var response = JsonSerializer.Deserialize<ProviderEvaluationResponse>(json, options);
+
+            if (response == null)
+                throw new JsonException("Deserialization returned null");
+
+            // Ensure non-null values
+            response.NpcResponse ??= "I need to think about that.";
+            response.WritingFeedback ??= new WritingFeedbackDto(
+                new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                new List<CorrectionDto>(),
+                null,
+                "* Không có phản hồi chi tiết."
+            );
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Provider} failed to parse response: {Content}", provider, content);
+            throw;
+        }
+    }
+
+    private ProviderEvaluationResponse GetFallbackResponse(string provider)
+    {
+        return new ProviderEvaluationResponse
+        {
+            NpcResponse = "I need to think about that.",
+            WritingFeedback = new WritingFeedbackDto(
+                new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                new List<CorrectionDto>(),
+                null,
+                $"* Lỗi hệ thống: {provider} gặp sự cố. Vui lòng thử lại."
+            ),
+            SuspicionChange = 0,
+            XpEarned = 0
         };
+    }
+
+    private ProviderEvaluationResponse GetUltimateFallbackResponse()
+    {
+        return new ProviderEvaluationResponse
+        {
+            NpcResponse = "I need to think about that.",
+            WritingFeedback = new WritingFeedbackDto(
+                new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                new List<CorrectionDto>(),
+                null,
+                "* Lỗi hệ thống: Tất cả các nhà cung cấp AI đều không khả dụng. Vui lòng thử lại sau."
+            ),
+            SuspicionChange = 0,
+            XpEarned = 0
+        };
+    }
+
+    public async Task<string> GenerateTextAsync(string systemPrompt, string userMessage)
+    {
+        _logger.LogInformation("Processing text generation request of length: {MessageLength}", userMessage.Length);
+
+        if (_isGeminiConfigured)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting text generation with Gemini...");
+                var geminiResult = await GetGeminiTextAsync(systemPrompt, userMessage);
+                return geminiResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Primary Gemini text generation failed, attempting Claude fallback...");
+            }
+        }
+
+        if (_isClaudeConfigured)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting text generation with Claude...");
+                var claudeResult = await GetClaudeTextAsync(systemPrompt, userMessage);
+                return claudeResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Both text generation providers failed");
+                throw;
+            }
+        }
+
+        throw new InvalidOperationException("No LLM providers configured for text generation");
+    }
+
+    private async Task<string> GetGeminiTextAsync(string systemPrompt, string userMessage)
+    {
+        if (!_isGeminiConfigured || string.IsNullOrWhiteSpace(_geminiApiKey))
+        {
+            throw new InvalidOperationException("Gemini API key is required but not configured");
+        }
+
+        var combinedPrompt = $"{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
+        var url = $"{_geminiBaseUrl}/models/{_geminiModel}:generateContent?key={_geminiApiKey}";
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new
+                    {
+                        contents = new[]
+                        {
+                            new
+                            {
+                                parts = new[]
+                                {
+                                    new { text = combinedPrompt }
+                                }
+                            }
+                        },
+                        generationConfig = new
+                        {
+                            temperature = 0.7,
+                            topP = 0.9,
+                            maxOutputTokens = 2000
+                        }
+                    }),
+                    Encoding.UTF8,
+                    "application/json"
+                )
+            };
+
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                _logger.LogError("Gemini API returned error status {StatusCode}: {ErrorContent}", (int)response.StatusCode, errorContent);
+                throw new Exception($"Gemini API error {response.StatusCode}: {errorContent}");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
+            
+            using var doc = JsonDocument.Parse(responseContent);
+            if (doc.RootElement.TryGetProperty("candidates", out var candidates) &&
+                candidates.GetArrayLength() > 0 &&
+                candidates[0].TryGetProperty("content", out var contentProp) &&
+                contentProp.TryGetProperty("parts", out var parts) &&
+                parts.GetArrayLength() > 0 &&
+                parts[0].TryGetProperty("text", out var textProp))
+            {
+                return textProp.GetString() ?? "";
+            }
+
+            throw new Exception("Could not find generated text in Gemini response.");
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Gemini API request timeout during text generation");
+        }
+    }
+
+    private async Task<string> GetClaudeTextAsync(string systemPrompt, string userMessage)
+    {
+        if (!_isClaudeConfigured || string.IsNullOrWhiteSpace(_claudeApiKey))
+        {
+            throw new InvalidOperationException("Claude API key is required but not configured");
+        }
+
+        var safeUserMessage = $"[USER_TEXT]\n{userMessage}\n[/USER_TEXT]";
+        var requestBody = new
+        {
+            model = _claudeModel,
+            max_tokens = 2000,
+            temperature = 0.7,
+            top_p = 0.9,
+            system = systemPrompt,
+            messages = new[] { new { role = "user", content = safeUserMessage } }
+        };
+
+        var url = _claudeBaseUrl;
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("x-api-key", _claudeApiKey);
+            request.Headers.Add("Authorization", $"Bearer {_claudeApiKey}");
+            request.Headers.Add("anthropic-version", "2023-06-01");
+
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                throw new Exception($"Claude API error {response.StatusCode}: {errorContent}");
+            }
+
+            var fullText = await StreamClaudeAsync(response, cts.Token);
+            return fullText;
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Claude API request timeout during text generation");
+        }
     }
 }
