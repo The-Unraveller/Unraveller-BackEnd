@@ -20,6 +20,7 @@ public class AIEvaluationServiceTests : IDisposable
     private readonly AppDbContext _context;
     private readonly Mock<IConfiguration> _configMock;
     private readonly Mock<IBadgeService> _badgeServiceMock;
+    private readonly Mock<ILLMProviderService> _llmProviderMock;
 
     public AIEvaluationServiceTests()
     {
@@ -42,6 +43,9 @@ public class AIEvaluationServiceTests : IDisposable
         _badgeServiceMock = new Mock<IBadgeService>();
         _badgeServiceMock.Setup(s => s.AwardBadgesForMissionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
                          .Returns(Task.CompletedTask);
+
+        // 4. Mock LLM Provider
+        _llmProviderMock = new Mock<ILLMProviderService>();
     }
 
     public void Dispose()
@@ -101,58 +105,23 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        // Đã bọc lót tất cả các trường hợp Case Sensitivity (camelCase & PascalCase)
-        var geminiResponseText = @"{
-            ""npcResponse"": ""Identify yourself!"",
-            ""NpcResponse"": ""Identify yourself!"",
-            ""feedback"": ""Good grammar, standard greeting."",
-            ""Feedback"": ""Good grammar, standard greeting."",
-            ""suspicionChange"": 5,
-            ""SuspicionChange"": 5,
-            ""xpEarned"": 15,
-            ""XpEarned"": 15,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 80,
-                    ""vocabulary"": 80,
-                    ""tone"": 80,
-                    ""naturalness"": 80,
-                    ""clarity"": 80,
-                    ""structure"": 80
-                },
-                ""corrections"": [],
-                ""rewriteSuggestion"": null,
-                ""summary"": ""Good grammar, standard greeting.""
-            }
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "Identify yourself!",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(80, 80, 80, 80, 80, 80),
+                    new List<CorrectionDto>(),
+                    null,
+                    "Good grammar, standard greeting."
+                ),
+                SuspicionChange = 5,
+                XpEarned = 15
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -193,9 +162,7 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        var handlerMock = new Mock<HttpMessageHandler>();
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() =>
@@ -209,21 +176,10 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.InternalServerError
-            });
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new HttpRequestException("API is unavailable"));
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -256,72 +212,38 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        // Đã bọc lót tất cả các trường hợp Case Sensitivity
-        var geminiResponseText = @"{
-            ""npcResponse"": ""Roger that."",
-            ""NpcResponse"": ""Roger that."",
-            ""feedback"": ""Good response."",
-            ""Feedback"": ""Good response."",
-            ""suspicionChange"": -5,
-            ""SuspicionChange"": -5,
-            ""xpEarned"": 15,
-            ""XpEarned"": 15,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 85,
-                    ""vocabulary"": 85,
-                    ""tone"": 85,
-                    ""naturalness"": 85,
-                    ""clarity"": 85,
-                    ""structure"": 85
-                },
-                ""corrections"": [],
-                ""rewriteSuggestion"": null,
-                ""summary"": ""Good response.""
-            }
-        }";
 
-        string? capturedRequestContent = null;
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .Callback<HttpRequestMessage, CancellationToken>(async (req, token) =>
+
+        string? capturedSystemPrompt = null;
+        _llmProviderMock
+            .Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((sysPrompt, userMsg) =>
             {
-                capturedRequestContent = await req.Content!.ReadAsStringAsync(token);
+                capturedSystemPrompt = sysPrompt;
             })
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "Roger that.",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(85, 85, 85, 85, 85, 85),
+                    new List<CorrectionDto>(),
+                    null,
+                    "Good response."
+                ),
+                SuspicionChange = -5,
+                XpEarned = 15
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Testing levels");
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(capturedRequestContent);
-        Assert.Contains(expectedInstructionSubstring, capturedRequestContent);
-        Assert.Contains($"Trình độ tiếng Anh: {level}", capturedRequestContent);
+        Assert.NotNull(capturedSystemPrompt);
+        Assert.Contains(expectedInstructionSubstring, capturedSystemPrompt);
+        Assert.Contains($"Trình độ tiếng Anh: {level}", capturedSystemPrompt);
     }
 
     [Fact]
@@ -330,57 +252,23 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        var geminiResponseText = @"{
-            ""npcResponse"": ""You are caught!"",
-            ""NpcResponse"": ""You are caught!"",
-            ""feedback"": ""Bad reply."",
-            ""Feedback"": ""Bad reply."",
-            ""suspicionChange"": 100,
-            ""SuspicionChange"": 100,
-            ""xpEarned"": 0,
-            ""XpEarned"": 0,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 20,
-                    ""vocabulary"": 20,
-                    ""tone"": 20,
-                    ""naturalness"": 20,
-                    ""clarity"": 20,
-                    ""structure"": 20
-                },
-                ""corrections"": [],
-                ""rewriteSuggestion"": null,
-                ""summary"": ""Failing performance.""
-            }
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "You are caught!",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(20, 20, 20, 20, 20, 20),
+                    new List<CorrectionDto>(),
+                    null,
+                    "Failing performance."
+                ),
+                SuspicionChange = 100,
+                XpEarned = 0
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "suspicious message");
@@ -440,57 +328,22 @@ public class AIEvaluationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // 3. Mock the 5th message reply (overallAvg will be 80, turns will be 5, satisfying win)
-        var geminiResponseText = @"{
-            ""npcResponse"": ""Thank you very much."",
-            ""NpcResponse"": ""Thank you very much."",
-            ""feedback"": ""Excellent grammar!"",
-            ""Feedback"": ""Excellent grammar!"",
-            ""suspicionChange"": -5,
-            ""SuspicionChange"": -5,
-            ""xpEarned"": 15,
-            ""XpEarned"": 15,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 80,
-                    ""vocabulary"": 80,
-                    ""tone"": 80,
-                    ""naturalness"": 80,
-                    ""clarity"": 80,
-                    ""structure"": 80
-                },
-                ""corrections"": [],
-                ""rewriteSuggestion"": ""Perfect response."",
-                ""summary"": ""Great job!""
-            }
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "Thank you very much.",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(80, 80, 80, 80, 80, 80),
+                    new List<CorrectionDto>(),
+                    "Perfect response.",
+                    "Great job!"
+                ),
+                SuspicionChange = -5,
+                XpEarned = 15
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "I would like a cup of coffee, please.");
@@ -526,64 +379,26 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        var geminiResponseText = @"{
-            ""npcResponse"": ""Sorry?"",
-            ""NpcResponse"": ""Sorry?"",
-            ""feedback"": ""Correction needed."",
-            ""Feedback"": ""Correction needed."",
-            ""suspicionChange"": 10,
-            ""SuspicionChange"": 10,
-            ""xpEarned"": 5,
-            ""XpEarned"": 5,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 50,
-                    ""vocabulary"": 60,
-                    ""tone"": 70,
-                    ""naturalness"": 60,
-                    ""clarity"": 50,
-                    ""structure"": 60
-                },
-                ""corrections"": [
-                    {
-                        ""axis"": 0,
-                        ""original"": ""I goes to coffee shop"",
-                        ""corrected"": ""I go to the coffee shop"",
-                        ""explanation"": ""Subject-verb agreement and missing article.""
-                    }
-                ],
-                ""rewriteSuggestion"": ""I would like to go to the coffee shop."",
-                ""summary"": ""Fix grammar issues.""
-            }
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + 
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") + 
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "Sorry?",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(50, 60, 70, 60, 50, 60),
+                    new List<CorrectionDto>
+                    {
+                        new CorrectionDto(TheUnraveller.Service.DTOs.SkillAxis.Grammar, "I goes to coffee shop", "I go to the coffee shop", "Subject-verb agreement and missing article.")
+                    },
+                    "I would like to go to the coffee shop.",
+                    "Fix grammar issues."
+                ),
+                SuspicionChange = 10,
+                XpEarned = 5
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "I goes to coffee shop");
@@ -606,29 +421,21 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"This is not valid JSON [[[\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "I need to think about that.",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                    new List<CorrectionDto>(),
+                    null,
+                    "* Lỗi hệ thống: Claude gặp sự cố. Vui lòng thử lại."
+                ),
+                SuspicionChange = 0,
+                XpEarned = 0
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -651,38 +458,18 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        // JSON with missing fields
-        var incompleteJson = @"{
-            ""npcResponse"": """",
-            ""suspicionChange"": 10,
-            ""xpEarned"": 5
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" +
-                    incompleteJson.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") +
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "",
+                WritingFeedback = null!,
+                SuspicionChange = 10,
+                XpEarned = 5
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -702,57 +489,23 @@ public class AIEvaluationServiceTests : IDisposable
         // Arrange
         SeedDatabase();
 
-        var geminiResponseText = @"{
-            ""npcResponse"": ""Hello!"",
-            ""NpcResponse"": ""Hello!"",
-            ""feedback"": ""Good."",
-            ""Feedback"": ""Good."",
-            ""suspicionChange"": -5,
-            ""SuspicionChange"": -5,
-            ""xpEarned"": 10,
-            ""XpEarned"": 10,
-            ""writingFeedback"": {
-                ""scores"": {
-                    ""grammar"": 80,
-                    ""vocabulary"": 80,
-                    ""tone"": 80,
-                    ""naturalness"": 80,
-                    ""clarity"": 80,
-                    ""structure"": 80
-                },
-                ""corrections"": [],
-                ""rewriteSuggestion"": null,
-                ""summary"": ""Great job! No errors.""
-            }
-        }";
 
-        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
+
+        _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new ProviderEvaluationResponse
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "event: message_start\n" +
-                    "data: {\"type\":\"message_start\"}\n\n" +
-                    "event: content_block_start\n" +
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
-                    "event: content_block_delta\n" +
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" +
-                    geminiResponseText.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ") +
-                    "\"}}\n\n" +
-                    "event: message_stop\n" +
-                    "data: {\"type\":\"message_stop\"}\n\n"
-                )
+                NpcResponse = "Hello!",
+                WritingFeedback = new WritingFeedbackDto(
+                    new WritingScoreDto(80, 80, 80, 80, 80, 80),
+                    new List<CorrectionDto>(),
+                    null,
+                    "Great job! No errors."
+                ),
+                SuspicionChange = -5,
+                XpEarned = 10
             });
 
-        var httpClient = new HttpClient(handlerMock.Object);
-        var service = new AIEvaluationService(httpClient, _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -776,8 +529,7 @@ public class AIEvaluationServiceTests : IDisposable
         _context.WritingSkillSnapshots.RemoveRange(existingSnapshots);
         await _context.SaveChangesAsync();
 
-        var service = new AIEvaluationService(
-            new HttpClient(), _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.GetWritingSkillMapAsync(1);
@@ -845,8 +597,7 @@ public class AIEvaluationServiceTests : IDisposable
         await _context.WritingSkillSnapshots.AddRangeAsync(snapshots);
         await _context.SaveChangesAsync();
 
-        var service = new AIEvaluationService(
-            new HttpClient(), _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act
         var result = await service.GetWritingSkillMapAsync(1);
@@ -883,8 +634,7 @@ public class AIEvaluationServiceTests : IDisposable
             await _context.SaveChangesAsync();
         }
 
-        var service = new AIEvaluationService(
-            new HttpClient(), _context, _configMock.Object, _badgeServiceMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<DomainException>(() => service.GetWritingSkillMapAsync(1));
