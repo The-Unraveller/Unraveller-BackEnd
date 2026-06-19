@@ -416,6 +416,7 @@ public class LlmProviderService : ILLMProviderService
 
             var json = content.Substring(first, last - first + 1);
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             var response = JsonSerializer.Deserialize<ProviderEvaluationResponse>(json, options);
 
             if (response == null)
@@ -435,7 +436,7 @@ public class LlmProviderService : ILLMProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{Provider} failed to parse response: {Content}", provider, content);
-            return GetFallbackResponse(provider);
+            throw;
         }
     }
 

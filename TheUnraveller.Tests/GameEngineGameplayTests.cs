@@ -7,6 +7,7 @@ using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Implementations;
 using TheUnraveller.Service.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace TheUnraveller.Tests;
