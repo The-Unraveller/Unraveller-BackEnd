@@ -127,7 +127,7 @@ public class GameController : ControllerBase
             string message = "Sử dụng vật phẩm thành công.";
 
             // 3. Apply item effects
-            if (request.ItemId == 2) // Golden Tongue / Lưỡi vàng (BribeNpc)
+            if (request.ItemId == 2) // Từ điển ngoại giao (BribeNpc)
             {
                 var progress = await _userProgressRepository.GetUserProgressAsync(userId, request.MissionId);
                 if (progress != null)
@@ -138,9 +138,9 @@ public class GameController : ControllerBase
                     await _userProgressRepository.SaveChangesAsync();
                     newSuspicion = progress.CurrentSuspicion;
                 }
-                message = "Đã sử dụng Lưỡi Vàng! Mức độ nghi ngờ của NPC giảm đi 20 điểm.";
+                message = "Đã sử dụng Từ điển ngoại giao! Chỉ số sai lệch giao tiếp giảm đi 20 điểm.";
             }
-            else if (request.ItemId == 1) // Detective Magnifier / Kính lúp thám tử (InGameHint)
+            else if (request.ItemId == 1) // Gợi ý thông thái (InGameHint)
             {
                 var progress = await _userProgressRepository.GetUserProgressAsync(userId, request.MissionId);
                 if (progress != null)
@@ -150,7 +150,7 @@ public class GameController : ControllerBase
                 
                 // Call LLM hint service to generate a Vietnamese suggestion
                 hint = await _aiEvaluationService.GenerateHintAsync(userId, request.MissionId);
-                message = "Đã kích hoạt Kính Lúp Thám Tử! AI đã phân tích tình huống và đưa ra gợi ý.";
+                message = "Đã kích hoạt Gợi ý thông thái! AI đã phân tích tình huống và đưa ra gợi ý.";
             }
 
             return Ok(new UseGameItemResponseDto(true, message, newSuspicion, hint));

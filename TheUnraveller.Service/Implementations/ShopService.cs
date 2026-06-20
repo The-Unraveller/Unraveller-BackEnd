@@ -90,8 +90,8 @@ public class ShopService : IShopService
 
         string effectMessage = item.Type switch
         {
-            ItemType.InGameHint => "Hint activated: NPC is now more likely to give a clue. Suspicion decreased by 10!",
-            ItemType.BribeNpc => "Bribe successful: Suspicion level decreased by 20!",
+            ItemType.InGameHint => "Hint activated: AI suggestion generated.",
+            ItemType.BribeNpc => "Helper used: Communicative drift decreased by 20!",
             ItemType.Cosmetic => "Cosmetic applied to your profile.",
             _ => "Item used successfully."
         };
