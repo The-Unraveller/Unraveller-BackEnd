@@ -335,6 +335,27 @@ public class LlmProviderService : ILLMProviderService
 
     private async Task<string> StreamClaudeAsync(HttpResponseMessage response, CancellationToken ct)
     {
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        if (mediaType != "text/event-stream")
+        {
+            var contentString = await response.Content.ReadAsStringAsync(ct);
+            try
+            {
+                using var doc = JsonDocument.Parse(contentString);
+                if (doc.RootElement.TryGetProperty("content", out var contentProp) &&
+                    contentProp.GetArrayLength() > 0 &&
+                    contentProp[0].TryGetProperty("text", out var textProp))
+                {
+                    return textProp.GetString() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse non-stream Claude response: {Content}", contentString);
+            }
+            return contentString;
+        }
+
         var textBuilder = new StringBuilder();
         using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);

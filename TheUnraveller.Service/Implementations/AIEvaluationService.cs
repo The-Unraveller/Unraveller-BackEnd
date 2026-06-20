@@ -72,9 +72,18 @@ public class AIEvaluationService : IAIEvaluationService
             historyBlock.AppendLine("\n--- CONVERSATION HISTORY (most recent turns) ---");
             foreach (var entry in history)
             {
-                historyBlock.AppendLine($"Player: {entry.PlayerMessage}");
+                if (!string.IsNullOrEmpty(entry.PlayerMessage))
+                {
+                    historyBlock.AppendLine($"Player: {entry.PlayerMessage}");
+                }
                 historyBlock.AppendLine($"{npc.Name}: {entry.NpcResponse}");
             }
+            historyBlock.AppendLine("--- END OF HISTORY ---");
+        }
+        else
+        {
+            historyBlock.AppendLine("\n--- CONVERSATION HISTORY (most recent turns) ---");
+            historyBlock.AppendLine($"{npc.Name}: {mission.Description}");
             historyBlock.AppendLine("--- END OF HISTORY ---");
         }
 
@@ -633,7 +642,7 @@ Task:
                 await _context.UserProgresses.AddAsync(progress);
             }
 
-            // Remove all dialogues
+            // Remove all dialogues and corrections
             var dialogues = await _context.Dialogues
                 .Where(d => d.UserId == userId && d.MissionId == missionId)
                 .ToListAsync();
