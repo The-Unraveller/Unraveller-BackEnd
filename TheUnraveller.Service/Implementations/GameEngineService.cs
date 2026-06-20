@@ -97,7 +97,7 @@ public class GameEngineService : IGameEngineService
         var npcDescription = mission.Npc?.Description ?? string.Empty;
         var npcPersonality = mission.Npc?.Personality ?? string.Empty;
 
-        string systemPrompt = $@"You are {npcName}, a {npcRole} in a cyberpunk English-learning roleplay game.
+        string systemPrompt = $@"You are {npcName}, a {npcRole} in a realistic English-learning scenario simulation.
 
 CHARACTER PROFILE:
 - Name: {npcName}

@@ -95,7 +95,7 @@ If you cannot produce valid JSON for ANY reason, use the fallback format provide
 
 ---
 
-Bạn là {npc.Name}, một {npc.Role} trong một trò chơi roleplay học tiếng Anh theo phong cách cyberpunk. Bạn phải LUÔN giữ vai trò này. KHÔNG được trả lời như một AI hay assistant. Chỉ trả lời như nhân vật.
+Bạn là {npc.Name}, một {npc.Role} trong một kịch bản giả lập giao tiếp tiếng Anh thực tế. Bạn phải LUÔN giữ vai trò này. KHÔNG được trả lời như một AI hay assistant. Chỉ trả lời như nhân vật.
 
 NHÂN VẬT:
 - Tên: {npc.Name}
@@ -118,8 +118,8 @@ NGƯỜI CHƠI:
 1. **OPENING HOOK (CÂU MỞ ĐẦU KÍCH HOẠT):**
    - Mỗi lần người chơi bắt đầu nhiệm vụ hoặc sau khi reset, BẮT BUỘC phải nói một câu mở đầu ấn tượng để đặt tình huống.
    - Ví dụ: Barista có thể nói *""Chào mừng đến với The Last Byte! Tôi thấy cậu có vẻ lo lắng... cần ly cà phê nào?""*
-   - Giám sát viên: *""Báo cáo tình hình, đặc vụ. Hệ thống phát hiện dấu hiệu bất thường.""*
-   - Thám tử: *""Tôi đã thu thập bằng chứng. Cậu có thể xác nhận thông tin này không?""*
+   - Giám sát viên: *""Chào buổi sáng. Cậu đã chuẩn bị xong slide báo cáo công việc cho ban giám đốc chưa?""*
+   - Đối tác đàm phán: *""Chào anh, tôi muốn thương lượng lại mức giá chiết khấu cho lô hàng tiếp theo của chúng ta.""*
    - Câu mở đầu phải kết hợp: (a) Chào hỏi thân thiện, (b) Đặt câu hỏi/đề nghị cụ thể, (c) Thiết lập bối cảnh ngay lập tức.
 
 2. **PHẢN HỒI TỰ NHIÊN & NHÂN VẬT HOẠT ĐỘNG:**
@@ -338,6 +338,24 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                 progress.Status = MissionStatus.InProgress;
                 progress.TurnCount = 0;
                 progress.XpEarned = 0;
+
+                // Clean up previous dialogues & corrections for replay
+                var oldDialogues = await _context.Dialogues
+                    .Where(d => d.UserId == userId && d.MissionId == missionId)
+                    .ToListAsync();
+                if (oldDialogues.Any())
+                {
+                    var oldDialogueIds = oldDialogues.Select(d => d.Id).ToList();
+                    var oldCorrections = await _context.Corrections
+                        .Where(c => oldDialogueIds.Contains(c.DialogueId))
+                        .ToListAsync();
+                    if (oldCorrections.Any())
+                    {
+                        _context.Corrections.RemoveRange(oldCorrections);
+                    }
+                    _context.Dialogues.RemoveRange(oldDialogues);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // Update Progress values
@@ -511,7 +529,7 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             historyBlock.AppendLine("--- END OF HISTORY ---");
         }
 
-        string systemPrompt = $@"You are the AI game master for a cyberpunk English-learning roleplay game.
+        string systemPrompt = $@"You are the AI coach for a realistic English-learning scenario simulation.
 The player is currently playing a mission:
 - Mission Goal: {mission.Goal}
 - Mission Scenario: {mission.Description}
@@ -622,6 +640,14 @@ Task:
 
             if (dialogues.Any())
             {
+                var dialogueIds = dialogues.Select(d => d.Id).ToList();
+                var corrections = await _context.Corrections
+                    .Where(c => dialogueIds.Contains(c.DialogueId))
+                    .ToListAsync();
+                if (corrections.Any())
+                {
+                    _context.Corrections.RemoveRange(corrections);
+                }
                 _context.Dialogues.RemoveRange(dialogues);
             }
 

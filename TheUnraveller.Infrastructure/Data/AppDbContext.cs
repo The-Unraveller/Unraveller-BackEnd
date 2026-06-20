@@ -193,9 +193,9 @@ public class AppDbContext : DbContext
 
         // Seed NPCs
         modelBuilder.Entity<Npc>().HasData(
-            new Npc { Id = 1, Name = "Barista", Role = "Pha chế", Description = "Một nhân viên pha chế thân thiện trong quán cà phê cyberpunk neon rực rỡ.", Personality = "Lịch sự, chu đáo, nhưng dễ bị bối rối trước các yêu cầu phức tạp hoặc hành vi đáng ngờ.", NpcEmoji = "☕" },
-            new Npc { Id = 2, Name = "Supervisor", Role = "Giám sát viên", Description = "Giám sát viên vận hành nghiêm khắc kiểm soát hiệu suất làm việc.", Personality = "Nghiêm khắc, chú trọng chi tiết, đòi hỏi sự chính xác tuyệt đối và tiếng Anh chuyên nghiệp cao.", NpcEmoji = "📋" },
-            new Npc { Id = 3, Name = "Chief Detective", Role = "Thám tử Trưởng", Description = "Thanh tra kỳ cựu đang phân tích bằng chứng tội phạm.", Personality = "Sắc sảo, hoài nghi, tính phân tích cao, giao tiếp bằng các thuật ngữ thám tử ngắn gọn, trang trọng.", NpcEmoji = "🔍" }
+            new Npc { Id = 1, Name = "Barista", Role = "Pha chế", Description = "Một nhân viên pha chế thân thiện trong quán cà phê ấm cúng.", Personality = "Lịch sự, chu đáo, giúp khách hàng chọn lựa đồ uống phù hợp.", NpcEmoji = "☕" },
+            new Npc { Id = 2, Name = "Supervisor", Role = "Giám sát viên", Description = "Giám sát viên quản lý tiến độ và phân chia công việc.", Personality = "Chuyên nghiệp, chú trọng chi tiết, yêu cầu độ chính xác trong giao tiếp.", NpcEmoji = "📋" },
+            new Npc { Id = 3, Name = "Director", Role = "Giám đốc", Description = "Giám đốc điều hành sắc sảo và giàu kinh nghiệm.", Personality = "Sắc sảo, thực tế, đòi hỏi các báo cáo rõ ràng và giải pháp thiết thực.", NpcEmoji = "👤" }
         );
 
         modelBuilder.Entity<Mission>().HasData(
@@ -203,7 +203,7 @@ public class AppDbContext : DbContext
                 Id = 1,
                 Title = "Giao tiếp tại Quán Cà phê",
                 Goal = "Luyện tập gọi món, trò chuyện ngắn và tiếng Anh giao tiếp trong quán cà phê.",
-                Description = "*The hum of neon lights fills the cozy cyber-café. The Barista wipes down the metallic counter, looking up with a friendly smile.* \"Welcome to Neon Mug! What can I get started for you today? We've got fresh cyber-brews and synthetic pastries.\"",
+                Description = "*The warm aroma of freshly ground coffee fills the cozy café. The Barista wipes down the wooden counter and looks up with a friendly smile.* \"Welcome to Coffee Corner! What can I get started for you today? We've got fresh house blends and hot pastries.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 1",
@@ -223,7 +223,7 @@ public class AppDbContext : DbContext
                 Id = 2,
                 Title = "Làm theo Chỉ dẫn",
                 Goal = "Lắng nghe cẩn thận, hiểu nhiệm vụ và thực hiện với độ chính xác cao.",
-                Description = "*The Supervisor taps their digital clipboard impatiently as you step into the assembly bay. The neon screens flicker behind them.* \"You're late. We have a heavy shipment of hover-car battery cores to calibrate today. Let me know when you're ready for your instructions.\"",
+                Description = "*The Supervisor reviews their clipboard as you step into the stockroom.* \"Glad you're here. We have a large shipment of office equipment to sort and organize today. Let me know when you're ready for your instructions.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 2",
@@ -243,7 +243,7 @@ public class AppDbContext : DbContext
                 Id = 3,
                 Title = "Tranh luận & Đàm phán",
                 Goal = "Luyện tập bảo vệ quan điểm và đạt được thỏa thuận bằng tiếng Anh.",
-                Description = "*The glass walls of the boardroom overlook the sprawling city skyline. The CEO leans forward, folding their hands.* \"Thank you for coming. We need to reach a deal on the technology sharing agreement. If you agree to our terms, we can sign today. What are your thoughts?\"",
+                Description = "*The glass walls of the boardroom overlook the city skyline. The CEO leans forward, folding their hands.* \"Thank you for coming. We need to reach a deal on the technology sharing agreement. If you agree to our terms, we can sign today. What are your thoughts?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 3",
@@ -263,7 +263,7 @@ public class AppDbContext : DbContext
                 Id = 4,
                 Title = "Phỏng vấn Xin việc",
                 Goal = "Vượt qua buổi phỏng vấn xin việc bằng tiếng Anh với vốn từ vựng chuyên nghiệp và tự tin.",
-                Description = "*You sit opposite the interviewer in a sleek high-tech office. The HR manager smiles warmly.* \"Welcome. I've reviewed your credentials and they look impressive. To begin, could you tell me why you want to work here at CyberTech Industries?\"",
+                Description = "*You sit opposite the interviewer in a professional corporate office. The HR manager smiles warmly.* \"Welcome. I've reviewed your resume, and it's quite impressive. To begin, could you tell me why you want to work at our company?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 4",
@@ -281,9 +281,9 @@ public class AppDbContext : DbContext
             },
             new Mission {
                 Id = 5,
-                Title = "Báo cáo Điều tra",
-                Goal = "Mô tả hiện trường vụ án và phá giải các bí ẩn bằng văn bản tiếng Anh.",
-                Description = "*Rain beats against the dirty precinct window. Chief Detective Henderson tosses a case file containing glowing holograms onto the table.* \"Grab a seat. The cyber-vault at Sector 7 was cracked wide open last night. Tell me exactly what you found at the crime scene.\"",
+                Title = "Báo cáo Sự cố Công việc",
+                Goal = "Mô tả sự cố xảy ra tại nơi làm việc và đề xuất hướng giải quyết bằng tiếng Anh.",
+                Description = "*The Director sits at their desk, looking concerned.* \"Welcome, please have a seat. I heard there was an unexpected issue with our client database yesterday. Can you tell me exactly what happened and what steps were taken to resolve it?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 5",
@@ -301,9 +301,9 @@ public class AppDbContext : DbContext
             },
             new Mission {
                 Id = 6,
-                Title = "Nhập vai Nâng cao",
-                Goal = "Xử lý các tình huống phức tạp có nhiều nhân vật với mục tiêu đa lớp.",
-                Description = "*You stand in the dim undercity market, surrounded by holographic advertisements. A shady merchant whispers from the shadows.* \"Psst... I hear you're looking for the decryption key. I might have it, but it's going to cost you. What did you bring to trade?\"",
+                Title = "Đàm phán với Nhà cung cấp",
+                Goal = "Thương lượng giá cả và các điều khoản giao hàng với nhà cung cấp nguyên liệu.",
+                Description = "*You stand in the modern office of a wholesale supplier. The sales representative crosses their arms and smiles.* \"Thanks for coming in. I understand you'd like to place a large order for your manufacturing line. We can discuss volume discounts. What terms did you have in mind?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 6",
@@ -324,7 +324,7 @@ public class AppDbContext : DbContext
                 Id = 7,
                 Title = "Viết Email Công việc",
                 Goal = "Tạo email chuyên nghiệp với cấu trúc rõ ràng và ngôn ngữ phù hợp.",
-                Description = "*Your supervisor hands you a crumpled note.* \"We need to schedule a team meeting about the Q3 projections. Draft the invitation email to all department heads. Make it professional but urgent.\"",
+                Description = "*Your supervisor hands you a notes sheet.* \"We need to schedule a team meeting about the Q3 project targets. Draft the invitation email to all department heads. Make it professional but urgent.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 7",
@@ -345,7 +345,7 @@ public class AppDbContext : DbContext
                 Id = 8,
                 Title = "Thuyết trình Sản phẩm",
                 Goal = "Giới thiệu sản phẩm mới bằng tiếng Anh với cấu trúc logic và từ vựng phong phú.",
-                Description = "*The conference room is full of investors. The product manager nods at you.* \"We're counting on you to pitch the new neural interface. Remember: features, benefits, market potential. Make it compelling.\"",
+                Description = "*The conference room is full of investors. The product manager nods at you.* \"We're counting on you to pitch the new software platform. Remember: features, benefits, market potential. Make it compelling.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 8",
@@ -366,7 +366,7 @@ public class AppDbContext : DbContext
                 Id = 9,
                 Title = "Đàm phán Hợp đồng",
                 Goal = "Thương lượng các điều khoản hợp đồng và tìm điểm chung.",
-                Description = "*Across the polished table, the potential partner taps a holographic contract.* \"We can offer exclusive distribution rights, but your margin demands are steep. Let's find a middle ground that works for both corporations.\"",
+                Description = "*Across the polished table, the potential partner taps the draft agreement.* \"We can offer exclusive distribution rights, but your margin demands are steep. Let's find a middle ground that works for both companies.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 9",
@@ -387,7 +387,7 @@ public class AppDbContext : DbContext
                 Id = 10,
                 Title = "Trò chuyện Xã giao",
                 Goal = "Tham gia cuộc trò chuyện thân thiện với từ ngữ tự nhiên và phong cách lịch sự.",
-                Description = "*You find yourself at a rooftop party overlooking the neon cityscape. A friendly stranger offers you a drink.* \"So, what brings you to the upper levels? Don't see many new faces up here.\"",
+                Description = "*You find yourself at a rooftop reception overlooking the evening skyline. A friendly attendee approaches you.* \"Hi there! What brings you to this event? I don't think we've met before.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 10",
@@ -408,7 +408,7 @@ public class AppDbContext : DbContext
                 Id = 11,
                 Title = "Thảo luận Học thuật",
                 Goal = "Tham gia thảo luận học thuật với lập luận có cấu trúc và từ nối học thuật.",
-                Description = "*The seminar room is filled with researchers. The professor clears their throat.* \"Today's topic: the ethical implications of AI consciousness. I'd like to hear your perspective on the Turing Test limitations.\"",
+                Description = "*The seminar room is filled with researchers. The professor clears their throat.* \"Today's topic: the social impact of automation. I'd like to hear your perspective on the shift in labor markets.\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 11",
@@ -429,7 +429,7 @@ public class AppDbContext : DbContext
                 Id = 12,
                 Title = "Dịch vụ Khách hàng",
                 Goal = "Giải quyết phàn nàn của khách hàng với thái độ tích cực và giải pháp hiệu quả.",
-                Description = "*The customer service console flashes red. An irate customer's message scrolls across the screen:* \"My order was supposed to arrive yesterday! This is unacceptable!\" *You type your response.*",
+                Description = "*The customer service portal flashes a notification. An unhappy customer's message appears on the screen:* \"My order was supposed to arrive yesterday! This is unacceptable!\" *You type your response.*",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 12",
@@ -445,12 +445,12 @@ public class AppDbContext : DbContext
                 MinTurnsToComplete = 5,
                 MinAverageScore = 65
             },
-            // Mission 13: Debate
+            // Mission 13: Persuasive Debate
             new Mission {
                 Id = 13,
-                Title = " tranh luận Chính trị",
-                Goal = "Xây dựng lập luận mạnh mẽ với bằng chứng và phản bác quan điểm đối lập.",
-                Description = "*The debate stage is set, cameras rolling. Your opponent smirks.* \"Obviously, the new surveillance law is necessary for security. Anyone who disagrees is naive.\" *The moderator hands you the microphone.*",
+                Title = "Thuyết phục Đồng nghiệp",
+                Goal = "Trình bày lập luận thuyết phục để đồng nghiệp đồng ý với phương án quản lý mới.",
+                Description = "*The meeting room is set, and your coworker looks skeptical.* \"Obviously, changing our workflow management software will cause too much disruption. Why should we support this change?\" *The team leads turn to look at you.*",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 13",
@@ -471,7 +471,7 @@ public class AppDbContext : DbContext
                 Id = 14,
                 Title = "Sự kiện Kết nối",
                 Goal = "Tạo ấn tượng tốt với các chuyên gia qua cuộc trò chuyện ngắn ngủi.",
-                Description = "*You're at the annual Tech Futures mixer. A venture capitalist approaches the bar.* \"I heard your startup is working on quantum encryption. Sounds ambitious. Tell me, what makes your team unique?\"",
+                Description = "*You're at the annual business mixer. An investor approaches you.* \"I heard your team is working on a new data security solution. Sounds ambitious. Tell me, what makes your team unique?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 14",
@@ -492,7 +492,7 @@ public class AppDbContext : DbContext
                 Id = 15,
                 Title = "Hỏi & Đáp Hội nghị",
                 Goal = "Đặt câu hỏi học thuật và nhận xét về bài thuyết trình.",
-                Description = "*After the keynote on neural interfaces, the speaker opens the floor. You raise your hand.* \"Professor Chen, your research mentions ethical concerns. How do you respond to critics who fear mind-reading technology?\"",
+                Description = "*After the keynote on cloud computing, the speaker opens the floor. You raise your hand.* \"Professor Chen, your research mentions cost efficiency. How do you respond to concerns regarding data privacy?\"",
                 StartSuspicion = 10,
                 MaxSuspicion = 100,
                 Stage = "Stage 15",
@@ -524,9 +524,9 @@ public class AppDbContext : DbContext
 
         // Seed ShopItems
         modelBuilder.Entity<ShopItem>().HasData(
-            new ShopItem { Id = 1, Name = "Kính Lúp Thám Tử", Description = "Tiết lộ các manh mối và gợi ý ẩn trong các đoạn hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, DiscountPriceXp = 160, Emoji = "🔍" },
-            new ShopItem { Id = 2, Name = "Khéo Ăn Khéo Nói", Description = "Giảm ngay lập tức 20 điểm nghi ngờ từ phía NPC.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "✨" },
-            new ShopItem { Id = 3, Name = "Áo Choàng Bóng Đêm", Description = "Vật phẩm trang trí hiếm có phù hợp cho một điệp viên xâm nhập bậc thầy.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🧥" }
+            new ShopItem { Id = 1, Name = "Gợi ý thông thái", Description = "Tiết lộ các gợi ý từ vựng và câu trả lời hữu ích trong hội thoại.", Type = ItemType.InGameHint, PriceXp = 200, DiscountPriceXp = 160, Emoji = "💡" },
+            new ShopItem { Id = 2, Name = "Từ điển ngoại giao", Description = "Giảm bớt sự bối rối hoặc mức nghi ngờ từ đối phương.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "📕" },
+            new ShopItem { Id = 3, Name = "Huy hiệu Vàng", Description = "Vật phẩm lưu niệm vàng danh giá dành cho người học xuất sắc.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🏅" }
         );
     }
 }
