@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheUnraveller.Infrastructure.Data;
@@ -12,9 +13,11 @@ using TheUnraveller.Infrastructure.Data;
 namespace TheUnraveller.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620164827_UpdateMissionSeeds2")]
+    partial class UpdateMissionSeeds2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -271,10 +274,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.PrimitiveCollection<List<string>>("InitialChoices")
-                        .IsRequired()
-                        .HasColumnType("text[]");
-
                     b.Property<bool>("Locked")
                         .HasColumnType("boolean");
 
@@ -299,10 +298,6 @@ namespace TheUnraveller.Infrastructure.Migrations
 
                     b.Property<int>("StartSuspicion")
                         .HasColumnType("integer");
-
-                    b.Property<string>("SyntaxPuzzlesJson")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -335,7 +330,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Luyện tập gọi món, trò chuyện ngắn và tiếng Anh giao tiếp trong quán cà phê.",
                             GrammarTarget = "Sử dụng câu nói lịch sự với 'Would like' hoặc động từ khuyết thiếu 'Could/May'.",
                             ImageUrl = "/scenario_coffee.png",
-                            InitialChoices = new List<string> { "I would like to order a cup of coffee, please.", "Could I see the menu, please?", "Do you recommend any house blends today?", "What kind of hot pastries do you have?" },
                             Locked = false,
                             MaxSuspicion = 100,
                             MinAverageScore = 60,
@@ -343,7 +337,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 1,
                             Stage = "Stage 1",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Giao tiếp tại Quán Cà phê",
                             WritingObjective = "Sử dụng câu nói lịch sự với 'Would like' hoặc động từ khuyết thiếu 'Could/May'.",
                             XpReward = 150
@@ -359,7 +352,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Lắng nghe cẩn thận, hiểu nhiệm vụ và thực hiện với độ chính xác cao.",
                             GrammarTarget = "Sử dụng câu mệnh lệnh (Imperatives) hoặc thể bị động (Passive voice) để xác nhận nhiệm vụ.",
                             ImageUrl = "/scenario_classroom.png",
-                            InitialChoices = new List<string> { "Understood. What is the first task I need to do?", "I'm ready. Please give me the instructions.", "Can you guide me on what to do first?", "I will do my best to follow the guidelines." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 65,
@@ -367,7 +359,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 2",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Làm theo Chỉ dẫn",
                             WritingObjective = "Sử dụng câu mệnh lệnh (Imperatives) hoặc thể bị động (Passive voice) để xác nhận nhiệm vụ.",
                             XpReward = 200
@@ -383,7 +374,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Luyện tập bảo vệ quan điểm và đạt được thỏa thuận bằng tiếng Anh.",
                             GrammarTarget = "Sử dụng câu điều kiện loại 1 (If... will...) hoặc loại 2 (If... would...) để đàm phán.",
                             ImageUrl = "/scenario_boardroom.png",
-                            InitialChoices = new List<string> { "I'm ready. Let's start the negotiation.", "Can you explain the main points of the agreement?", "I'd like to discuss the terms of this deal.", "Let's look at the topic from both sides." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 70,
@@ -391,7 +381,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 3",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Tranh luận & Đàm phán",
                             WritingObjective = "Sử dụng câu điều kiện loại 1 (If... will...) hoặc loại 2 (If... would...) để đàm phán.",
                             XpReward = 300
@@ -407,7 +396,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Vượt qua buổi phỏng vấn xin việc bằng tiếng Anh với vốn từ vựng chuyên nghiệp và tự tin.",
                             GrammarTarget = "Sử dụng câu phức chứa mệnh đề quan hệ (Relative Clauses) hoặc liên từ (Because, Although).",
                             ImageUrl = "/scenario_interview.png",
-                            InitialChoices = new List<string> { "Good morning. Thank you for having me today.", "I'm excited to share my experience with you.", "I'm ready for the interview questions.", "Thank you. I'm glad to have this opportunity." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 75,
@@ -415,7 +403,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 4",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Phỏng vấn Xin việc",
                             WritingObjective = "Sử dụng câu phức chứa mệnh đề quan hệ (Relative Clauses) hoặc liên từ (Because, Although).",
                             XpReward = 350
@@ -431,7 +418,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Mô tả sự cố xảy ra tại nơi làm việc và đề xuất hướng giải quyết bằng tiếng Anh.",
                             GrammarTarget = "Sử dụng trạng từ mô tả (Descriptive Adverbs) và thì Quá khứ đơn (Past Simple) để báo cáo chứng cứ.",
                             ImageUrl = "/scenario_detective.png",
-                            InitialChoices = new List<string> { "I'm on the case. What details do we have?", "Let's start by examining the evidence.", "Where was the victim last seen?", "I'll solve this. What's our first clue." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 80,
@@ -439,7 +425,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 3,
                             Stage = "Stage 5",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Báo cáo Sự cố Công việc",
                             WritingObjective = "Sử dụng trạng từ mô tả (Descriptive Adverbs) và thì Quá khứ đơn (Past Simple) để báo cáo chứng cứ.",
                             XpReward = 500
@@ -455,7 +440,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Thương lượng giá cả và các điều khoản giao hàng với nhà cung cấp nguyên liệu.",
                             GrammarTarget = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao.",
                             ImageUrl = "/scenario_undercity.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 85,
@@ -463,7 +447,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 3,
                             Stage = "Stage 6",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Đàm phán với Nhà cung cấp",
                             WritingObjective = "Sử dụng câu giả định (Subjunctive Mood) hoặc lối nói gián tiếp (Reported Speech) ở trình độ cao.",
                             XpReward = 600
@@ -479,7 +462,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Tạo email chuyên nghiệp với cấu trúc rõ ràng và ngôn ngữ phù hợp.",
                             GrammarTarget = "Sử dụng câu bị động (Passive Voice) và từ nối (Furthermore, However) trong văn bản hành chính.",
                             ImageUrl = "/scenario_classroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 65,
@@ -487,7 +469,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 7",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Viết Email Công việc",
                             WritingObjective = "Sử dụng câu bị động (Passive Voice) và từ nối (Furthermore, However) trong văn bản hành chính.",
                             XpReward = 280
@@ -503,7 +484,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Giới thiệu sản phẩm mới bằng tiếng Anh với cấu trúc logic và từ vựng phong phú.",
                             GrammarTarget = "Sử dụng thì tương lai đơn (Future Simple) và câu so sánh hơn (Comparative forms) để mô tả ưu điểm.",
                             ImageUrl = "/scenario_boardroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 70,
@@ -511,7 +491,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 8",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Thuyết trình Sản phẩm",
                             WritingObjective = "Sử dụng thì tương lai đơn (Future Simple) và câu so sánh hơn (Comparative forms) để mô tả ưu điểm.",
                             XpReward = 400
@@ -527,7 +506,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Thương lượng các điều khoản hợp đồng và tìm điểm chung.",
                             GrammarTarget = "Sử dụng câu điều kiện loại 2 (If I were...) và từ trung lập (Compromise, Concession) trong đàm phán.",
                             ImageUrl = "/scenario_boardroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 75,
@@ -535,7 +513,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 9",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Đàm phán Hợp đồng",
                             WritingObjective = "Sử dụng câu điều kiện loại 2 (If I were...) và từ trung lập (Compromise, Concession) trong đàm phán.",
                             XpReward = 450
@@ -551,7 +528,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Tham gia cuộc trò chuyện thân thiện với từ ngữ tự nhiên và phong cách lịch sự.",
                             GrammarTarget = "Sử dụng thì quá khứ đơn (Past Simple) để kể chuyện và câu hỏi mở (What about you?).",
                             ImageUrl = "/scenario_coffee.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 55,
@@ -559,7 +535,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 3,
                             Stage = "Stage 10",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Trò chuyện Xã giao",
                             WritingObjective = "Sử dụng thì quá khứ đơn (Past Simple) để kể chuyện và câu hỏi mở (What about you?).",
                             XpReward = 180
@@ -575,7 +550,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Tham gia thảo luận học thuật với lập luận có cấu trúc và từ nối học thuật.",
                             GrammarTarget = "Sử dụng mệnh đề tương quan (Relative Clauses) và từ nối học thuật (Therefore, Consequently).",
                             ImageUrl = "/scenario_classroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 75,
@@ -583,7 +557,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 11",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Thảo luận Học thuật",
                             WritingObjective = "Sử dụng mệnh đề tương quan (Relative Clauses) và từ nối học thuật (Therefore, Consequently).",
                             XpReward = 420
@@ -599,7 +572,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Giải quyết phàn nàn của khách hàng với thái độ tích cực và giải pháp hiệu quả.",
                             GrammarTarget = "Sử dụng câu bị động (Passive Voice) và lời xin lỗi lịch sự (I apologize for...).",
                             ImageUrl = "/scenario_classroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 65,
@@ -607,7 +579,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 1,
                             Stage = "Stage 12",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Dịch vụ Khách hàng",
                             WritingObjective = "Sử dụng câu bị động (Passive Voice) và lời xin lỗi lịch sự (I apologize for...).",
                             XpReward = 260
@@ -623,7 +594,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Trình bày lập luận thuyết phục để đồng nghiệp đồng ý với phương án quản lý mới.",
                             GrammarTarget = "Sử dụng câu điều kiện loại 3 (If we had...) và từ nối phản lập (However, On the other hand).",
                             ImageUrl = "/scenario_boardroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 78,
@@ -631,7 +601,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 3,
                             Stage = "Stage 13",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Thuyết phục Đồng nghiệp",
                             WritingObjective = "Sử dụng câu điều kiện loại 3 (If we had...) và từ nối phản lập (However, On the other hand).",
                             XpReward = 480
@@ -647,7 +616,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Tạo ấn tượng tốt với các chuyên gia qua cuộc trò chuyện ngắn ngủi.",
                             GrammarTarget = "Sử dụng thì hiện tại hoàn thành (Present Perfect) để mô tả thành tích và câu hỏi Follow-up questions.",
                             ImageUrl = "/scenario_coffee.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 68,
@@ -655,7 +623,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 14",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Sự kiện Kết nối",
                             WritingObjective = "Sử dụng thì hiện tại hoàn thành (Present Perfect) để mô tả thành tích và câu hỏi Follow-up questions.",
                             XpReward = 320
@@ -671,7 +638,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             Goal = "Đặt câu hỏi học thuật và nhận xét về bài thuyết trình.",
                             GrammarTarget = "Sử dụng câu gián tiếp (Indirect Questions) và từ nối học thuật (While, Whereas).",
                             ImageUrl = "/scenario_classroom.png",
-                            InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
                             Locked = true,
                             MaxSuspicion = 100,
                             MinAverageScore = 72,
@@ -679,7 +645,6 @@ namespace TheUnraveller.Infrastructure.Migrations
                             NpcId = 2,
                             Stage = "Stage 15",
                             StartSuspicion = 10,
-                            SyntaxPuzzlesJson = "[]",
                             Title = "Hỏi & Đáp Hội nghị",
                             WritingObjective = "Sử dụng câu gián tiếp (Indirect Questions) và từ nối học thuật (While, Whereas).",
                             XpReward = 380

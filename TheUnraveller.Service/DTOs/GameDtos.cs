@@ -16,7 +16,9 @@ public record MissionDto(
     string NpcEmoji,
     bool Locked,
     string GrammarTarget,
-    int Domain
+    int Domain,
+    List<string> InitialChoices,
+    string SyntaxPuzzles
 );
 
 public record DialogueRequestDto(int UserId, int MissionId, string Message);

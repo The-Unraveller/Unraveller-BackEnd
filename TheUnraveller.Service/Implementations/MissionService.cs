@@ -30,7 +30,9 @@ public class MissionService : IMissionService
             m.Npc?.NpcEmoji ?? string.Empty,
             m.Locked,
             m.GrammarTarget,
-            (int)m.Domain
+            (int)m.Domain,
+            m.InitialChoices,
+            m.SyntaxPuzzlesJson
         ));
     }
 
@@ -52,7 +54,9 @@ public class MissionService : IMissionService
             m.Npc?.NpcEmoji ?? string.Empty,
             m.Locked,
             m.GrammarTarget,
-            (int)m.Domain
+            (int)m.Domain,
+            m.InitialChoices,
+            m.SyntaxPuzzlesJson
         );
     }
 }
