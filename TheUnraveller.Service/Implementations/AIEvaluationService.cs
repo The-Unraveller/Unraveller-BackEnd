@@ -740,30 +740,20 @@ Task:
         // Premium users have access to all missions
         if (user.IsPremium) return (true, "Access granted (Premium)");
 
-        // Free users: missions 1-3 only with prerequisites
-        if (missionId > 3)
-        {
-            return (false, "Kịch bản này yêu cầu nâng cấp gói Premium VIP.");
-        }
+        // Free users: sequential unlock — mission N requires mission N-1 completed
+        if (missionId == 1) return (true, "Access granted");
 
-        if (missionId == 2)
-        {
-            var step1Completed = await _context.UserProgresses
-                .AnyAsync(p => p.UserId == userId && p.MissionId == 1 && p.Status == MissionStatus.Completed);
-            if (!step1Completed)
-            {
-                return (false, "Bạn cần hoàn thành kịch bản 'Giao tiếp tại Quán Cà phê' để mở khóa kịch bản này.");
-            }
-        }
+        // Check that previous mission is completed
+        var prevMission = await _context.Missions
+            .FirstOrDefaultAsync(m => m.Id == missionId - 1);
 
-        if (missionId == 3)
+        var prevCompleted = await _context.UserProgresses
+            .AnyAsync(p => p.UserId == userId && p.MissionId == missionId - 1 && p.Status == MissionStatus.Completed);
+
+        if (!prevCompleted)
         {
-            var step2Completed = await _context.UserProgresses
-                .AnyAsync(p => p.UserId == userId && p.MissionId == 2 && p.Status == MissionStatus.Completed);
-            if (!step2Completed)
-            {
-                return (false, "Bạn cần hoàn thành kịch bản 'Làm theo Chỉ dẫn' để mở khóa kịch bản này.");
-            }
+            string prevTitle = prevMission?.Title ?? $"Kịch bản {missionId - 1}";
+            return (false, $"Bạn cần hoàn thành '{prevTitle}' để mở khóa kịch bản này.");
         }
 
         return (true, "Access granted");
