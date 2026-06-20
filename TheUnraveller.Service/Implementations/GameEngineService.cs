@@ -135,7 +135,8 @@ ROLEPLAY RULES (FOLLOW STRICTLY):
         if (progress.CurrentSuspicion > mission.MaxSuspicion) progress.CurrentSuspicion = mission.MaxSuspicion;
         
         bool isLose = progress.CurrentSuspicion >= mission.MaxSuspicion;
-        bool isWin = !isLose && progress.TurnCount >= 5 && progress.CurrentSuspicion < 50;
+        // Use mission-defined thresholds instead of hardcoded values
+        bool isWin = !isLose && progress.TurnCount >= mission.MinTurnsToComplete;
 
         if (isWin) progress.Status = MissionStatus.Completed;
         else if (isLose) progress.Status = MissionStatus.Failed;

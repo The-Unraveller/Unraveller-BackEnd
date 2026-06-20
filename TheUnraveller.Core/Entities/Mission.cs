@@ -31,6 +31,8 @@ public class Mission
     public string ImageUrl { get; set; } = string.Empty;
     public bool Locked { get; set; } = false;
     public string GrammarTarget { get; set; } = string.Empty; // e.g., "Sử dụng câu điều kiện loại 1 (If...)"
+    public List<string> InitialChoices { get; set; } = new();
+    public string SyntaxPuzzlesJson { get; set; } = "[]";
 
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;

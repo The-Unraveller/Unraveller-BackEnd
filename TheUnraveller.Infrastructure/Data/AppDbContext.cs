@@ -218,6 +218,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.A2,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 60
+            ,
+                InitialChoices = new List<string> { "I would like to order a cup of coffee, please.", "Could I see the menu, please?", "Do you recommend any house blends today?", "What kind of hot pastries do you have?" },
+                SyntaxPuzzlesJson = "[]"
             },
             new Mission {
                 Id = 2,
@@ -238,6 +241,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B1,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 65
+            ,
+                InitialChoices = new List<string> { "Understood. What is the first task I need to do?", "I'm ready. Please give me the instructions.", "Can you guide me on what to do first?", "I will do my best to follow the guidelines." },
+                SyntaxPuzzlesJson = "[]"
             },
             new Mission {
                 Id = 3,
@@ -258,6 +264,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B2,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 70
+            ,
+                InitialChoices = new List<string> { "I'm ready. Let's start the negotiation.", "Can you explain the main points of the agreement?", "I'd like to discuss the terms of this deal.", "Let's look at the topic from both sides." },
+                SyntaxPuzzlesJson = "[]"
             },
             new Mission {
                 Id = 4,
@@ -278,6 +287,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B2,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 75
+            ,
+                InitialChoices = new List<string> { "Good morning. Thank you for having me today.", "I'm excited to share my experience with you.", "I'm ready for the interview questions.", "Thank you. I'm glad to have this opportunity." },
+                SyntaxPuzzlesJson = "[]"
             },
             new Mission {
                 Id = 5,
@@ -298,6 +310,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C1,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 80
+            ,
+                InitialChoices = new List<string> { "I'm on the case. What details do we have?", "Let's start by examining the evidence.", "Where was the victim last seen?", "I'll solve this. What's our first clue." },
+                SyntaxPuzzlesJson = "[]"
             },
             new Mission {
                 Id = 6,
@@ -318,6 +333,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C2,
                 MinTurnsToComplete = 7,
                 MinAverageScore = 85
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 7: Email Writing
             new Mission {
@@ -339,6 +357,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B1,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 65
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 8: Presentation Skills
             new Mission {
@@ -360,6 +381,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B2,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 70
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 9: Negotiation
             new Mission {
@@ -381,6 +405,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C1,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 75
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 10: Social Chat
             new Mission {
@@ -402,6 +429,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.A2,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 55
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 11: Academic Discussion
             new Mission {
@@ -423,6 +453,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C1,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 75
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 12: Customer Service
             new Mission {
@@ -444,6 +477,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B1,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 65
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 13: Persuasive Debate
             new Mission {
@@ -465,6 +501,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C1,
                 MinTurnsToComplete = 7,
                 MinAverageScore = 78
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 14: Networking Event
             new Mission {
@@ -486,6 +525,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.B1,
                 MinTurnsToComplete = 5,
                 MinAverageScore = 68
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             },
             // Mission 15: Conference Q&A
             new Mission {
@@ -507,6 +549,9 @@ public class AppDbContext : DbContext
                 CefrLevel = CefrLevel.C1,
                 MinTurnsToComplete = 6,
                 MinAverageScore = 72
+            ,
+                InitialChoices = new List<string> { "Hello!", "Can you help me?", "I have a question.", "Let's start." },
+                SyntaxPuzzlesJson = "[]"
             }
         );
 
