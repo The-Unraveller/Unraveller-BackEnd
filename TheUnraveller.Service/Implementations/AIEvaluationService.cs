@@ -803,7 +803,7 @@ Task:
             .FirstOrDefaultAsync(m => m.Id == missionId - 1);
 
         var prevCompleted = await _context.UserProgresses
-            .AnyAsync(p => p.UserId == userId && p.MissionId == missionId - 1 && p.Status == MissionStatus.Completed);
+            .AnyAsync(p => p.UserId == userId && p.MissionId == missionId - 1 && (p.Status == MissionStatus.Completed || p.CompletedAt != null));
 
         if (!prevCompleted)
         {
