@@ -133,7 +133,7 @@ public class ProgressService : IProgressService
 
         // Recommended scenarios: missions not yet completed with similar or slightly higher CEFR
         var completedMissionIds = await _context.UserProgresses
-            .Where(p => p.UserId == userId && p.Status == MissionStatus.Completed)
+            .Where(p => p.UserId == userId && (p.Status == MissionStatus.Completed || p.CompletedAt != null))
             .Select(p => p.MissionId)
             .ToListAsync();
 
