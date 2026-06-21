@@ -327,6 +327,7 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             var progress = await _context.UserProgresses
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.MissionId == missionId);
 
+            bool isReplay = false;
             if (progress == null)
             {
                 progress = new UserProgress
@@ -340,15 +341,15 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                 };
                 await _context.UserProgresses.AddAsync(progress);
             }
-            else if (progress.Status != MissionStatus.InProgress)
+            else if (progress.Status == MissionStatus.Failed)
             {
-                // Reset progress state if replaying a completed/failed mission
+                // Reset failed missions fully — they were never completed so no unlock risk
                 progress.CurrentSuspicion = mission.StartSuspicion;
                 progress.Status = MissionStatus.InProgress;
                 progress.TurnCount = 0;
                 progress.XpEarned = 0;
 
-                // Clean up previous dialogues & corrections for replay
+                // Clean up previous dialogues & corrections
                 var oldDialogues = await _context.Dialogues
                     .Where(d => d.UserId == userId && d.MissionId == missionId)
                     .ToListAsync();
@@ -358,10 +359,36 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                     var oldCorrections = await _context.Corrections
                         .Where(c => oldDialogueIds.Contains(c.DialogueId))
                         .ToListAsync();
-                    if (oldCorrections.Any())
-                    {
-                        _context.Corrections.RemoveRange(oldCorrections);
-                    }
+                    if (oldCorrections.Any()) _context.Corrections.RemoveRange(oldCorrections);
+                    _context.Dialogues.RemoveRange(oldDialogues);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else if (progress.Status == MissionStatus.Completed)
+            {
+                // ─── REPLAY of a COMPLETED mission ───
+                // IMPORTANT: Do NOT reset Status to InProgress — this would re-lock
+                // any downstream missions that depend on this mission being Completed.
+                // Instead, reset only the play-session counters for a fresh attempt.
+                // The CompletionToken and original CompletedAt are also preserved.
+                isReplay = true;
+                progress.CurrentSuspicion = mission.StartSuspicion;
+                progress.TurnCount = 0;
+                progress.XpEarned = 0;
+                // Leave progress.Status = MissionStatus.Completed intentionally
+                // Leave progress.CompletionToken / progress.CompletedAt intact
+
+                // Clean up previous dialogues & corrections so AI context is fresh
+                var oldDialogues = await _context.Dialogues
+                    .Where(d => d.UserId == userId && d.MissionId == missionId)
+                    .ToListAsync();
+                if (oldDialogues.Any())
+                {
+                    var oldDialogueIds = oldDialogues.Select(d => d.Id).ToList();
+                    var oldCorrections = await _context.Corrections
+                        .Where(c => oldDialogueIds.Contains(c.DialogueId))
+                        .ToListAsync();
+                    if (oldCorrections.Any()) _context.Corrections.RemoveRange(oldCorrections);
                     _context.Dialogues.RemoveRange(oldDialogues);
                     await _context.SaveChangesAsync();
                 }
@@ -430,7 +457,9 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             string? token = null;
             if (isWin)
             {
+                // Always keep status Completed (for replays this is already Completed)
                 progress.Status = MissionStatus.Completed;
+                // Preserve the original completion token (don't regenerate on replay wins)
                 if (string.IsNullOrEmpty(progress.CompletionToken))
                 {
                     progress.CompletionToken = $"UNRV-{userId}-{missionId}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
@@ -438,7 +467,7 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                 }
                 token = progress.CompletionToken;
 
-                // Create WritingSkillSnapshot
+                // Create WritingSkillSnapshot (also for replays, to track improvement)
                 var snapshot = new WritingSkillSnapshot
                 {
                     UserId = userId,
@@ -459,7 +488,13 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             }
             else if (isLose)
             {
-                progress.Status = MissionStatus.Failed;
+                // When replaying a completed mission and losing, keep it as Completed
+                // (losing a replay should not revoke earned unlock/badge progress)
+                if (!isReplay)
+                {
+                    progress.Status = MissionStatus.Failed;
+                }
+                // For replays: status stays Completed, so downstream missions remain unlocked
             }
 
             // Add XP to User Balance
@@ -579,7 +614,21 @@ Task:
         var progress = await _context.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.MissionId == missionId);
 
-        if (progress == null || progress.Status != MissionStatus.InProgress)
+        if (progress == null)
+        {
+            return new GameSessionDto { HasActiveSession = false };
+        }
+
+        // A session is considered "active" if:
+        // 1. It's explicitly InProgress, OR
+        // 2. It's Completed but has existing dialogues (= mid-replay)
+        bool hasDialogues = await _context.Dialogues
+            .AnyAsync(d => d.UserId == userId && d.MissionId == missionId);
+
+        bool isActiveSession = progress.Status == MissionStatus.InProgress ||
+                               (progress.Status == MissionStatus.Completed && hasDialogues && progress.TurnCount > 0);
+
+        if (!isActiveSession)
         {
             return new GameSessionDto { HasActiveSession = false };
         }
@@ -621,7 +670,13 @@ Task:
             if (progress != null)
             {
                 progress.CurrentSuspicion = startSuspicion;
-                progress.Status = MissionStatus.InProgress;
+                // IMPORTANT: Preserve Completed status — resetting to InProgress would
+                // re-lock any downstream missions that depend on this one being Completed.
+                // Only reset to InProgress if the mission was previously Failed (not Completed).
+                if (progress.Status != MissionStatus.Completed)
+                {
+                    progress.Status = MissionStatus.InProgress;
+                }
                 progress.TurnCount = 0;
                 progress.XpEarned = 0;
                 progress.LastActivity = DateTime.UtcNow;
