@@ -37,6 +37,8 @@ public class Mission
     public int NpcId { get; set; }
     public Npc Npc { get; set; } = null!;
 
+    public ICollection<MissionSubTask> SubTasks { get; set; } = new List<MissionSubTask>();
+
     public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Approved;
     public string? RejectionReason { get; set; }
 

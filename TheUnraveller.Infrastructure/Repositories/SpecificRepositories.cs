@@ -22,11 +22,14 @@ public class MissionRepository : GenericRepository<Mission>, IMissionRepository
 
     public async Task<IEnumerable<Mission>> GetAvailableMissionsAsync() =>
         await _dbSet.Include(m => m.Npc)
+                    .Include(m => m.SubTasks)
                     .Where(m => m.ApprovalStatus == ApprovalStatus.Approved)
                     .ToListAsync();
 
     public override async Task<Mission?> GetByIdAsync(int id) =>
-        await _dbSet.Include(m => m.Npc).FirstOrDefaultAsync(m => m.Id == id);
+        await _dbSet.Include(m => m.Npc)
+                    .Include(m => m.SubTasks)
+                    .FirstOrDefaultAsync(m => m.Id == id);
 }
 
 public class UserProgressRepository : GenericRepository<UserProgress>, IUserProgressRepository

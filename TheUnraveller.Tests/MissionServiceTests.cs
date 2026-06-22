@@ -1,9 +1,12 @@
 using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using TheUnraveller.Core.Entities;
 using TheUnraveller.Core.Interfaces;
+using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Service.Implementations;
 using Xunit;
 
@@ -12,12 +15,17 @@ namespace TheUnraveller.Tests;
 public class MissionServiceTests
 {
     private readonly Mock<IMissionRepository> _missionRepoMock;
+    private readonly AppDbContext _context;
     private readonly MissionService _missionService;
 
     public MissionServiceTests()
     {
         _missionRepoMock = new Mock<IMissionRepository>();
-        _missionService = new MissionService(_missionRepoMock.Object);
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "TestDb_" + Guid.NewGuid().ToString())
+            .Options;
+        _context = new AppDbContext(options);
+        _missionService = new MissionService(_missionRepoMock.Object, _context);
     }
 
     [Fact]

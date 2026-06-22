@@ -361,8 +361,15 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                         .ToListAsync();
                     if (oldCorrections.Any()) _context.Corrections.RemoveRange(oldCorrections);
                     _context.Dialogues.RemoveRange(oldDialogues);
-                    await _context.SaveChangesAsync();
                 }
+
+                // Clean up subtask progresses
+                var oldSubTaskProgresses = await _context.UserSubTaskProgresses
+                    .Where(p => p.UserId == userId && p.MissionId == missionId)
+                    .ToListAsync();
+                if (oldSubTaskProgresses.Any()) _context.UserSubTaskProgresses.RemoveRange(oldSubTaskProgresses);
+
+                await _context.SaveChangesAsync();
             }
             else if (progress.Status == MissionStatus.Completed)
             {
@@ -390,7 +397,46 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                         .ToListAsync();
                     if (oldCorrections.Any()) _context.Corrections.RemoveRange(oldCorrections);
                     _context.Dialogues.RemoveRange(oldDialogues);
-                    await _context.SaveChangesAsync();
+                }
+
+                // Clean up subtask progresses
+                var oldSubTaskProgresses = await _context.UserSubTaskProgresses
+                    .Where(p => p.UserId == userId && p.MissionId == missionId)
+                    .ToListAsync();
+                if (oldSubTaskProgresses.Any()) _context.UserSubTaskProgresses.RemoveRange(oldSubTaskProgresses);
+
+                await _context.SaveChangesAsync();
+            }
+
+            // Sub-task evaluation
+            var subTasks = await _context.MissionSubTasks
+                .Where(s => s.MissionId == missionId)
+                .OrderBy(s => s.OrderIndex)
+                .ToListAsync();
+
+            var completedSubTaskIds = await _context.UserSubTaskProgresses
+                .Where(p => p.UserId == userId && p.MissionId == missionId)
+                .Select(p => p.SubTaskId)
+                .ToListAsync();
+
+            int subTaskXpBonus = 0;
+            foreach (var subtask in subTasks.Where(s => !completedSubTaskIds.Contains(s.Id)))
+            {
+                bool isTriggered = subtask.TriggerKeywords.Any(keyword => 
+                    playerMessage.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+
+                if (isTriggered)
+                {
+                    subTaskXpBonus += subtask.XpBonus;
+                    completedSubTaskIds.Add(subtask.Id); // Include it as completed now
+
+                    await _context.UserSubTaskProgresses.AddAsync(new UserSubTaskProgress
+                    {
+                        UserId = userId,
+                        MissionId = missionId,
+                        SubTaskId = subtask.Id,
+                        CompletedAt = DateTime.UtcNow
+                    });
                 }
             }
 
@@ -400,6 +446,7 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             progress.CurrentSuspicion = Math.Clamp(progress.CurrentSuspicion, 0, mission.MaxSuspicion);
 
             int finalXpEarned = user.IsPremium ? claudeResponse.XpEarned * 2 : claudeResponse.XpEarned;
+            finalXpEarned += subTaskXpBonus; // Add the subtask XP bonus
             progress.XpEarned += finalXpEarned;
             progress.LastActivity = DateTime.UtcNow;
 
@@ -523,6 +570,18 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
             // Commit transaction
             await transaction.CommitAsync();
 
+            var mappedSubTasks = subTasks.Select(s => new MissionSubTaskDto(
+                s.Id,
+                s.MissionId,
+                s.OrderIndex,
+                s.Label,
+                s.LabelEn,
+                s.HintPhrase,
+                s.IsOptional,
+                s.XpBonus,
+                completedSubTaskIds.Contains(s.Id)
+            )).ToList();
+
             return new DialogueResponseWithScoresDto(
                 claudeResponse.NpcResponse,
                 writingFeedback,
@@ -533,7 +592,8 @@ Nhiệm vụ của bạn: Phản hồi người chơi một cách tự nhiên, b
                 finalXpEarned,
                 token,
                 user.Energy,
-                user.MaxEnergy
+                user.MaxEnergy,
+                mappedSubTasks
             );
         }
         catch
@@ -639,6 +699,28 @@ Task:
             .Take(50) // Limit to last 50 dialogues to prevent memory issues
             .ToListAsync();
 
+        var subTasks = await _context.MissionSubTasks
+            .Where(s => s.MissionId == missionId)
+            .OrderBy(s => s.OrderIndex)
+            .ToListAsync();
+
+        var completedSubTaskIds = await _context.UserSubTaskProgresses
+            .Where(p => p.UserId == userId && p.MissionId == missionId)
+            .Select(p => p.SubTaskId)
+            .ToListAsync();
+
+        var mappedSubTasks = subTasks.Select(s => new MissionSubTaskDto(
+            s.Id,
+            s.MissionId,
+            s.OrderIndex,
+            s.Label,
+            s.LabelEn,
+            s.HintPhrase,
+            s.IsOptional,
+            s.XpBonus,
+            completedSubTaskIds.Contains(s.Id)
+        )).ToList();
+
         return new GameSessionDto
         {
             HasActiveSession = true,
@@ -652,7 +734,8 @@ Task:
                 NpcResponse = h.NpcResponse ?? string.Empty,
                 Feedback = h.Feedback ?? string.Empty,
                 SuspicionChange = h.SuspicionChange
-            }).ToList()
+            }).ToList(),
+            SubTasks = mappedSubTasks
         };
     }
 
@@ -713,6 +796,15 @@ Task:
                     _context.Corrections.RemoveRange(corrections);
                 }
                 _context.Dialogues.RemoveRange(dialogues);
+            }
+
+            // Remove all subtask progresses
+            var subTaskProgresses = await _context.UserSubTaskProgresses
+                .Where(p => p.UserId == userId && p.MissionId == missionId)
+                .ToListAsync();
+            if (subTaskProgresses.Any())
+            {
+                _context.UserSubTaskProgresses.RemoveRange(subTaskProgresses);
             }
 
             await _context.SaveChangesAsync();

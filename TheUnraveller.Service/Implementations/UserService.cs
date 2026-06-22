@@ -22,7 +22,7 @@ public class UserService : IUserService
         if (user == null) throw new Exception("User not found");
 
         // 1. Áp dụng Lazy Recharge Energy
-        RechargeEnergyLazy(user);
+        await RechargeEnergyLazyAsync(user);
 
         var progresses = await _userProgressRepository.GetUserProgressesAsync(userId);
 
@@ -136,7 +136,7 @@ public class UserService : IUserService
         await _userRepository.SaveChangesAsync();
     }
 
-    private void RechargeEnergyLazy(User user)
+    private async Task RechargeEnergyLazyAsync(User user)
     {
         var now = DateTime.UtcNow;
         var timeElapsed = now - user.LastEnergyRechargedAt;
@@ -152,7 +152,7 @@ public class UserService : IUserService
 
             // Lưu vào DB
             _userRepository.Update(user);
-            _userRepository.SaveChangesAsync().Wait(); // Sử dụng async/await trong method chính
+            await _userRepository.SaveChangesAsync();
         }
     }
 }
