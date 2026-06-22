@@ -35,7 +35,8 @@ public record DialogueResponseWithScoresDto(
     [property: JsonPropertyName("xpEarned")] int XpEarned,
     [property: JsonPropertyName("completionToken")] string? CompletionToken = null,
     [property: JsonPropertyName("updatedEnergy")] int? UpdatedEnergy = null,
-    [property: JsonPropertyName("updatedMaxEnergy")] int? UpdatedMaxEnergy = null
+    [property: JsonPropertyName("updatedMaxEnergy")] int? UpdatedMaxEnergy = null,
+    [property: JsonPropertyName("updatedSubTasks")] List<MissionSubTaskDto>? UpdatedSubTasks = null
 );
 
 public record SkillMapDto(

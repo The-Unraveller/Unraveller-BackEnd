@@ -17,8 +17,8 @@ public interface IAuthService
 
 public interface IMissionService
 {
-    Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
-    Task<MissionDto?> GetMissionByIdAsync(int id);
+    Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int? userId = null);
+    Task<MissionDto?> GetMissionByIdAsync(int id, int? userId = null);
 }
 
 public interface IGameEngineService

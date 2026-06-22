@@ -1,6 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace TheUnraveller.Service.DTOs;
 
 public record UserDto(int Id, string Username, string Email);
+
+public record MissionSubTaskDto(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("missionId")] int MissionId,
+    [property: JsonPropertyName("orderIndex")] int OrderIndex,
+    [property: JsonPropertyName("label")] string Label,
+    [property: JsonPropertyName("labelEn")] string LabelEn,
+    [property: JsonPropertyName("hintPhrase")] string HintPhrase,
+    [property: JsonPropertyName("isOptional")] bool IsOptional,
+    [property: JsonPropertyName("xpBonus")] int XpBonus,
+    [property: JsonPropertyName("isCompleted")] bool IsCompleted
+);
 
 public record MissionDto(
     int Id,
@@ -18,7 +32,8 @@ public record MissionDto(
     string GrammarTarget,
     int Domain,
     List<string> InitialChoices,
-    string SyntaxPuzzles
+    string SyntaxPuzzles,
+    List<MissionSubTaskDto> SubTasks
 );
 
 public record DialogueRequestDto(int UserId, int MissionId, string Message);
@@ -70,4 +85,5 @@ public class GameSessionDto
     public int TurnCount { get; set; }
     public int XpEarned { get; set; }
     public List<DialogueMessageHistoryDto> History { get; set; } = new();
+    public List<MissionSubTaskDto> SubTasks { get; set; } = new();
 }

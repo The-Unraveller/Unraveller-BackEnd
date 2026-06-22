@@ -21,6 +21,8 @@ public class AppDbContext : DbContext
     public DbSet<UserInventory> UserInventories { get; set; } = null!;
     public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;
     public DbSet<UserSubscription> UserSubscriptions { get; set; } = null!;
+    public DbSet<MissionSubTask> MissionSubTasks { get; set; } = null!;
+    public DbSet<UserSubTaskProgress> UserSubTaskProgresses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -573,6 +575,40 @@ public class AppDbContext : DbContext
             new ShopItem { Id = 2, Name = "Từ điển ngoại giao", Description = "Giảm bớt sự bối rối hoặc mức nghi ngờ từ đối phương.", Type = ItemType.BribeNpc, PriceXp = 500, Emoji = "📕" },
             new ShopItem { Id = 3, Name = "Huy hiệu Vàng", Description = "Vật phẩm lưu niệm vàng danh giá dành cho người học xuất sắc.", Type = ItemType.Cosmetic, PriceXp = 1000, Emoji = "🏅" }
         );
+
+        // MissionSubTask configuration
+        modelBuilder.Entity<MissionSubTask>(entity =>
+        {
+            entity.ToTable("MissionSubTasks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.Property(e => e.TriggerKeywords).HasColumnType("text[]");
+            entity.HasOne(e => e.Mission)
+                .WithMany(m => m.SubTasks)
+                .HasForeignKey(e => e.MissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.MissionId, e.OrderIndex }).IsUnique();
+            entity.HasIndex(e => e.MissionId);
+        });
+
+        // UserSubTaskProgress configuration
+        modelBuilder.Entity<UserSubTaskProgress>(entity =>
+        {
+            entity.ToTable("UserSubTaskProgress");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.Property(e => e.CompletedAt).HasColumnType("timestamp with time zone");
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SubTask)
+                .WithMany()
+                .HasForeignKey(e => e.SubTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.SubTaskId }).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.MissionId });
+        });
     }
 }
 
