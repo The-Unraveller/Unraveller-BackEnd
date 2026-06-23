@@ -27,6 +27,7 @@ public class MissionManagementService : IMissionManagementService
     {
         var missions = await _context.Missions
             .Include(m => m.Npc)
+            .Include(m => m.SubTasks)
             .OrderByDescending(m => m.Id)
             .ToListAsync();
 
@@ -37,6 +38,7 @@ public class MissionManagementService : IMissionManagementService
     {
         var missions = await _context.Missions
             .Include(m => m.Npc)
+            .Include(m => m.SubTasks)
             .Where(m => m.ApprovalStatus == ApprovalStatus.Pending)
             .OrderByDescending(m => m.Id)
             .ToListAsync();
@@ -74,6 +76,24 @@ public class MissionManagementService : IMissionManagementService
             CreatedByUserId = creatorId,
             GrammarTarget = dto.GrammarTarget
         };
+
+        if (dto.SubTasks != null && dto.SubTasks.Count > 0)
+        {
+            int order = 1;
+            foreach (var subDto in dto.SubTasks)
+            {
+                newMission.SubTasks.Add(new MissionSubTask
+                {
+                    Label = subDto.Label,
+                    LabelEn = subDto.LabelEn,
+                    HintPhrase = subDto.HintPhrase,
+                    TriggerKeywords = subDto.TriggerKeywords ?? new List<string>(),
+                    IsOptional = subDto.IsOptional,
+                    XpBonus = subDto.XpBonus,
+                    OrderIndex = order++
+                });
+            }
+        }
 
         await _missionRepository.AddAsync(newMission);
         await _missionRepository.SaveChangesAsync();
@@ -215,7 +235,19 @@ public class MissionManagementService : IMissionManagementService
             ApprovalStatus = (int)m.ApprovalStatus,
             RejectionReason = m.RejectionReason,
             CreatedByUserId = m.CreatedByUserId,
-            GrammarTarget = m.GrammarTarget
+            GrammarTarget = m.GrammarTarget,
+            SubTasks = m.SubTasks.Select(s => new SubTaskManagementDto
+            {
+                Id = s.Id,
+                MissionId = s.MissionId,
+                OrderIndex = s.OrderIndex,
+                Label = s.Label,
+                LabelEn = s.LabelEn,
+                HintPhrase = s.HintPhrase,
+                TriggerKeywords = s.TriggerKeywords,
+                IsOptional = s.IsOptional,
+                XpBonus = s.XpBonus
+            }).OrderBy(s => s.OrderIndex).ToList()
         };
     }
 }

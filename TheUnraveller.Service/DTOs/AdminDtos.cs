@@ -23,6 +23,29 @@ public class MissionUpdateDto
     public string? ImageUrl { get; set; }
 }
 
+public class SubTaskCreateDto
+{
+    public string Label { get; set; } = string.Empty;
+    public string LabelEn { get; set; } = string.Empty;
+    public string HintPhrase { get; set; } = string.Empty;
+    public List<string> TriggerKeywords { get; set; } = new();
+    public bool IsOptional { get; set; } = false;
+    public int XpBonus { get; set; } = 10;
+}
+
+public class SubTaskManagementDto
+{
+    public int Id { get; set; }
+    public int MissionId { get; set; }
+    public int OrderIndex { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public string LabelEn { get; set; } = string.Empty;
+    public string HintPhrase { get; set; } = string.Empty;
+    public List<string> TriggerKeywords { get; set; } = new();
+    public bool IsOptional { get; set; }
+    public int XpBonus { get; set; }
+}
+
 public class MissionCreateDto
 {
     public string Title { get; set; } = string.Empty;
@@ -36,6 +59,7 @@ public class MissionCreateDto
     public string ImageUrl { get; set; } = string.Empty;
     public int NpcId { get; set; } = 1;
     public string GrammarTarget { get; set; } = string.Empty;
+    public List<SubTaskCreateDto>? SubTasks { get; set; }
 }
 
 public class MissionManagementDto
@@ -58,6 +82,7 @@ public class MissionManagementDto
     public string? RejectionReason { get; set; }
     public int? CreatedByUserId { get; set; }
     public string GrammarTarget { get; set; } = string.Empty;
+    public List<SubTaskManagementDto> SubTasks { get; set; } = new();
 }
 
 public class NpcDto
