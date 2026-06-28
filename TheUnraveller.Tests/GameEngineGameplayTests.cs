@@ -34,7 +34,8 @@ public class GameEngineGameplayTests
             _progressRepoMock.Object,
             _missionRepoMock.Object,
             _llmServiceMock.Object,
-            _userRepoMock.Object
+            _userRepoMock.Object,
+			Mock.Of<IConfiguration>()
         );
     }
 
