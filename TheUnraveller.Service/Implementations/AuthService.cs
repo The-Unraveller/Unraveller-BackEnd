@@ -46,15 +46,19 @@ public class AuthService : IAuthService
         var existingUser = await _userRepository.GetByEmailAsync(email);
         if (existingUser != null) return false;
 
+        var defaultEnergy = _configuration.GetValue<int>("GameRules:DefaultEnergy", 100);
+        var defaultMaxEnergy = _configuration.GetValue<int>("GameRules:DefaultMaxEnergy", 100);
+        var defaultEnglishLevel = _configuration.GetValue<string>("GameRules:DefaultEnglishLevel") ?? "B1";
+
         var newUser = new User
         {
             Username = username,
             Email = email,
-            Energy = 100,
-            MaxEnergy = 100,
+            Energy = defaultEnergy,
+            MaxEnergy = defaultMaxEnergy,
             XpBalance = 0,
             IsPremium = false,
-            EnglishLevel = "B1",
+            EnglishLevel = defaultEnglishLevel,
             CreatedAt = DateTime.UtcNow,
             LastEnergyRechargedAt = DateTime.UtcNow,
             LastActiveDate = DateTime.UtcNow
@@ -74,7 +78,6 @@ public class AuthService : IAuthService
 
         try
         {
-            // Verify the ID token with Google (with retry logic for transient network/DNS errors)
             GoogleJsonWebSignature.Payload? payload = null;
             int maxRetries = 3;
             for (int i = 0; i < maxRetries; i++)
@@ -85,11 +88,11 @@ public class AuthService : IAuthService
                     {
                         Audience = new[] { clientId }
                     });
-                    break; // Success, exit retry loop
+                    break;
                 }
                 catch (Exception ex) when (ex.Message.Contains("transient") && i < maxRetries - 1)
                 {
-                    await Task.Delay(1000 * (i + 1)); // Wait 1s, 2s... then retry
+                    await Task.Delay(1000 * (i + 1));
                 }
             }
 
@@ -101,27 +104,29 @@ public class AuthService : IAuthService
             var email = payload.Email;
             var name = payload.Name;
 
-            // Check if user exists
+            var defaultEnergy = _configuration.GetValue<int>("GameRules:DefaultEnergy", 100);
+            var defaultMaxEnergy = _configuration.GetValue<int>("GameRules:DefaultMaxEnergy", 100);
+            var defaultEnglishLevel = _configuration.GetValue<string>("GameRules:DefaultEnglishLevel") ?? "B1";
+
             var user = await _userRepository.GetByEmailAsync(email);
 
             if (user == null)
             {
-                // Auto-register if not exists
                 user = new User
                 {
                     Username = name ?? email.Split('@')[0],
                     Email = email,
-                    Energy = 100,
-                    MaxEnergy = 100,
+                    Energy = defaultEnergy,
+                    MaxEnergy = defaultMaxEnergy,
                     XpBalance = 0,
                     IsPremium = false,
-                    EnglishLevel = "B1",
+                    EnglishLevel = defaultEnglishLevel,
                     CreatedAt = DateTime.UtcNow,
                     LastEnergyRechargedAt = DateTime.UtcNow,
                     LastActiveDate = DateTime.UtcNow
                 };
                 user.PasswordHash = _passwordHasher.HashPassword(user, Guid.NewGuid().ToString());
-                
+
                 await _userRepository.AddAsync(user);
                 await _userRepository.SaveChangesAsync();
             }
@@ -130,8 +135,8 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            var innerDetail = ex.InnerException != null 
-                ? $" | InnerException: {ex.InnerException.Message} | StackTrace: {ex.InnerException.StackTrace}" 
+            var innerDetail = ex.InnerException != null
+                ? $" | InnerException: {ex.InnerException.Message} | StackTrace: {ex.InnerException.StackTrace}"
                 : "";
             throw new UnauthorizedAccessException($"Google authentication failed: {ex.Message}{innerDetail}");
         }

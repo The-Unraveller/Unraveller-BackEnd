@@ -26,10 +26,14 @@ public class UserSubscription
 {
     [Key]
     public int Id { get; set; }
-    public string UserId { get; set; } = string.Empty;
+    public int UserId { get; set; }
     public int PlanId { get; set; }
-    public DateTime StartDate { get; set; }
+    public DateTime StartDate { get; set; } = DateTime.UtcNow;
     public DateTime? EndDate { get; set; }
     public bool IsActive { get; set; } = true;
     public string TransactionId { get; set; } = string.Empty;
+
+    // Navigation properties
+    public User? User { get; set; }
+    public SubscriptionPlan? Plan { get; set; }
 }

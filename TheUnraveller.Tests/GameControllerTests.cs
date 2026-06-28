@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using TheUnraveller.API.Controllers;
 using TheUnraveller.Service.DTOs;
@@ -12,89 +13,97 @@ namespace TheUnraveller.Tests;
 
 public class GameControllerTests
 {
-    private readonly Mock<IAIEvaluationService> _aiServiceMock;
-    private readonly Mock<IShopRepository> _shopRepoMock;
-    private readonly Mock<IUserProgressRepository> _progressRepoMock;
-    private readonly GameController _controller;
+	private readonly Mock<IAIEvaluationService> _aiServiceMock;
+	private readonly Mock<IShopRepository> _shopRepoMock;
+	private readonly Mock<IUserProgressRepository> _progressRepoMock;
+	private readonly GameController _controller;
 
-    public GameControllerTests()
-    {
-        _aiServiceMock = new Mock<IAIEvaluationService>();
-        _shopRepoMock = new Mock<IShopRepository>();
-        _progressRepoMock = new Mock<IUserProgressRepository>();
+	public GameControllerTests()
+	{
+		_aiServiceMock = new Mock<IAIEvaluationService>();
+		_shopRepoMock = new Mock<IShopRepository>();
+		_progressRepoMock = new Mock<IUserProgressRepository>();
 
-        // Set up Mock User Claims for Authorized Endpoint
-        var userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, "1")
-        }, "mock"));
+		// Set up Mock User Claims for Authorized Endpoint
+		var userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+		{
+			new Claim(ClaimTypes.NameIdentifier, "1")
+		}, "mock"));
 
-        _controller = new GameController(_aiServiceMock.Object, _shopRepoMock.Object, _progressRepoMock.Object)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext { User = userPrincipal }
-            }
-        };
-    }
+		var myConfiguration = new System.Collections.Generic.Dictionary<string, string>
+		{
+			{ "GameRules:BribeNpcSuspicionReduction", "20" }
+		};
+		var configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(myConfiguration)
+			.Build();
 
-    [Fact]
-    public async Task SendMessage_ShouldReturnOk_OnSuccess()
-    {
-        // Arrange
-        var request = new DialogueRequestDto(0, 1, "Hello officer");
-        var mockResponse = new DialogueResponseWithScoresDto(
-            "Who goes there?",
-            new WritingFeedbackDto(
-                new WritingScoreDto(80, 85, 90, 75, 88, 82),
-                new List<CorrectionDto>(),
-                null,
-                "Good spelling."
-            ),
-            15,
-            false,
-            false,
-            1,
-            5
-        );
+		_controller = new GameController(_aiServiceMock.Object, _shopRepoMock.Object, _progressRepoMock.Object, configuration)
+		{
+			ControllerContext = new ControllerContext
+			{
+				HttpContext = new DefaultHttpContext { User = userPrincipal }
+			}
+		};
+	}
 
-        _aiServiceMock
-            .Setup(s => s.EvaluateMessageAsync(1, 1, "Hello officer"))
-            .ReturnsAsync(mockResponse);
+	[Fact]
+	public async Task SendMessage_ShouldReturnOk_OnSuccess()
+	{
+		// Arrange
+		var request = new DialogueRequestDto(0, 1, "Hello officer");
+		var mockResponse = new DialogueResponseWithScoresDto(
+			"Who goes there?",
+			new WritingFeedbackDto(
+				new WritingScoreDto(80, 85, 90, 75, 88, 82),
+				new List<CorrectionDto>(),
+				null,
+				"Good spelling."
+			),
+			15,
+			false,
+			false,
+			1,
+			5
+		);
 
-        // Act
-        var result = await _controller.SendMessage(request);
+		_aiServiceMock
+			.Setup(s => s.EvaluateMessageAsync(1, 1, "Hello officer"))
+			.ReturnsAsync(mockResponse);
 
-        // Assert
-        var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
-        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-        var returnedDto = Assert.IsType<DialogueResponseWithScoresDto>(okResult.Value);
+		// Act
+		var result = await _controller.SendMessage(request);
 
-        Assert.Equal("Who goes there?", returnedDto.NpcResponse);
-        Assert.Equal("Good spelling.", returnedDto.WritingFeedback.Summary);
-        Assert.Equal(15, returnedDto.NewSuspicionLevel);
-        Assert.Equal(5, returnedDto.XpEarned);
-    }
+		// Assert
+		var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
+		var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+		var returnedDto = Assert.IsType<DialogueResponseWithScoresDto>(okResult.Value);
 
-    [Fact]
-    public async Task SendMessage_ShouldReturnBadRequest_WhenServiceThrowsException()
-    {
-        // Arrange
-        var request = new DialogueRequestDto(0, 1, "Hello officer");
+		Assert.Equal("Who goes there?", returnedDto.NpcResponse);
+		Assert.Equal("Good spelling.", returnedDto.WritingFeedback.Summary);
+		Assert.Equal(15, returnedDto.NewSuspicionLevel);
+		Assert.Equal(5, returnedDto.XpEarned);
+	}
 
-        _aiServiceMock
-            .Setup(s => s.EvaluateMessageAsync(1, 1, "Hello officer"))
-            .ThrowsAsync(new System.Exception("Not enough energy"));
+	[Fact]
+	public async Task SendMessage_ShouldReturnBadRequest_WhenServiceThrowsException()
+	{
+		// Arrange
+		var request = new DialogueRequestDto(0, 1, "Hello officer");
 
-        // Act
-        var result = await _controller.SendMessage(request);
+		_aiServiceMock
+			.Setup(s => s.EvaluateMessageAsync(1, 1, "Hello officer"))
+			.ThrowsAsync(new System.Exception("Not enough energy"));
 
-        // Assert
-        var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+		// Act
+		var result = await _controller.SendMessage(request);
 
-        // Assert error message exists in returned object
-        var errorObj = badRequestResult.Value;
-        Assert.NotNull(errorObj);
-    }
+		// Assert
+		var actionResult = Assert.IsType<ActionResult<DialogueResponseWithScoresDto>>(result);
+		var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+
+		// Assert error message exists in returned object
+		var errorObj = badRequestResult.Value;
+		Assert.NotNull(errorObj);
+	}
 }

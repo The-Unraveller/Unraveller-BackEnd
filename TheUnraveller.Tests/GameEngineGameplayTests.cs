@@ -29,12 +29,27 @@ public class GameEngineGameplayTests
         _llmServiceMock = new Mock<ILLMProviderService>();
         _userRepoMock = new Mock<IUserRepository>();
 
+        var myConfiguration = new System.Collections.Generic.Dictionary<string, string>
+        {
+            { "GameRules:EnergyCostPerMessage", "5" },
+            { "GameRules:FreeEnergyRechargeIntervalMinutes", "30" },
+            { "GameRules:FreeEnergyPerRecharge", "10" },
+            { "GameRules:PremiumEnergyPerRecharge", "20" },
+            { "GameRules:MinTurnsToComplete", "5" },
+            { "GameRules:WinSuspicionThreshold", "50" },
+            { "GameRules:XpPenaltyMin", "5" }
+        };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(myConfiguration)
+            .Build();
+
         _gameEngine = new GameEngineService(
             _dialogueRepoMock.Object,
             _progressRepoMock.Object,
             _missionRepoMock.Object,
             _llmServiceMock.Object,
-            _userRepoMock.Object
+            _userRepoMock.Object,
+            configuration
         );
     }
 

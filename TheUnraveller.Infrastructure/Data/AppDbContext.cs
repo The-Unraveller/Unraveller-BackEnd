@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TheUnraveller.Core.Entities;
 
 namespace TheUnraveller.Infrastructure.Data;
@@ -95,7 +95,25 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<SubscriptionPlan>().HasData(
             new SubscriptionPlan { Id = 1, Name = "Gói Miễn Phí", Tier = SubscriptionTier.Free, Price = 0, DurationDays = 0, Description = "Quyền truy cập miễn phí giới hạn vào các kịch bản bắt đầu", Features = new List<string> { "Kịch bản khởi đầu", "Năng lượng mỗi ngày" } },
             new SubscriptionPlan { Id = 2, Name = "Premium VIP", Tier = SubscriptionTier.MonthlyPremium, Price = 199000, DurationDays = 30, Description = "Mở khóa toàn bộ tính năng và kịch bản cao cấp", Features = new List<string> { "Toàn bộ Kịch bản", "Năng lượng vô cực", "Phản hồi AI nâng cao" } }
-        );
+);
+
+// UserSubscription configuration
+modelBuilder.Entity<UserSubscription>(entity =>
+{
+    entity.ToTable("UserSubscriptions");
+    entity.HasKey(e => e.Id);
+    entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+    entity.HasOne(s => s.User)
+        .WithMany()
+        .HasForeignKey(s => s.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+    entity.HasOne(s => s.Plan)
+        .WithMany()
+        .HasForeignKey(s => s.PlanId)
+        .OnDelete(DeleteBehavior.Restrict);
+    entity.HasIndex(s => s.UserId);
+    entity.HasIndex(s => new { s.UserId, s.IsActive });
+});
 
         // Configure relationships
         modelBuilder.Entity<Dialogue>()
