@@ -3,7 +3,7 @@ namespace TheUnraveller.Service.DTOs;
 public class CreatePaymentRequestDto
 {
     public int UserId { get; set; }
-    public string PlanId { get; set; } = string.Empty;
+    public int PlanId { get; set; }
     public decimal Amount { get; set; }
 }
 
@@ -27,7 +27,7 @@ public class CreatePayOSLinkResponseDto
 public class PaymentHistoryDto
 {
     public int Id { get; set; }
-    public string PlanId { get; set; } = string.Empty;
+    public int PlanId { get; set; }
     public decimal Amount { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }

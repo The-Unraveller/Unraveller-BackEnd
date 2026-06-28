@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TheUnraveller.Core.Entities;
 
@@ -11,7 +11,7 @@ public class Payment
     public int UserId { get; set; }
 
     [Required]
-    public string PlanId { get; set; } = string.Empty;
+public int PlanId { get; set; }
 
     [Required]
     public decimal Amount { get; set; }

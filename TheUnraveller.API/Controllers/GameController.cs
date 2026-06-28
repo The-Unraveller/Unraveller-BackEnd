@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using TheUnraveller.Core.Entities;
+using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
-using TheUnraveller.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using TheUnraveller.Service.DTOs;
 
 namespace TheUnraveller.API.Controllers;
 
@@ -15,15 +16,18 @@ public class GameController : ControllerBase
     private readonly IAIEvaluationService _aiEvaluationService;
     private readonly IShopRepository _shopRepository;
     private readonly IUserProgressRepository _userProgressRepository;
+    private readonly int _bribeNpcReduction;
 
     public GameController(
         IAIEvaluationService aiEvaluationService,
         IShopRepository shopRepository,
-        IUserProgressRepository userProgressRepository)
+        IUserProgressRepository userProgressRepository,
+        IConfiguration configuration)
     {
         _aiEvaluationService = aiEvaluationService;
         _shopRepository = shopRepository;
         _userProgressRepository = userProgressRepository;
+        _bribeNpcReduction = configuration.GetValue<int>("GameRules:BribeNpcSuspicionReduction", 20);
     }
 
     [Authorize]
@@ -112,45 +116,54 @@ public class GameController : ControllerBase
             if (userIdClaim == null) return Unauthorized(new UseGameItemResponseDto(false, "Không tìm thấy User ID trong token.", 0, null));
             int userId = int.Parse(userIdClaim.Value);
 
-            // 1. Verify item quantity in inventory
+            // 1. Load item from DB to get its type (avoids magic ItemId numbers)
+            var shopItem = await _shopRepository.GetByIdAsync(request.ItemId);
+            if (shopItem == null)
+                return NotFound(new UseGameItemResponseDto(false, "Vật phẩm không tồn tại.", 0, null));
+
+            // 2. Verify item quantity in inventory
             int quantity = await _shopRepository.GetItemQuantityAsync(userId, request.ItemId);
             if (quantity <= 0)
             {
                 return BadRequest(new UseGameItemResponseDto(false, "Bạn không sở hữu vật phẩm này trong túi đồ.", 0, null));
             }
 
-            // 2. Decrement item quantity
+            // 3. Decrement item quantity
             await _shopRepository.UpdateItemQuantityAsync(userId, request.ItemId, quantity - 1);
 
             int newSuspicion = 0;
             string? hint = null;
             string message = "Sử dụng vật phẩm thành công.";
 
-            // 3. Apply item effects
-            if (request.ItemId == 2) // Từ điển ngoại giao (BribeNpc)
+            // 4. Apply item effects based on ItemType enum (not hard-coded IDs)
+            if (shopItem.Type == ItemType.BribeNpc)
             {
                 var progress = await _userProgressRepository.GetUserProgressAsync(userId, request.MissionId);
                 if (progress != null)
                 {
-                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - 20);
+                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - _bribeNpcReduction);
                     progress.LastActivity = DateTime.UtcNow;
                     _userProgressRepository.Update(progress);
                     await _userProgressRepository.SaveChangesAsync();
                     newSuspicion = progress.CurrentSuspicion;
                 }
-                message = "Đã sử dụng Từ điển ngoại giao! Chỉ số sai lệch giao tiếp giảm đi 20 điểm.";
+                message = $"Đã sử dụng {shopItem.Name}! Chỉ số nghi ngờ giảm đi {_bribeNpcReduction} điểm.";
             }
-            else if (request.ItemId == 1) // Gợi ý thông thái (InGameHint)
+            else if (shopItem.Type == ItemType.InGameHint)
             {
                 var progress = await _userProgressRepository.GetUserProgressAsync(userId, request.MissionId);
                 if (progress != null)
                 {
                     newSuspicion = progress.CurrentSuspicion;
                 }
-                
+
                 // Call LLM hint service to generate a Vietnamese suggestion
                 hint = await _aiEvaluationService.GenerateHintAsync(userId, request.MissionId);
-                message = "Đã kích hoạt Gợi ý thông thái! AI đã phân tích tình huống và đưa ra gợi ý.";
+                message = $"Đã kích hoạt {shopItem.Name}! AI đã phân tích tình huống và đưa ra gợi ý.";
+            }
+            else if (shopItem.Type == ItemType.Cosmetic)
+            {
+                message = $"Đã áp dụng {shopItem.Name} vào hồ sơ của bạn.";
             }
 
             return Ok(new UseGameItemResponseDto(true, message, newSuspicion, hint));

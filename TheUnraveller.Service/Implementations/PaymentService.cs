@@ -19,6 +19,7 @@ public class PaymentService : IPaymentService
     private readonly PayOSClient _payOSClient;
     private readonly string _returnUrl;
     private readonly string _cancelUrl;
+    private readonly int _premiumMaxEnergy;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
@@ -31,22 +32,17 @@ public class PaymentService : IPaymentService
         _userRepository = userRepository;
         _context = context;
         _payOSClient = payOSClient;
-        _returnUrl = configuration["PayOS:ReturnUrl"] ?? "http://localhost:5173/premium?payment=success";
-        _cancelUrl = configuration["PayOS:CancelUrl"] ?? "http://localhost:5173/premium?payment=failed";
+        _returnUrl = configuration["PayOS:ReturnUrl"] ?? throw new InvalidOperationException("PayOS ReturnUrl is not configured");
+        _cancelUrl = configuration["PayOS:CancelUrl"] ?? throw new InvalidOperationException("PayOS CancelUrl is not configured");
+        _premiumMaxEnergy = configuration.GetValue<int>("GameRules:PremiumMaxEnergy", 200);
     }
 
-    /// <summary>
-    /// Creates a payOS hosted checkout link and persists a Pending payment record.
-    /// </summary>
-    public async Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, string planId, int amount)
+    public async Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, int planId, int amount)
     {
         try
         {
-            // Generate a unique numeric order code required by payOS (must be a positive integer)
-            // Using last 9 digits of Unix-millisecond timestamp — unique enough for a university project
             long orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 1_000_000_000L;
 
-            // Persist pending payment record first so we can match on webhook
             var payment = new Payment
             {
                 UserId = userId,
@@ -60,7 +56,6 @@ public class PaymentService : IPaymentService
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
 
-            // Build the payOS payment request
             var paymentRequest = new CreatePaymentLinkRequest
             {
                 OrderCode = orderCode,
@@ -88,48 +83,37 @@ public class PaymentService : IPaymentService
         }
     }
 
-    /// <summary>
-    /// Verifies the payOS webhook HMAC signature and upgrades user to Premium on success.
-    /// </summary>
     public async Task<bool> VerifyPayOSWebhookAsync(Webhook webhookPayload)
     {
         try
         {
-            // SDK verifies the HMAC-SHA256 signature using ChecksumKey internally
-            // If the signature is invalid, it will throw an exception.
             var webhookData = await _payOSClient.Webhooks.VerifyAsync(webhookPayload);
 
-            // Once the signature is verified, we should return true (200 OK) to payOS
-            // to confirm receipt of the authenticated webhook, even if the order was already completed.
             if (webhookPayload.Code == "00" && webhookPayload.Success)
             {
                 var orderCode = webhookData.OrderCode.ToString();
 
-                // If it is a test/verification order code (123), return true immediately
                 if (webhookData.OrderCode == 123)
                 {
                     return true;
                 }
 
-                // Find the matching Pending payment record
                 var payment = await _context.Set<Payment>()
                     .FirstOrDefaultAsync(p => p.OrderId == orderCode && p.Status == "Pending");
 
                 if (payment != null)
                 {
-                    // Mark payment as completed
                     payment.Status = "Completed";
                     payment.CompletedAt = DateTime.UtcNow;
                     _paymentRepository.Update(payment);
                     await _paymentRepository.SaveChangesAsync();
 
-                    // Upgrade user to Premium
                     var user = await _userRepository.GetByIdAsync(payment.UserId);
                     if (user != null)
                     {
                         user.IsPremium = true;
-                        user.MaxEnergy = 200;
-                        user.Energy = 200; // Recharge current energy to full
+                        user.MaxEnergy = _premiumMaxEnergy;
+                        user.Energy = _premiumMaxEnergy;
                         _userRepository.Update(user);
                         await _userRepository.SaveChangesAsync();
                     }
@@ -138,8 +122,9 @@ public class PaymentService : IPaymentService
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[PayOS Webhook] Verification failed: {ex.Message}");
             return false;
         }
     }
@@ -152,70 +137,64 @@ public class PaymentService : IPaymentService
                 .Where(p => p.UserId == userId && p.Status == "Pending")
                 .ToListAsync();
 
-            if (pendingPayments.Any())
-            {
-                bool hasUpdates = false;
-                foreach (var payment in pendingPayments)
-                {
-                    if (long.TryParse(payment.OrderId, out long orderCode))
-                    {
-                        try
-                        {
-                            Console.WriteLine($"[SyncPendingPayments] Checking orderCode: {orderCode}");
-                            var paymentInfo = await _payOSClient.PaymentRequests.GetAsync(orderCode);
-                            if (paymentInfo != null)
-                            {
-                                string statusStr = paymentInfo.Status.ToString();
-                                Console.WriteLine($"[SyncPendingPayments] OrderCode {orderCode} status on PayOS: {statusStr}");
-                                if (statusStr.Equals("PAID", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    payment.Status = "Completed";
-                                    payment.CompletedAt = DateTime.UtcNow;
-                                    _paymentRepository.Update(payment);
-                                    hasUpdates = true;
+            if (!pendingPayments.Any()) return;
 
-                                    // Upgrade user to Premium
-                                    var user = await _userRepository.GetByIdAsync(userId);
-                                    if (user != null)
-                                    {
-                                        user.IsPremium = true;
-                                        user.MaxEnergy = 200;
-                                        user.Energy = 200; // Recharge current energy to full
-                                        _userRepository.Update(user);
-                                    }
-                                }
-                                else if (statusStr.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase))
+            bool hasUpdates = false;
+            foreach (var payment in pendingPayments)
+            {
+                if (long.TryParse(payment.OrderId, out long orderCode))
+                {
+                    try
+                    {
+                        Console.WriteLine($"[SyncPendingPayments] Checking orderCode: {orderCode}");
+                        var paymentInfo = await _payOSClient.PaymentRequests.GetAsync(orderCode);
+                        if (paymentInfo != null)
+                        {
+                            string statusStr = paymentInfo.Status.ToString();
+                            Console.WriteLine($"[SyncPendingPayments] OrderCode {orderCode} status: {statusStr}");
+
+                            if (statusStr.Equals("PAID", StringComparison.OrdinalIgnoreCase))
+                            {
+                                payment.Status = "Completed";
+                                payment.CompletedAt = DateTime.UtcNow;
+                                _paymentRepository.Update(payment);
+                                hasUpdates = true;
+
+                                var user = await _userRepository.GetByIdAsync(userId);
+                                if (user != null)
                                 {
-                                    payment.Status = "Failed";
-                                    _paymentRepository.Update(payment);
-                                    hasUpdates = true;
+                                    user.IsPremium = true;
+                                    user.MaxEnergy = _premiumMaxEnergy;
+                                    user.Energy = _premiumMaxEnergy;
+                                    _userRepository.Update(user);
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[SyncPendingPayments] Error checking orderCode {orderCode}: {ex.Message}");
-                            Console.WriteLine(ex.ToString());
+                            else if (statusStr.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase))
+                            {
+                                payment.Status = "Failed";
+                                _paymentRepository.Update(payment);
+                                hasUpdates = true;
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SyncPendingPayments] Error checking orderCode {orderCode}: {ex.Message}");
+                    }
                 }
+            }
 
-                if (hasUpdates)
-                {
-                    await _paymentRepository.SaveChangesAsync();
-                }
+            if (hasUpdates)
+            {
+                await _paymentRepository.SaveChangesAsync();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[SyncPendingPayments] Outer error: {ex.Message}");
-            Console.WriteLine(ex.ToString());
         }
     }
 
-    /// <summary>
-    /// Returns the payment history for a given user.
-    /// </summary>
     public async Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId)
     {
         await SyncPendingPaymentsAsync(userId);

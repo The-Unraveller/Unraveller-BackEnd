@@ -9,11 +9,16 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IUserProgressRepository _userProgressRepository;
+    private readonly ISubscriptionService _subscriptionService;
 
-    public UserService(IUserRepository userRepository, IUserProgressRepository userProgressRepository)
+    public UserService(
+        IUserRepository userRepository,
+        IUserProgressRepository userProgressRepository,
+        ISubscriptionService subscriptionService)
     {
         _userRepository = userRepository;
         _userProgressRepository = userProgressRepository;
+        _subscriptionService = subscriptionService;
     }
 
     public async Task<UserProfileDto> GetProfileAsync(int userId)
@@ -21,10 +26,13 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null) throw new Exception("User not found");
 
-        // 1. Áp dụng Lazy Recharge Energy
+        // 1. Apply Lazy Recharge Energy
         await RechargeEnergyLazyAsync(user);
 
         var progresses = await _userProgressRepository.GetUserProgressesAsync(userId);
+
+        // 2. Get subscription status
+        var subStatus = await _subscriptionService.GetUserSubscriptionStatusAsync(userId);
 
         return new UserProfileDto
         {
@@ -40,6 +48,10 @@ public class UserService : IUserService
             XpBalance = user.XpBalance,
             IsPremium = user.IsPremium,
             EnglishLevel = user.EnglishLevel,
+            SubscriptionPlanName = subStatus?.PlanName,
+            SubscriptionEndDate = subStatus?.ExpiresAt,
+            SubscriptionDaysRemaining = subStatus?.DaysRemaining ?? 0,
+            SubscriptionExpiringSoon = subStatus?.IsExpiringSoon ?? false,
             CreatedAt = user.CreatedAt,
             MissionProgresses = progresses.Select(p => new UserMissionProgressDto
             {
@@ -59,28 +71,18 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null) throw new Exception("User not found");
 
-        // 2. Logic Daily Streak (UTC+7)
-        var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-        var todayVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone).Date;
+        var today = DateTime.UtcNow.Date;
+        var lastActive = user.LastActiveDate?.Date ?? DateTime.MinValue;
 
-        if (user.LastActiveDate == null)
+        if (lastActive < today.AddDays(-1))
         {
+            // Streak broken
             user.StreakCount = 1;
         }
-        else
+        else if (lastActive < today)
         {
-            var lastActiveVn = TimeZoneInfo.ConvertTimeFromUtc(user.LastActiveDate.Value, vnTimeZone).Date;
-            var diffDays = (todayVn - lastActiveVn).Days;
-
-            if (diffDays == 1)
-            {
-                user.StreakCount += 1;
-            }
-            else if (diffDays > 1)
-            {
-                user.StreakCount = 1; // Reset về 1 nếu đứt chuỗi
-            }
-            // Nếu diffDays == 0, không làm gì (vẫn trong ngày hôm nay)
+            // Consecutive day
+            user.StreakCount++;
         }
 
         user.LastActiveDate = DateTime.UtcNow;
@@ -93,13 +95,7 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null) throw new Exception("User not found");
 
-        var level = englishLevel?.Trim().ToUpper() ?? "B1";
-        if (level != "A1" && level != "A2" && level != "B1" && level != "B2" && level != "C1" && level != "C2")
-        {
-            throw new ArgumentException("Trình độ không hợp lệ. Phải thuộc một trong các cấp độ: A1, A2, B1, B2, C1, C2.");
-        }
-
-        user.EnglishLevel = level;
+        user.EnglishLevel = englishLevel;
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();
     }
@@ -109,29 +105,8 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null) throw new Exception("User not found");
 
-        var cleanUsername = username?.Trim();
-        var cleanEmail = email?.Trim();
-
-        if (string.IsNullOrWhiteSpace(cleanUsername)) throw new ArgumentException("Tên người dùng không được để trống.");
-        if (string.IsNullOrWhiteSpace(cleanEmail)) throw new ArgumentException("Email không được để trống.");
-
-        // Check unique username
-        var existingUsername = await _userRepository.GetByUsernameAsync(cleanUsername);
-        if (existingUsername != null && existingUsername.Id != userId)
-        {
-            throw new InvalidOperationException("Tên người dùng đã được sử dụng.");
-        }
-
-        // Check unique email
-        var existingEmail = await _userRepository.GetByEmailAsync(cleanEmail);
-        if (existingEmail != null && existingEmail.Id != userId)
-        {
-            throw new InvalidOperationException("Email đã được sử dụng.");
-        }
-
-        user.Username = cleanUsername;
-        user.Email = cleanEmail;
-
+        user.Username = username;
+        user.Email = email;
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();
     }
@@ -144,13 +119,11 @@ public class UserService : IUserService
         if (timeElapsed.TotalMinutes >= 30)
         {
             int intervals = (int)(timeElapsed.TotalMinutes / 30);
-            int energyToRecharge = intervals * (user.IsPremium ? 20 : 10);
+            int energyPerInterval = user.IsPremium ? 20 : 10;
+            int energyToRecharge = intervals * energyPerInterval;
 
             user.Energy = Math.Min(user.MaxEnergy, user.Energy + energyToRecharge);
-            // Cập nhật mốc thời gian vừa hồi xong (không dùng now để tránh mất lẻ phút)
             user.LastEnergyRechargedAt = user.LastEnergyRechargedAt.AddMinutes(intervals * 30);
-
-            // Lưu vào DB
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
         }

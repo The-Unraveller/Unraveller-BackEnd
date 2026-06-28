@@ -17,31 +17,23 @@ public class BadgeService : IBadgeService
 
     public async Task AwardBadgesForMissionAsync(int userId, int missionId, decimal averageScore, CancellationToken cancellationToken = default)
     {
-        // Get all badge definitions from cache/database
         var badges = await _context.Badges.ToListAsync(cancellationToken);
-
-        // Get IDs of badges already earned by user
         var earnedBadgeIds = await _context.UserBadges
             .Where(ub => ub.UserId == userId)
             .Select(ub => ub.BadgeId)
             .ToListAsync(cancellationToken);
 
-        // List of new badges to award in this call
         var newBadges = new List<UserBadge>();
 
         // 1. First Steps: if this is the user's first completed mission
-        if (!earnedBadgeIds.Contains(1))
+        var firstCompletionBadge = badges.FirstOrDefault(b => b.CriteriaType == "FirstCompletion");
+        if (firstCompletionBadge != null && !earnedBadgeIds.Contains(firstCompletionBadge.Id))
         {
-            var firstCompletionBadge = badges.FirstOrDefault(b => b.CriteriaType == "FirstCompletion");
-            if (firstCompletionBadge != null)
+            var priorCompletions = await _context.UserProgresses
+                .CountAsync(p => p.UserId == userId && p.Status == MissionStatus.Completed && p.MissionId != missionId, cancellationToken);
+            if (priorCompletions == 0)
             {
-                // Check if user had any prior completed missions (other than this one)
-                var priorCompletions = await _context.UserProgresses
-                    .CountAsync(p => p.UserId == userId && p.Status == MissionStatus.Completed && p.MissionId != missionId, cancellationToken);
-                if (priorCompletions == 0)
-                {
-                    newBadges.Add(new UserBadge { UserId = userId, BadgeId = firstCompletionBadge.Id, EarnedAt = DateTime.UtcNow });
-                }
+                newBadges.Add(new UserBadge { UserId = userId, BadgeId = firstCompletionBadge.Id, EarnedAt = DateTime.UtcNow });
             }
         }
 
@@ -56,7 +48,6 @@ public class BadgeService : IBadgeService
         }
 
         // 3. TotalCompletions: Lifetime Learner (10)
-        // Count total completed missions (includes current because we already saved the completed progress)
         var totalCompletions = await _context.UserProgresses
             .CountAsync(p => p.UserId == userId && p.Status == MissionStatus.Completed, cancellationToken);
 
@@ -73,7 +64,6 @@ public class BadgeService : IBadgeService
         var domainBadge = badges.FirstOrDefault(b => b.CriteriaType == "DomainDiversity");
         if (domainBadge != null && !earnedBadgeIds.Contains(domainBadge.Id))
         {
-            // Get distinct domains from completed missions (already includes current)
             var completedMissionIds = await _context.UserProgresses
                 .Where(p => p.UserId == userId && p.Status == MissionStatus.Completed)
                 .Select(p => p.MissionId)
@@ -85,7 +75,7 @@ public class BadgeService : IBadgeService
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            if (domains.Count >= 3) // Professional, Academic, Social
+            if (domains.Count >= 3)
             {
                 newBadges.Add(new UserBadge { UserId = userId, BadgeId = domainBadge.Id, EarnedAt = DateTime.UtcNow });
             }
@@ -102,7 +92,7 @@ public class BadgeService : IBadgeService
             }
         }
 
-        // 6. Streak Master: check streak count >= 5
+        // 6. Streak Master: check streak count >= required
         var streakBadge = badges.FirstOrDefault(b => b.CriteriaType == "Streak");
         if (streakBadge != null && !earnedBadgeIds.Contains(streakBadge.Id))
         {
@@ -113,11 +103,6 @@ public class BadgeService : IBadgeService
             }
         }
 
-        // 7. Polished: perfect turn - this requires checking latest dialogue scores; we would need that data passed in.
-        // For now, skip or we could extend AwardBadgesForMissionAsync to accept a flag indicating perfect turn.
-        // We can leave for future iteration.
-
-        // Add new badges to context
         if (newBadges.Any())
         {
             await _context.UserBadges.AddRangeAsync(newBadges, cancellationToken);

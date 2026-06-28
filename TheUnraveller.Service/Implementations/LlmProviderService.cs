@@ -26,14 +26,26 @@ public class LlmProviderService : ILLMProviderService
     private readonly string _claudeModel;
     private readonly bool _isClaudeConfigured;
 
+    // LLM generation parameters from config
+    private readonly int _timeoutSeconds;
+    private readonly double _temperature;
+    private readonly double _topP;
+    private readonly int _maxOutputTokens;
+
     public LlmProviderService(IConfiguration configuration, ILogger<LlmProviderService> logger, HttpClient httpClient)
     {
         _configuration = configuration;
         _logger = logger;
         _httpClient = httpClient;
 
+        // Read LLM parameters from config
+        _timeoutSeconds = _configuration.GetValue<int>("LlmApi:TimeoutSeconds", 90);
+        _temperature = _configuration.GetValue<double>("LlmApi:Temperature", 0.7);
+        _topP = _configuration.GetValue<double>("LlmApi:TopP", 0.9);
+        _maxOutputTokens = _configuration.GetValue<int>("LlmApi:MaxOutputTokens", 3000);
+
         // Configure timeouts and retry policies
-        _httpClient.Timeout = TimeSpan.FromSeconds(120);
+        _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds + 30);
 
         // Use the most up-to-date Google AI SDK endpoints and model naming
         // Updated to use gemini-2.5-flash for better performance and reliability
@@ -113,7 +125,7 @@ public class LlmProviderService : ILLMProviderService
 
         var url = $"{_geminiBaseUrl}/models/{_geminiModel}:generateContent?key={_geminiApiKey}";
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
 
         try
         {
@@ -134,9 +146,9 @@ public class LlmProviderService : ILLMProviderService
                         },
                         generationConfig = new
                         {
-                            temperature = 0.7,
-                            topP = 0.9,
-                            maxOutputTokens = 3000,
+                            temperature = _temperature,
+                            topP = _topP,
+                            maxOutputTokens = _maxOutputTokens,
                             responseMimeType = "application/json"
                         },
                         safetySettings = new[]
@@ -193,8 +205,8 @@ public class LlmProviderService : ILLMProviderService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogWarning("Gemini API request timed out after 90 seconds");
-            throw new TimeoutException("Gemini API request timeout");
+            _logger.LogWarning("Gemini API request timed out after {Timeout} seconds", _timeoutSeconds);
+            throw new TimeoutException($"Gemini API request timeout after {_timeoutSeconds}s");
         }
         catch (Exception ex)
         {
@@ -284,15 +296,15 @@ public class LlmProviderService : ILLMProviderService
         var requestBody = new
         {
             model = _claudeModel,
-            max_tokens = 3000,
-            temperature = 0.7,
-            top_p = 0.9,
+            max_tokens = _maxOutputTokens,
+            temperature = _temperature,
+            top_p = _topP,
             system = systemPrompt,
             messages = new[] { new { role = "user", content = safeUserMessage } }
         };
 
         var url = _claudeBaseUrl;
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
 
         try
         {
@@ -323,8 +335,8 @@ public class LlmProviderService : ILLMProviderService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogWarning("Claude API request timed out after 90 seconds");
-            throw new TimeoutException("Claude API request timeout");
+            _logger.LogWarning("Claude API request timed out after {Timeout} seconds", _timeoutSeconds);
+            throw new TimeoutException($"Claude API request timeout after {_timeoutSeconds}s");
         }
         catch (Exception ex)
         {
@@ -539,7 +551,7 @@ public class LlmProviderService : ILLMProviderService
         var combinedPrompt = $"{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
         var url = $"{_geminiBaseUrl}/models/{_geminiModel}:generateContent?key={_geminiApiKey}";
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
 
         try
         {
@@ -560,8 +572,8 @@ public class LlmProviderService : ILLMProviderService
                         },
                         generationConfig = new
                         {
-                            temperature = 0.7,
-                            topP = 0.9,
+                            temperature = _temperature,
+                            topP = _topP,
                             maxOutputTokens = 2000
                         }
                     }),
@@ -580,7 +592,7 @@ public class LlmProviderService : ILLMProviderService
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
-            
+
             using var doc = JsonDocument.Parse(responseContent);
             if (doc.RootElement.TryGetProperty("candidates", out var candidates) &&
                 candidates.GetArrayLength() > 0 &&
@@ -596,7 +608,7 @@ public class LlmProviderService : ILLMProviderService
         }
         catch (TaskCanceledException)
         {
-            throw new TimeoutException("Gemini API request timeout during text generation");
+            throw new TimeoutException($"Gemini API request timeout during text generation after {_timeoutSeconds}s");
         }
     }
 
@@ -611,15 +623,15 @@ public class LlmProviderService : ILLMProviderService
         var requestBody = new
         {
             model = _claudeModel,
-            max_tokens = 2000,
-            temperature = 0.7,
-            top_p = 0.9,
+            max_tokens = _maxOutputTokens,
+            temperature = _temperature,
+            top_p = _topP,
             system = systemPrompt,
             messages = new[] { new { role = "user", content = safeUserMessage } }
         };
 
         var url = _claudeBaseUrl;
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
 
         try
         {
@@ -645,7 +657,7 @@ public class LlmProviderService : ILLMProviderService
         }
         catch (TaskCanceledException)
         {
-            throw new TimeoutException("Claude API request timeout during text generation");
+            throw new TimeoutException($"Claude API request timeout during text generation after {_timeoutSeconds}s");
         }
     }
 }

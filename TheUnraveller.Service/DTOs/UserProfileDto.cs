@@ -21,6 +21,12 @@ public class UserProfileDto
     public bool IsPremium { get; set; }
     public string EnglishLevel { get; set; } = "B1";
 
+    // Subscription fields
+    public string? SubscriptionPlanName { get; set; }
+    public DateTime? SubscriptionEndDate { get; set; }
+    public int SubscriptionDaysRemaining { get; set; } // -1 = lifetime, 0 = expired
+    public bool SubscriptionExpiringSoon { get; set; }
+
     // Created info
     public DateTime CreatedAt { get; set; }
 

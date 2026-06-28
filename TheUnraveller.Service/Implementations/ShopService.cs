@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using TheUnraveller.Core.Entities;
 using TheUnraveller.Core.Interfaces;
 using TheUnraveller.Service.DTOs;
@@ -12,15 +13,24 @@ public class ShopService : IShopService
     private readonly IShopRepository _shopRepository;
     private readonly IUserRepository _userRepository;
     private readonly IUserProgressRepository _userProgressRepository;
+    private readonly IConfiguration _configuration;
+    private readonly decimal _premiumDiscount;
+    private readonly int _bribeNpcReduction;
+    private readonly int _inGameHintReduction;
 
     public ShopService(
         IShopRepository shopRepository,
         IUserRepository userRepository,
-        IUserProgressRepository userProgressRepository)
+        IUserProgressRepository userProgressRepository,
+        IConfiguration configuration)
     {
         _shopRepository = shopRepository;
         _userRepository = userRepository;
         _userProgressRepository = userProgressRepository;
+        _configuration = configuration;
+        _premiumDiscount = _configuration.GetValue<decimal>("GameRules:PremiumShopDiscount", 0.8m);
+        _bribeNpcReduction = _configuration.GetValue<int>("GameRules:BribeNpcSuspicionReduction", 20);
+        _inGameHintReduction = _configuration.GetValue<int>("GameRules:InGameHintSuspicionReduction", 10);
     }
 
     public async Task<IEnumerable<ShopItemDto>> GetShopItemsAsync(int userId)
@@ -36,7 +46,7 @@ public class ShopService : IShopService
             Description = i.Description,
             Type = i.Type.ToString(),
             PriceXp = i.PriceXp,
-            DiscountPriceXp = i.DiscountPriceXp > 0 ? i.DiscountPriceXp : (isPremium ? (int)(i.PriceXp * 0.8) : i.PriceXp),
+            DiscountPriceXp = i.DiscountPriceXp > 0 ? i.DiscountPriceXp : (isPremium ? (int)(i.PriceXp * _premiumDiscount) : i.PriceXp),
             Emoji = i.Emoji
         });
     }
@@ -51,7 +61,7 @@ public class ShopService : IShopService
             return new BuyItemResponseDto { Success = false, Message = "User or Item not found" };
         }
 
-        int actualPrice = user.IsPremium ? (int)(item.PriceXp * 0.8) : item.PriceXp;
+        int actualPrice = user.IsPremium ? (int)(item.PriceXp * _premiumDiscount) : item.PriceXp;
 
         if (user.XpBalance < actualPrice)
         {
@@ -91,7 +101,7 @@ public class ShopService : IShopService
         string effectMessage = item.Type switch
         {
             ItemType.InGameHint => "Hint activated: AI suggestion generated.",
-            ItemType.BribeNpc => "Helper used: Communicative drift decreased by 20!",
+            ItemType.BribeNpc => $"Helper used: Suspicion decreased by {_bribeNpcReduction}!",
             ItemType.Cosmetic => "Cosmetic applied to your profile.",
             _ => "Item used successfully."
         };
@@ -103,13 +113,13 @@ public class ShopService : IShopService
             {
                 if (item.Type == ItemType.BribeNpc)
                 {
-                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - 20);
+                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - _bribeNpcReduction);
                     _userProgressRepository.Update(progress);
                     await _userProgressRepository.SaveChangesAsync();
                 }
                 else if (item.Type == ItemType.InGameHint)
                 {
-                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - 10);
+                    progress.CurrentSuspicion = Math.Max(0, progress.CurrentSuspicion - _inGameHintReduction);
                     _userProgressRepository.Update(progress);
                     await _userProgressRepository.SaveChangesAsync();
                 }
