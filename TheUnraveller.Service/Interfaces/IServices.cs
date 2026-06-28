@@ -34,7 +34,7 @@ public interface ILLMProviderService
 
 public interface IPaymentService
 {
-    Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, string planId, int amount);
+    Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, int planId, int amount);
     Task<bool> VerifyPayOSWebhookAsync(Webhook webhookPayload);
     Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId);
 }
