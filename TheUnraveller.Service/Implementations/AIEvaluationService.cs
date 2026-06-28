@@ -1,4 +1,4 @@
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -256,7 +256,24 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
         };
         _context.Dialogues.Add(dialogue);
 
-        // --- Win: snapshot + corrections + badges ---
+        // Corrections (recorded for every dialogue turn)
+        if (claudeResponse.WritingFeedback.Corrections != null
+            && claudeResponse.WritingFeedback.Corrections.Any())
+        {
+            foreach (var corr in claudeResponse.WritingFeedback.Corrections)
+            {
+                _context.Corrections.Add(new Correction
+                {
+                    Dialogue = dialogue,
+                    Axis = (TheUnraveller.Core.Entities.SkillAxis)corr.Axis,
+                    OriginalText = corr.OriginalText,
+                    CorrectedText = corr.CorrectedText,
+                    Explanation = corr.Explanation
+                });
+            }
+        }
+
+        // --- Win: snapshot + badges ---
         string? completionToken = null;
 
         if (isWin)
@@ -286,23 +303,6 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
                 AiRewriteSuggestion = claudeResponse.WritingFeedback.RewriteSuggestion
             };
             _context.WritingSkillSnapshots.Add(snapshot);
-
-            // Corrections
-            if (claudeResponse.WritingFeedback.Corrections != null
-                && claudeResponse.WritingFeedback.Corrections.Any())
-            {
-                foreach (var corr in claudeResponse.WritingFeedback.Corrections)
-                {
-                    _context.Corrections.Add(new Correction
-                    {
-                        DialogueId = dialogue.Id,
-                        Axis = (TheUnraveller.Core.Entities.SkillAxis)corr.Axis,
-                        OriginalText = corr.OriginalText,
-                        CorrectedText = corr.CorrectedText,
-                        Explanation = corr.Explanation
-                    });
-                }
-            }
 
             // Badges
             var avgScoreDecimal = Math.Round(avgScore / 100m, 2);

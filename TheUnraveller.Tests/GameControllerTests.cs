@@ -30,7 +30,15 @@ public class GameControllerTests
 			new Claim(ClaimTypes.NameIdentifier, "1")
 		}, "mock"));
 
-		_controller = new GameController(_aiServiceMock.Object, _shopRepoMock.Object, _progressRepoMock.Object, Mock.Of<IConfiguration>())
+		var myConfiguration = new System.Collections.Generic.Dictionary<string, string>
+		{
+			{ "GameRules:BribeNpcSuspicionReduction", "20" }
+		};
+		var configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(myConfiguration)
+			.Build();
+
+		_controller = new GameController(_aiServiceMock.Object, _shopRepoMock.Object, _progressRepoMock.Object, configuration)
 		{
 			ControllerContext = new ControllerContext
 			{

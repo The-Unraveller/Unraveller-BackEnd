@@ -18,7 +18,7 @@ public class AIEvaluationServiceTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _context;
-    private readonly Mock<IConfiguration> _configMock;
+    private readonly IConfiguration _configuration;
     private readonly Mock<IBadgeService> _badgeServiceMock;
     private readonly Mock<ILLMProviderService> _llmProviderMock;
 
@@ -35,9 +35,29 @@ public class AIEvaluationServiceTests : IDisposable
         _context = new AppDbContext(options);
         _context.Database.EnsureCreated();
 
-        // 2. Mock Configuration
-        _configMock = new Mock<IConfiguration>();
-        _configMock.Setup(c => c["LlmApi:ApiKey"]).Returns("test-api-key");
+        // 2. Real Configuration Builder with in-memory provider
+        var myConfiguration = new System.Collections.Generic.Dictionary<string, string>
+        {
+            { "LlmApi:ApiKey", "test-api-key" },
+            { "GameRules:EnergyCostPerMessage", "5" },
+            { "GameRules:PremiumXpMultiplier", "2" },
+            { "GameRules:FreeEnergyRechargeIntervalMinutes", "30" },
+            { "GameRules:FreeEnergyPerRecharge", "10" },
+            { "GameRules:PremiumEnergyPerRecharge", "20" },
+            { "GameRules:PremiumMaxEnergy", "200" },
+            { "GameRules:BribeNpcSuspicionReduction", "20" },
+            { "GameRules:InGameHintSuspicionReduction", "10" },
+            { "GameRules:DefaultEnergy", "100" },
+            { "GameRules:DefaultMaxEnergy", "100" },
+            { "GameRules:DefaultEnglishLevel", "B1" },
+            { "GameRules:MinTurnsToComplete", "5" },
+            { "GameRules:WinSuspicionThreshold", "50" },
+            { "GameRules:XpPenaltyMin", "5" }
+        };
+
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(myConfiguration)
+            .Build();
 
         // 3. Mock Badge Service
         _badgeServiceMock = new Mock<IBadgeService>();
@@ -121,7 +141,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 15
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -137,7 +157,7 @@ public class AIEvaluationServiceTests : IDisposable
         var updatedUser = await _context.Users.FindAsync(1);
         Assert.NotNull(updatedUser);
         Assert.Equal(95, updatedUser!.Energy); // 100 - 5
-        Assert.Equal(15, updatedUser.XpBalance);
+        Assert.Equal(0, updatedUser.XpBalance);
 
         var progress = await _context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == 1 && p.MissionId == 1);
         Assert.NotNull(progress);
@@ -162,10 +182,10 @@ public class AIEvaluationServiceTests : IDisposable
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<Exception>(() =>
+        var exception = await Assert.ThrowsAsync<DomainException>(() =>
             service.EvaluateMessageAsync(1, 1, "Hello"));
         Assert.Contains("Not enough energy", exception.Message);
     }
@@ -179,7 +199,7 @@ public class AIEvaluationServiceTests : IDisposable
         _llmProviderMock.Setup(p => p.GetEvaluationResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ThrowsAsync(new HttpRequestException("API is unavailable"));
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello officer");
@@ -234,7 +254,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 15
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Testing levels");
@@ -243,7 +263,7 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.NotNull(result);
         Assert.NotNull(capturedSystemPrompt);
         Assert.Contains(expectedInstructionSubstring, capturedSystemPrompt);
-        Assert.Contains($"Trình độ tiếng Anh: {level}", capturedSystemPrompt);
+        Assert.Contains($"Trình độ tiếng Anh của người chơi: {level}", capturedSystemPrompt);
     }
 
     [Fact]
@@ -268,7 +288,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 0
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "suspicious message");
@@ -343,7 +363,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 15
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "I would like a cup of coffee, please.");
@@ -370,7 +390,7 @@ public class AIEvaluationServiceTests : IDisposable
         Assert.Equal("Perfect response.", snapshot.AiRewriteSuggestion);
 
         // Verify BadgeService was called on win
-        _badgeServiceMock.Verify(s => s.AwardBadgesForMissionAsync(1, 1, It.Is<decimal>(v => v == 80m), It.IsAny<CancellationToken>()), Times.Once);
+        _badgeServiceMock.Verify(s => s.AwardBadgesForMissionAsync(1, 1, It.Is<decimal>(v => v == 0.8m), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -398,7 +418,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 5
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "I goes to coffee shop");
@@ -435,7 +455,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 0
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -469,7 +489,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 5
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -505,7 +525,7 @@ public class AIEvaluationServiceTests : IDisposable
                 XpEarned = 10
             });
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.EvaluateMessageAsync(1, 1, "Hello");
@@ -529,7 +549,7 @@ public class AIEvaluationServiceTests : IDisposable
         _context.WritingSkillSnapshots.RemoveRange(existingSnapshots);
         await _context.SaveChangesAsync();
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.GetWritingSkillMapAsync(1);
@@ -597,7 +617,7 @@ public class AIEvaluationServiceTests : IDisposable
         await _context.WritingSkillSnapshots.AddRangeAsync(snapshots);
         await _context.SaveChangesAsync();
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act
         var result = await service.GetWritingSkillMapAsync(1);
@@ -634,7 +654,7 @@ public class AIEvaluationServiceTests : IDisposable
             await _context.SaveChangesAsync();
         }
 
-        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _configMock.Object);
+        var service = new AIEvaluationService(_context, _badgeServiceMock.Object, _llmProviderMock.Object, _configuration);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<DomainException>(() => service.GetWritingSkillMapAsync(1));
