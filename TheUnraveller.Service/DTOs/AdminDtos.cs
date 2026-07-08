@@ -21,7 +21,20 @@ public class MissionUpdateDto
     public string? Difficulty { get; set; }
     public int? NpcId { get; set; }
     public string? ImageUrl { get; set; }
+    public List<SubTaskUpdateDto>? SubTasks { get; set; }
 }
+
+public class SubTaskUpdateDto
+{
+    public int? Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public string LabelEn { get; set; } = string.Empty;
+    public string HintPhrase { get; set; } = string.Empty;
+    public List<string> TriggerKeywords { get; set; } = new();
+    public bool IsOptional { get; set; } = false;
+    public int XpBonus { get; set; } = 10;
+}
+
 
 public class SubTaskCreateDto
 {
