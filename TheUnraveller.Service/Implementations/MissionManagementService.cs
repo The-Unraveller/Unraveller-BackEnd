@@ -115,6 +115,56 @@ public class MissionManagementService : IMissionManagementService
         if (dto.NpcId.HasValue) mission.NpcId = dto.NpcId.Value;
         if (!string.IsNullOrEmpty(dto.ImageUrl)) mission.ImageUrl = dto.ImageUrl;
 
+        if (dto.SubTasks != null)
+        {
+            var existingSubTasks = await _context.MissionSubTasks
+                .Where(s => s.MissionId == id)
+                .ToListAsync();
+
+            var incomingIds = dto.SubTasks.Where(s => s.Id.HasValue).Select(s => s.Id!.Value).ToList();
+            var toDelete = existingSubTasks.Where(s => !incomingIds.Contains(s.Id)).ToList();
+            
+            if (toDelete.Any())
+            {
+                _context.MissionSubTasks.RemoveRange(toDelete);
+            }
+
+            int order = 1;
+            foreach (var subDto in dto.SubTasks)
+            {
+                if (subDto.Id.HasValue)
+                {
+                    var existing = existingSubTasks.FirstOrDefault(s => s.Id == subDto.Id.Value);
+                    if (existing != null)
+                    {
+                        existing.Label = subDto.Label;
+                        existing.LabelEn = subDto.LabelEn;
+                        existing.HintPhrase = subDto.HintPhrase;
+                        existing.TriggerKeywords = subDto.TriggerKeywords ?? new List<string>();
+                        existing.IsOptional = subDto.IsOptional;
+                        existing.XpBonus = subDto.XpBonus;
+                        existing.OrderIndex = order++;
+                        _context.MissionSubTasks.Update(existing);
+                    }
+                }
+                else
+                {
+                    var newSub = new MissionSubTask
+                    {
+                        MissionId = id,
+                        Label = subDto.Label,
+                        LabelEn = subDto.LabelEn,
+                        HintPhrase = subDto.HintPhrase,
+                        TriggerKeywords = subDto.TriggerKeywords ?? new List<string>(),
+                        IsOptional = subDto.IsOptional,
+                        XpBonus = subDto.XpBonus,
+                        OrderIndex = order++
+                    };
+                    await _context.MissionSubTasks.AddAsync(newSub);
+                }
+            }
+        }
+
         await _missionRepository.UpdateAsync(mission);
         await _missionRepository.SaveChangesAsync();
         return true;
