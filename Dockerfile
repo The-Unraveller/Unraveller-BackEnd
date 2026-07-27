@@ -29,6 +29,8 @@ COPY --from=build /app/publish .
 
 # Configure ASP.NET Core to bind to port 8080 (standard for .NET 8/9 containers)
 ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 EXPOSE 8080
 
 # Start the application
