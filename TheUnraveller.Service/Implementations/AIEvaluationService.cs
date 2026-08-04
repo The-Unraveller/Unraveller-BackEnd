@@ -54,12 +54,15 @@ public class AIEvaluationService : IAIEvaluationService
         if (user == null)
             throw new DomainException("User not found.");
 
-        // --- Lazy energy recharge ---
-        RechargeEnergyLazy(user);
+        // --- Lazy energy recharge (only for free users; premium energy = always full) ---
+        if (!user.IsPremium)
+        {
+            RechargeEnergyLazy(user);
+        }
 
-        // --- Energy gate ---
+        // --- Energy gate (premium = 0 cost, always passes) ---
         int energyCost = user.IsPremium ? 0 : _energyCostPerMessage;
-        if (user.Energy < energyCost)
+        if (!user.IsPremium && user.Energy < energyCost)
             throw new DomainException($"Not enough energy. Each message requires {_energyCostPerMessage} energy.");
 
         user.Energy -= energyCost;
@@ -334,6 +337,10 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
             .ToList() ?? new List<MissionSubTaskDto>();
 
         // --- Build response ---
+        // For premium users, return -1 as a signal for infinite energy (∞) on the frontend
+        int responseEnergy = user.IsPremium ? -1 : user.Energy;
+        int responseMaxEnergy = user.IsPremium ? -1 : user.MaxEnergy;
+
         return new DialogueResponseWithScoresDto(
             claudeResponse.NpcResponse,
             claudeResponse.WritingFeedback,
@@ -343,8 +350,8 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
             progress.TurnCount,
             finalXpEarned,
             completionToken,
-            user.Energy,
-            user.MaxEnergy,
+            responseEnergy,
+            responseMaxEnergy,
             subTaskDtos);
     }
 
