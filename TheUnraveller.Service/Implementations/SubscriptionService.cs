@@ -62,6 +62,7 @@ public class SubscriptionService : ISubscriptionService
             {
                 user.IsPremium = false;
                 user.MaxEnergy = 100; // Reset to free tier max energy
+                user.Energy = Math.Min(user.Energy, 100); // Cap current energy
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("User {UserId} subscription expired, downgraded to Free", userId);
             }
@@ -131,17 +132,9 @@ public class SubscriptionService : ISubscriptionService
         // Update user to premium
         user.IsPremium = true;
 
-        // Set max energy based on plan
-        if (plan.DurationDays == 0)
-        {
-            // Lifetime premium
-            user.MaxEnergy = 200;
-        }
-        else
-        {
-            user.MaxEnergy = 200;
-        }
-        user.Energy = user.MaxEnergy;
+        // Set max energy to int.MaxValue = truly infinite energy for premium
+        user.MaxEnergy = int.MaxValue;
+        user.Energy = int.MaxValue; // Fill energy completely
 
         await _context.SaveChangesAsync();
 
@@ -206,6 +199,7 @@ public class SubscriptionService : ISubscriptionService
             {
                 sub.User.IsPremium = false;
                 sub.User.MaxEnergy = 100;
+                sub.User.Energy = Math.Min(sub.User.Energy, 100); // Cap energy back to free limit
                 count++;
                 _logger.LogInformation("Subscription expired for UserId={UserId}, PlanId={PlanId}",
                     sub.UserId, sub.PlanId);
