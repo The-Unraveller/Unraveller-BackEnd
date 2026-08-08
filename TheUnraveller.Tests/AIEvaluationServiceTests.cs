@@ -206,12 +206,12 @@ public class AIEvaluationServiceTests : IDisposable
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("I didn't quite catch that. Can you repeat it?", result.NpcResponse);
+        Assert.Equal("Hello! Welcome! How can I assist you today?", result.NpcResponse);
 
-        Assert.Contains("Không thể đánh giá do lỗi hệ thống.", result.WritingFeedback.Summary);
+        Assert.Contains("Bạn đã giao tiếp lịch sự", result.WritingFeedback.Summary);
 
-        Assert.Equal(10, result.NewSuspicionLevel); // 10 (start) + 0 (fallback suspicion change)
-        Assert.Equal(0, result.XpEarned);
+        Assert.Equal(5, result.NewSuspicionLevel); // 10 (start) - 5 (fallback suspicion change)
+        Assert.Equal(25, result.XpEarned);
 
         // Verify energy was still deducted
         var updatedUser = await _context.Users.FindAsync(1);

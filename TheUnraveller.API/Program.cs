@@ -120,6 +120,18 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate(); // Apply pending migrations
+
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            UPDATE ""Missions"" SET ""Locked"" = FALSE WHERE ""Id"" <= 13;
+            UPDATE ""Missions"" SET ""Locked"" = TRUE WHERE ""Id"" >= 14;
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB Startup Update] Note: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
