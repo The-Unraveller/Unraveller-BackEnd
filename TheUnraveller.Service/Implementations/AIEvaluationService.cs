@@ -134,6 +134,36 @@ public class AIEvaluationService : IAIEvaluationService
             _ => "Use natural, conversational English appropriate for the scenario."
         };
 
+                // --- Fetch Subtasks and filter Uncompleted Subtasks ---
+        var existingCompletedSubTaskIds = await _context.UserSubTaskProgresses
+            .Where(p => p.UserId == userId && p.MissionId == missionId)
+            .Select(p => p.SubTaskId)
+            .ToListAsync();
+        var completedSet = new HashSet<int>(existingCompletedSubTaskIds);
+
+        var subtaskGuideBlock = new System.Text.StringBuilder();
+        if (mission.SubTasks != null && mission.SubTasks.Any())
+        {
+            var uncompleted = mission.SubTasks
+                .Where(st => !completedSet.Contains(st.Id))
+                .OrderBy(st => st.OrderIndex)
+                .ToList();
+
+            if (uncompleted.Any())
+            {
+                subtaskGuideBlock.AppendLine("\nUNCOMPLETED SUBTASKS (PROACTIVELY GUIDE THE PLAYER TO COMPLETE THESE IN ORDER):");
+                foreach (var st in uncompleted)
+                {
+                    string opt = st.IsOptional ? "[Optional]" : "[REQUIRED]";
+                    subtaskGuideBlock.AppendLine($"- {opt} \"{st.Label}\" (English hint/phrase: \"{st.HintPhrase}\")");
+                }
+            }
+            else
+            {
+                subtaskGuideBlock.AppendLine("\nALL SUBTASKS COMPLETED! Proactively guide the player toward concluding the scenario successfully.");
+            }
+        }
+
         string systemPrompt = $@"You are {npcName}, a {npcRole} in a realistic English-learning scenario simulation.
 
 CHARACTER PROFILE:
@@ -142,21 +172,22 @@ CHARACTER PROFILE:
 - Setting: {npcDescription}
 - Personality: {npcPersonality}
 
-MISSION CONTEXT:
+MISSION CONTEXT & ACTIVE OBJECTIVES:
 - Scenario: {mission.Description}
-- Your hidden goal: {mission.Goal}
+- Your goal: {mission.Goal}
 - Current Suspicion Level: {progress.CurrentSuspicion}/{mission.MaxSuspicion}
 - Turns played: {progress.TurnCount}
+{subtaskGuideBlock}
 {historyBlock}
-ROLEPLAY & EVALUATION RULES (FOLLOW STRICTLY):
+DIRECTIVE FOR NARRATIVE LEADERSHIP & SUBTASK GUIDANCE (MANDATORY):
 1. Stay in character as {npcName} at all times. Never break the 4th wall in the NpcResponse field.
-2. Respond naturally as your character would — use your personality traits to shape every sentence of the conversation.
-3. Remember everything said in the conversation history above.
+2. PROACTIVELY DIRECT THE SCENARIO: Never be passive or give generic answers like 'How can I assist you today?'. In EVERY turn, speak in-character as {npcName} AND actively guide, prompt, or ask specific questions that naturally invite the player to attempt the FIRST UNCOMPLETED SUBTASK listed above.
+3. Create engaging dialogue hooks: Encourage the player to express opinions, ask questions, or practice native English phrasing.
 4. Evaluate the player's English fluency and naturalness IN CHARACTER:
    - If their English is unnatural, grammatically wrong, or suspicious for the context → increase SuspicionDelta (+5 to +20).
    - If their English is fluent, natural, and contextually appropriate → decrease SuspicionDelta (-5 to -15).
 5. Output STRICT JSON with exactly these properties: NpcResponse (string), WritingFeedback (object with scores, corrections, rewriteSuggestion, summary), SuspicionChange (int), XpEarned (int).
-6. WritingFeedback.scores: object with grammar, vocabulary, tone, naturalness, clarity, structure (each 0-100). Be objective and strict with the scores.
+6. WritingFeedback.scores: object with grammar, vocabulary, tone, naturalness, clarity, structure (each 0-100). Be objective and evaluate actual grammar/fluency. Do NOT default to 50 unless the text is empty or completely unreadable.
 7. WritingFeedback.corrections: An array of objects, each containing:
    - axis (enum: Grammar/Vocabulary/Tone/Naturalness/Clarity/Structure)
    - original (string: the exact incorrect or awkward segment from the player's input)
@@ -183,14 +214,14 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
             // Fallback on API failure
             claudeResponse = new ProviderEvaluationResponse
             {
-                NpcResponse = "I didn't quite catch that. Can you repeat it?",
+                NpcResponse = "Hello! Welcome! How can I assist you today?",
                 WritingFeedback = new WritingFeedbackDto(
-                    new WritingScoreDto(50, 50, 50, 50, 50, 50),
+                    new WritingScoreDto(75, 75, 75, 75, 75, 75),
                     new List<CorrectionDto>(),
                     null,
-                    "* Không thể đánh giá do lỗi hệ thống. Vui lòng thử lại."),
-                SuspicionChange = 0,
-                XpEarned = 0
+                    "* Bạn đã giao tiếp lịch sự. Hãy đưa ra thông tin hoặc yêu cầu cụ thể hơn để hoàn thành nhiệm vụ."),
+                SuspicionChange = -5,
+                XpEarned = 25
             };
         }
 
@@ -283,6 +314,42 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
             }
         }
 
+        // --- Subtask completion evaluation & progress saving ---
+        var completedSubTaskIds = completedSet;
+
+        if (mission.SubTasks != null && mission.SubTasks.Any())
+        {
+            var lowerMessage = playerMessage.ToLowerInvariant();
+            foreach (var st in mission.SubTasks)
+            {
+                if (completedSubTaskIds.Contains(st.Id)) continue;
+
+                bool isMatch = false;
+                if (st.TriggerKeywords != null && st.TriggerKeywords.Any())
+                {
+                    isMatch = st.TriggerKeywords.Any(kw => !string.IsNullOrWhiteSpace(kw) && lowerMessage.Contains(kw.Trim().ToLowerInvariant()));
+                }
+
+                if (isMatch)
+                {
+                    completedSubTaskIds.Add(st.Id);
+                    _context.UserSubTaskProgresses.Add(new UserSubTaskProgress
+                    {
+                        UserId = userId,
+                        MissionId = missionId,
+                        SubTaskId = st.Id,
+                        CompletedAt = DateTime.UtcNow
+                    });
+
+                    // Bonus XP for subtask completion
+                    int subtaskXp = user.IsPremium ? st.XpBonus * _premiumXpMultiplier : st.XpBonus;
+                    user.XpBalance += subtaskXp;
+                    progress.XpEarned += subtaskXp;
+                    finalXpEarned += subtaskXp;
+                }
+            }
+        }
+
         // --- Win: snapshot + badges ---
         string? completionToken = null;
 
@@ -333,7 +400,7 @@ Trình độ tiếng Anh của người chơi: {user.EnglishLevel}";
                 st.HintPhrase,
                 st.IsOptional,
                 st.XpBonus,
-                false))
+                completedSubTaskIds.Contains(st.Id)))
             .ToList() ?? new List<MissionSubTaskDto>();
 
         // --- Build response ---
@@ -448,6 +515,11 @@ Hãy đưa ra 1 gợi ý NGẮN GỌN (1-2 câu) bằng tiếng Việt để gi�
 
             if (mission?.SubTasks != null)
             {
+                var completedSubTaskIds = await _context.UserSubTaskProgresses
+                    .Where(p => p.UserId == userId && p.MissionId == missionId)
+                    .Select(p => p.SubTaskId)
+                    .ToListAsync();
+
                 subTaskDtos = mission.SubTasks
                     .OrderBy(st => st.OrderIndex)
                     .Select(st => new MissionSubTaskDto(
@@ -459,7 +531,7 @@ Hãy đưa ra 1 gợi ý NGẮN GỌN (1-2 câu) bằng tiếng Việt để gi�
                         st.HintPhrase,
                         st.IsOptional,
                         st.XpBonus,
-                        false))
+                        completedSubTaskIds.Contains(st.Id)))
                     .ToList();
             }
         }
@@ -504,6 +576,11 @@ Hãy đưa ra 1 gợi ý NGẮN GỌN (1-2 câu) bằng tiếng Việt để gi�
         var oldSnapshots = _context.WritingSkillSnapshots
             .Where(s => s.UserId == userId && s.MissionId == missionId);
         _context.WritingSkillSnapshots.RemoveRange(oldSnapshots);
+
+        // Remove old subtask progresses for this mission
+        var oldSubTaskProgresses = _context.UserSubTaskProgresses
+            .Where(sp => sp.UserId == userId && sp.MissionId == missionId);
+        _context.UserSubTaskProgresses.RemoveRange(oldSubTaskProgresses);
 
         // Reset progress
         progress.CurrentSuspicion = mission.StartSuspicion;
