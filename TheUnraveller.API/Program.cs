@@ -119,14 +119,34 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate(); // Apply pending migrations
+    try
+    {
+        db.Database.Migrate(); // Apply pending migrations
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB Migration Note]: {ex.Message}");
+    }
 
     try
     {
         db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS ""Feedbacks"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""UserId"" INT NOT NULL REFERENCES ""Users""(""Id"") ON DELETE CASCADE,
+                ""Rating"" INT NOT NULL DEFAULT 5,
+                ""Category"" VARCHAR(255) NOT NULL DEFAULT 'Trải nghiệm UI/UX',
+                ""Comment"" TEXT NOT NULL DEFAULT '',
+                ""CreatedAt"" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Feedbacks_UserId"" ON ""Feedbacks"" (""UserId"");
+            CREATE INDEX IF NOT EXISTS ""IX_Feedbacks_CreatedAt"" ON ""Feedbacks"" (""CreatedAt"");
+
             UPDATE ""Missions"" SET ""Locked"" = FALSE WHERE ""Id"" <= 13;
             UPDATE ""Missions"" SET ""Locked"" = TRUE WHERE ""Id"" >= 14;
         ");
+        Console.WriteLine("[DB Startup] Feedbacks table checked and synchronized on Supabase PostgreSQL.");
     }
     catch (Exception ex)
     {
