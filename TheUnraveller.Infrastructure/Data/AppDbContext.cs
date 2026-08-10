@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<UserSubscription> UserSubscriptions { get; set; } = null!;
     public DbSet<MissionSubTask> MissionSubTasks { get; set; } = null!;
     public DbSet<UserSubTaskProgress> UserSubTaskProgresses { get; set; } = null!;
+    public DbSet<Feedback> Feedbacks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,6 +90,18 @@ public class AppDbContext : DbContext
             entity.ToTable("Payments");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.ToTable("Feedbacks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone");
+            entity.HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Seed Subscription Plans

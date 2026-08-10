@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TheUnraveller.Core.Entities;
+using TheUnraveller.Infrastructure.Data;
 using TheUnraveller.Service.DTOs;
 using TheUnraveller.Service.Interfaces;
 
@@ -12,10 +14,12 @@ namespace TheUnraveller.API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly AppDbContext _context;
 
-    public UserController(IUserService userService)
+    public UserController(IUserService userService, AppDbContext context)
     {
         _userService = userService;
+        _context = context;
     }
 
     private int GetUserId()
@@ -94,6 +98,39 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { Message = $"Lỗi hệ thống: {ex.Message}" });
+        }
+    }
+
+    public class UserFeedbackSubmitDto
+    {
+        public int Rating { get; set; } = 5;
+        public string Category { get; set; } = "Trải nghiệm UI/UX";
+        public string Comment { get; set; } = string.Empty;
+    }
+
+    [HttpPost("feedback")]
+    public async Task<IActionResult> SubmitFeedback([FromBody] UserFeedbackSubmitDto request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var feedback = new Feedback
+            {
+                UserId = userId,
+                Rating = Math.Clamp(request.Rating, 1, 5),
+                Category = string.IsNullOrWhiteSpace(request.Category) ? "Trải nghiệm UI/UX" : request.Category,
+                Comment = request.Comment ?? string.Empty,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Feedbacks.Add(feedback);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Cảm ơn bạn đã gửi đóng góp phản hồi! Ý kiến của bạn đã được chuyển đến ban quản trị." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
         }
     }
 }
