@@ -133,15 +133,20 @@ public class PaymentService : IPaymentService
 		}
 	}
 
-	private async Task SyncPendingPaymentsAsync(int userId)
+	public async Task<int> SyncPendingPaymentsAsync(int? userId = null)
 	{
+		int syncedCount = 0;
 		try
 		{
-			var pendingPayments = await _context.Set<Payment>()
-				.Where(p => p.UserId == userId && p.Status == "Pending")
-				.ToListAsync();
+			var query = _context.Set<Payment>().Where(p => p.Status == "Pending");
+			if (userId.HasValue)
+			{
+				query = query.Where(p => p.UserId == userId.Value);
+			}
 
-			if (!pendingPayments.Any()) return;
+			var pendingPayments = await query.ToListAsync();
+
+			if (!pendingPayments.Any()) return 0;
 
 			bool hasUpdates = false;
 			foreach (var payment in pendingPayments)
@@ -163,9 +168,10 @@ public class PaymentService : IPaymentService
 								payment.CompletedAt = DateTime.UtcNow;
 								_paymentRepository.Update(payment);
 								hasUpdates = true;
+								syncedCount++;
 
 								await _subscriptionService.ActivateSubscriptionAsync(
-									userId, payment.PlanId, $"PAYOS-SYNC-{orderCode}");
+									payment.UserId, payment.PlanId, $"PAYOS-SYNC-{orderCode}");
 							}
 							else if (statusStr.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase))
 							{
@@ -191,6 +197,8 @@ public class PaymentService : IPaymentService
 		{
 			Console.WriteLine($"[SyncPendingPayments] Outer error: {ex.Message}");
 		}
+
+		return syncedCount;
 	}
 
 	public async Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId)
