@@ -19,23 +19,28 @@ public class AdminController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IMissionManagementService _missionManagementService;
     private readonly IShopService _shopService;
+    private readonly IPaymentService _paymentService;
     private readonly AppDbContext _context;
 
     public AdminController(
         IUserRepository userRepository, 
         IMissionManagementService missionManagementService, 
         IShopService shopService,
+        IPaymentService paymentService,
         AppDbContext context)
     {
         _userRepository = userRepository;
         _missionManagementService = missionManagementService;
         _shopService = shopService;
+        _paymentService = paymentService;
         _context = context;
     }
 
     [HttpGet("dashboard-stats")]
     public async Task<IActionResult> GetDashboardStats()
     {
+        await _paymentService.SyncPendingPaymentsAsync(null);
+
         var now = DateTime.UtcNow;
         var today = now.Date;
         var sevenDaysAgo = now.AddDays(-7);
@@ -196,9 +201,18 @@ public class AdminController : ControllerBase
         });
     }
 
+    [HttpPost("sync-payments")]
+    public async Task<IActionResult> SyncPayments()
+    {
+        var syncedCount = await _paymentService.SyncPendingPaymentsAsync(null);
+        return Ok(new { message = $"Đã đồng bộ thành công {syncedCount} giao dịch từ PayOS.", syncedCount });
+    }
+
     [HttpGet("transactions")]
     public async Task<IActionResult> GetAllTransactions()
     {
+        await _paymentService.SyncPendingPaymentsAsync(null);
+
         var transactions = await (from p in _context.Payments
                                   join u in _context.Users on p.UserId equals u.Id into userGroup
                                   from user in userGroup.DefaultIfEmpty()

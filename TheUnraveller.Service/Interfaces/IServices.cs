@@ -37,6 +37,7 @@ public interface IPaymentService
     Task<CreatePayOSLinkResponseDto> CreatePayOSLinkAsync(int userId, int planId, int amount);
     Task<bool> VerifyPayOSWebhookAsync(Webhook webhookPayload);
     Task<IEnumerable<PaymentHistoryDto>> GetPaymentHistoryAsync(int userId);
+    Task<int> SyncPendingPaymentsAsync(int? userId = null);
 }
 
 public interface IUserService
